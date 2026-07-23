@@ -42,6 +42,8 @@ CSRF_TRUSTED_ORIGINS = [
 custom_origin = os.environ.get('CSRF_TRUSTED_ORIGIN')
 if custom_origin:
     CSRF_TRUSTED_ORIGINS.append(custom_origin)
+
+
 # ALLOWED_HOSTS = ['*']
 
 # Allow Vercel domain + any custom domain you add
@@ -103,7 +105,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'notifications.context_processors.notifications_processor',
+                # 'notifications.context_processors.notifications_processor',
             ],
         },
     },
