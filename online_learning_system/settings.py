@@ -78,6 +78,8 @@ INSTALLED_APPS = [
     'adminpanel',
     'quizzes',
     'notifications',
+    'cloudinary_storage',  # ⬅️ ត្រូវដាក់នៅទីតាំងទី១ នៃបញ្ជី
+    'cloudinary',    
 ]
 
 MIDDLEWARE = [
@@ -188,7 +190,6 @@ CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
 
 if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
     import cloudinary
-    # ត្រូវប្រាកដថាបានដំឡើង django-cloudinary-storage ក្នុង requirements.txt
     import cloudinary_storage 
 
     cloudinary.config(
@@ -198,12 +199,13 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         secure=True,
     )
 
-    # បញ្ចូល App ទាំងពីរទៅទីតាំងខាងលើគេបង្អស់នៃ INSTALLED_APPS
     INSTALLED_APPS.insert(0, 'cloudinary_storage')
     INSTALLED_APPS.insert(1, 'cloudinary')
     
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    MEDIA_URL = f'https://cloudinary.com{CLOUDINARY_CLOUD_NAME}/'
+    
+    # ត្រូវដូរមកប្រើប្រាស់ Domain "res.cloudinary.com" និងមានសញ្ញា "/" ត្រឹមត្រូវបែបនេះ៖
+    MEDIA_URL = f'https://cloudinary.com{CLOUDINARY_CLOUD_NAME}/image/upload/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
