@@ -57,6 +57,8 @@ if custom_origin:
 # Application definition
 # ---------------------------------------------------------------------------
 INSTALLED_APPS = [
+    'cloudinary_storage',  # ម្ចាស់កូដត្រូវដាក់នៅលំដាប់ទី ១ នៃបញ្ជីដាច់ខាត
+    'cloudinary',          # ម្ចាស់កូដត្រូវដាក់នៅលំដាប់ទី ២ នៃបញ្ជីដាច់ខាត
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -78,8 +80,6 @@ INSTALLED_APPS = [
     'adminpanel',
     'quizzes',
     'notifications',
-    'cloudinary_storage',  # ⬅️ ត្រូវដាក់នៅទីតាំងទី១ នៃបញ្ជី
-    'cloudinary',    
 ]
 
 MIDDLEWARE = [
@@ -198,14 +198,11 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
-    
-    # ❌ ត្រូវលុបបន្ទាត់ INSTALLED_APPS.insert(0, 'cloudinary_storage') ចេញ
-    # ❌ ត្រូវលុបបន្ទាត់ INSTALLED_APPS.insert(1, 'cloudinary') ចេញ
 
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     
-    # ត្រូវដូរមកប្រើប្រាស់ Domain "res.cloudinary.com" និងមានសញ្ញា "/" ត្រឹមត្រូវបែបនេះ៖
-    MEDIA_URL = f'https://cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
+    # កែប្រែដូរមកប្រើប្រាស់ Domain ត្រឹមត្រូវ "res.cloudinary.com"
+    MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
