@@ -196,7 +196,12 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         secure=True,
     )
 
-    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
+    # លុប INSTALLED_APPS += ... ចាស់ចេញ រួចជំនួសដោយកូដបញ្ចូលទៅខាងលើវិញ៖
+    # បញ្ចូល 'cloudinary_storage' ទៅទីតាំងដំបូងគេបង្អស់នៃ INSTALLED_APPS
+    INSTALLED_APPS.insert(0, 'cloudinary_storage')
+    # បញ្ចូល 'cloudinary' ទៅបន្ទាត់បន្ទាប់
+    INSTALLED_APPS.insert(1, 'cloudinary')
+    
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/'
 else:
