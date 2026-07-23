@@ -36,16 +36,14 @@
             <!-- Avatar Header Box -->
             <div class="d-flex flex-column flex-sm-row align-items-center gap-4 mb-4 pb-4 border-bottom">
               <div class="position-relative">
-                {% if request.user.avatar %}
-                  <!-- ប្តូរពី avatar_url មកជា avatar.url និងលុបពាក្យ or ចេញ -->
-                  <img src="{{ request.user.avatar.url }}" id="avatarPreview" alt="Profile Picture" class="rounded-circle object-fit-cover shadow-sm" style="width:110px; height:110px; border:4px solid var(--surface-2);">
+                {% if request.user.avatar_url %}
+                <img src="{{ request.user.avatar_url }}" id="avatarPreview" alt="Profile Picture" class="rounded-circle object-fit-cover shadow-sm" style="width:110px; height:110px; border:4px solid var(--surface-2);">
                 {% else %}
-                  <div id="avatarInitials" class="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:110px; height:110px; background:linear-gradient(135deg, #0f2c52, #1e5aa8); color:#fff; font-size:2.2rem; border:4px solid var(--surface-2);">
-                    {% if request.user.first_name %}{{ request.user.first_name|slice:":1"|upper }}{% if request.user.last_name %}{{ request.user.last_name|slice:":1"|upper }}{% endif %}
-                    {% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}
-                  </div>
+                <div id="avatarInitials" class="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:110px; height:110px; background:linear-gradient(135deg, #0f2c52, #1e5aa8); color:#fff; font-size:2.2rem; border:4px solid var(--surface-2);">
+                  {% if request.user.first_name %}{{ request.user.first_name|slice:":1"|upper }}{% if request.user.last_name %}{{ request.user.last_name|slice:":1"|upper }}{% endif %} {% else %}{{ request.user.username|slice:":2"|upper }}{% endif %} 
+                </div>
                   <img src="" id="avatarPreview" alt="Profile Picture" class="rounded-circle object-fit-cover shadow-sm d-none" style="width:110px; height:110px; border:4px solid var(--surface-2);">
-                {% endif %}
+                {% endif %} 
               </div>
 
               <div class="text-center text-sm-start">
