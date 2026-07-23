@@ -1,5 +1,4 @@
 from .models import Notification
-from django.db.utils import OperationalError, ProgrammingError
 
 def notifications_processor(request):
     if not request.user.is_authenticated:
@@ -22,9 +21,8 @@ def notifications_processor(request):
             'unread_notifications_count': unread_count,
             'latest_notifications': latest_notifications
         }
-
-    except (OperationalError, ProgrammingError, Exception):
-        # Graceful fallback
+    except Exception:
+        # Safe fallback if tables don't exist yet
         return {
             'unread_notifications_count': 0,
             'latest_notifications': []
