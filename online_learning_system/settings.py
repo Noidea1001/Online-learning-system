@@ -21,25 +21,36 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 # Security
 # ---------------------------------------------------------------------------
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY',
-    'django-insecure-lw%(&)vknz*(55+=)-nh&4rt^uymtdkovh^n!jpz)q0rd!_+70'
-)
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
-# DEBUG is True locally (default), False in production.
-# Set DEBUG=False in Vercel environment variables.
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+# Better than ['*'] for production
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.onrender.com',           # ← Important for Render
+    '.vercel.app',
+]
 
-# Allow Vercel domain + any custom domain you add
 CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',  # ← Add this
     'https://*.vercel.app',
 ]
+
+# Optional: Add your custom domain if you have one
 custom_origin = os.environ.get('CSRF_TRUSTED_ORIGIN')
 if custom_origin:
     CSRF_TRUSTED_ORIGINS.append(custom_origin)
+# ALLOWED_HOSTS = ['*']
 
+# Allow Vercel domain + any custom domain you add
+# CSRF_TRUSTED_ORIGINS = [
+#     'https://*.vercel.app',
+# ]
+custom_origin = os.environ.get('CSRF_TRUSTED_ORIGIN')
+if custom_origin:
+    CSRF_TRUSTED_ORIGINS.append(custom_origin)
 # ---------------------------------------------------------------------------
 # Application definition
 # ---------------------------------------------------------------------------
