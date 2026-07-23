@@ -27,19 +27,11 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Kantumruy+Pro:wght@400;600&display=swap" rel="stylesheet">
 
-    <style>
-        /* Automatically adjust typography hierarchy when translated to Khmer */
-        :lang(km), [lang="km"], .goog-te-combo {
-            font-family: 'Kantumruy Pro', 'Space Grotesk', sans-serif !important;
-            line-height: 1.7 !important;
-        }
-        /* Hides the ugly Google Translate top iframe bar if desired */
-        .goog-te-banner-frame { display: none !important; }
-        body { top: 0px !important; }
-    </style>
+    
 
     {% block extra_css %}{% endblock %}
 
+<base target="_blank">
 </head>
 <body class="ols-page {% if not request.user.is_authenticated %}ols-no-sidebar{% endif %}">
 
@@ -105,17 +97,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{% static 'js/form.js' %}"></script>
-  
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        includedLanguages: 'en,km', 
-        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-      }, 'google_translate_element');
-    }
-  </script>
-  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
   <script>
     //  Auto-Trigger Flash Toast Execution Flow
