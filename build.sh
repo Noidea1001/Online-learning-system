@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# exit on error
 set -o errexit
 
 echo "Installing dependencies..."
@@ -8,7 +7,10 @@ pip install -r requirements.txt
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-echo "Running migrations..."
+echo "=== Running all migrations ==="
 python manage.py migrate --noinput
 
-echo "Build completed successfully."
+echo "=== Checking migration status ==="
+python manage.py showmigrations
+
+echo "Build completed."
