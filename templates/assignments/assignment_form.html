@@ -1,0 +1,287 @@
+{# templates/assignments/assignment_form.html #}
+{% extends "base.html" %}
+{% block title %}
+  {% if form.instance.pk %}Edit{% else %}Add New{% endif %} Assignment Task
+{% endblock %}
+{% block content %}
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="toast align-items-center text-white {% if message.tags == 'success' %}bg-success{% elif message.tags == 'error' %}bg-danger{% else %}bg-primary{% endif %} border-0 shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body d-flex align-items-center gap-2 py-3 px-3">
+            {% if message.tags == 'success' %}
+              <i class="bi bi-check-circle-fill fs-5 text-white"></i>
+            {% else %}
+              <i class="bi bi-exclamation-triangle-fill fs-5 text-white"></i>
+            {% endif %}
+            <div class="fw-semibold" style="font-size: 0.875rem;">{{ message }}</div>
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2.5 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-11 col-xl-11">
+
+      <!-- Back Button -->
+      <div class="mb-4">
+        <a href="{% url 'assignment_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+          <i class="bi bi-arrow-left"></i> Back to Assignment
+        </a>
+      </div>
+
+      <!-- Form Card Component -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden premium-form-card">
+        <div class="card-body p-4 p-md-5">
+          <div class="border-bottom pb-4 mb-4">
+            <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1.5 fw-bold small mb-2 d-inline-flex align-items-center gap-1" style="background-color: rgba(255, 193, 7, 0.08) !important; color: #7c4a15 !important;">
+              <i class="bi bi-clipboard-plus"></i> Task Framework Settings
+            </span>
+            <h2 class="fw-bold text-dark mb-1 fs-3 fs-md-2" style="font-weight: 800; letter-spacing: -0.02em;">
+              {% if form.instance.pk %}Configure Assignment Task{% else %}Deploy New Assignment{% endif %}
+            </h2>
+            <p class="text-muted mb-0 small">Determine the requirements, scores, and due date for assignments for a specific course or lesson.</p>
+          </div>
+
+          <form method="post" action="" id="assignmentForm" enctype="multipart/form-data" class="needs-validation" novalidate data-lessons-url="{% url 'ajax_load_lessons' %}">
+            {% csrf_token %}
+
+            {% if form.errors %}
+              <div class="alert alert-danger rounded-3 mb-4 border-0 shadow-sm">
+                <h6 class="fw-bold small text-uppercase mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Check the form below:</h6>
+                <ul class="mb-0 small ps-3" style="font-size: 0.85rem;">
+                  {% for field, errors in form.errors.items %}
+                    <li><strong>{{ field.label }}:</strong> {{ errors|striptags }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
+            <div class="row g-3 g-md-4">
+              
+              {% for field in form %}
+                {% if field.name == 'assignment_file' %}
+                  <!-- 📂 Section: Premium Interactive File Dropzone Box Area -->
+                  <div class="col-12 mt-3">
+                    <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">
+                      {{ field.label }} {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    <div class="premium-dropzone-box text-center position-relative border border-dashed rounded-3 p-4 bg-light" id="premiumDropzoneBox">
+                      <input type="file" 
+                             name="assignment_file" 
+                             id="assignmentFileInput" 
+                             class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="z-index: 5;" />
+                      <div class="dropzone-content-matrix position-relative" style="z-index: 2;">
+                        <div class="bg-warning-subtle text-warning rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 52px; height: 52px; background-color: rgba(255, 193, 7, 0.05) !important; color: #b7791f !important;">
+                          <i class="bi bi-cloud-arrow-up-fill fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1" id="fileDropzoneTitle">Drag & drop task instruction assets here or click to browse</h6>
+                        <p class="text-muted small mb-0" id="fileDropzoneSubtitle">Accepted Formats: PDF, ZIP, DOCX, or images</p>
+                      </div>
+                    </div>
+                    <div id="fileSelectionBadge" class="d-none mt-2">
+                      <span class="badge bg-success rounded-pill px-2.5 py-1.5 small fw-bold d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-file-earmark-check-fill"></i> Resource Loaded: <span id="fileNameTarget" class="text-truncate" style="max-width: 240px;"></span>
+                      </span>
+                    </div>
+                  </div>
+                {% else %}
+                  <!-- ✍️ Section: Standard Inputs Layout Row -->
+                  <div class="col-12 {% if field.name == 'max_score' or field.name == 'due_date' %}col-md-6{% endif %}">
+                    <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">
+                      {{ field.label }} {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    <div class="premium-input-group position-relative">
+                      {{ field }}
+                    </div>
+                    
+                    {% if field.field.required %}
+                      <div class="invalid-feedback small font-monospace mt-1.5 fw-semibold text-danger" style="font-size: 0.8rem;">
+                        <i class="bi bi-exclamation-circle me-1"></i>Required: Please configure this field.
+                      </div>
+                    {% endif %}
+                    
+                    {% if field.help_text and not field.errors %}
+                      <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">{{ field.help_text|safe }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                      <div class="text-danger small mt-1 font-monospace" style="font-size: 0.8rem;">{{ field.errors|striptags }}</div>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+
+            </div>
+
+            <!-- Execution Action Control Line -->
+            <div class="d-flex flex-column-reverse flex-md-row justify-content-md-end gap-2 gap-md-3 mt-5 pt-4 border-top mobile-buttons-flex">
+              <a href="{% url 'assignment_list' %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border w-100 w-md-auto transition-smooth btn-premium-action">Cancel</a>
+              <button type="submit" class="btn btn-warning text-dark rounded-pill px-4 py-2.5 fw-bold w-100 w-md-auto transition-smooth btn-premium-action">
+                <i class="bi bi-check-circle-fill me-2"></i>Publish Task Instance
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- JavaScript Engine Section -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const courseSelect = document.querySelector("select[name='course']");
+    const lessonSelect = document.querySelector("select[name='lesson']");
+    const form = document.getElementById("assignmentForm");
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialLessonId = "{{ form.instance.lesson_id|default:'' }}" || "{{ form.initial.lesson.id|default:'' }}" || urlParams.get('lesson_id') || urlParams.get('lesson');
+
+    // Display backend toasts if loaded
+    var toastElements = [].slice.call(document.querySelectorAll('.toast'));
+    toastElements.map(function (element) {
+      var toastInstance = new bootstrap.Toast(element, { autohide: true, delay: 4000 });
+      toastInstance.show();
+    });
+
+    function updateLessons(courseId, selectedLessonId = '') {
+      const url = form.getAttribute("data-lessons-url");
+      if (!courseId) {
+        lessonSelect.innerHTML = '<option value="">No Lesson Available</option>';
+        return;
+      }
+
+      fetch(`${url}?course_id=${courseId}`)
+        .then(response => response.json())
+        .then(data => {
+          lessonSelect.innerHTML = '<option value="">No Lesson Available</option>';
+          data.forEach(lesson => {
+            const option = document.createElement("option");
+            option.value = lesson.id;
+            option.textContent = lesson.title;
+            if (selectedLessonId && lesson.id == selectedLessonId) {
+              option.selected = true;
+            }
+            lessonSelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error("Error loading lessons:", error);
+          if (window.showToast) {
+            showToast('error', 'Could not load lessons for this course.', 'Load Failed');
+          }
+        });
+    }
+
+    if (courseSelect && lessonSelect) {
+      if (courseSelect.value) {
+        updateLessons(courseSelect.value, initialLessonId);
+      }
+      courseSelect.addEventListener("change", function () {
+        updateLessons(this.value);
+      });
+    }
+
+    // Interactive File Upload Matrix Handling
+    const fileInput = document.getElementById('assignmentFileInput');
+    const dropzoneBox = document.getElementById('premiumDropzoneBox');
+    const dropzoneTitle = document.getElementById('fileDropzoneTitle');
+    const dropzoneSubtitle = document.getElementById('fileDropzoneSubtitle');
+    const previewBadge = document.getElementById('fileSelectionBadge');
+    const fileNameTarget = document.getElementById('fileNameTarget');
+
+    if (fileInput) {
+      fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const file = this.files[0];
+          const maxSize = 50 * 1024 * 1024; // 50MB
+          
+          if (file.size > maxSize) {
+            triggerLiveToast("File Too Large: The assignment resource file cannot exceed 50MB.", "danger");
+            this.value = '';
+            return;
+          }
+          
+          if (dropzoneBox) {
+            dropzoneBox.style.borderColor = '#2f855a';
+            dropzoneBox.style.backgroundColor = '#f0fff4';
+          }
+          if (dropzoneTitle) {
+            dropzoneTitle.innerHTML = `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Reference loaded successfully!</span>`;
+          }
+          if (dropzoneSubtitle) {
+            dropzoneSubtitle.textContent = "Click or drag alternative document asset to replace.";
+          }
+          if (fileNameTarget) {
+            fileNameTarget.textContent = file.name;
+          }
+          if (previewBadge) {
+            previewBadge.classList.remove('d-none');
+          }
+        }
+      });
+    }
+
+    function triggerLiveToast(message, type) {
+      const container = document.querySelector('.toast-container');
+      if (!container) return;
+      
+      const bgClass = type === 'danger' ? 'bg-danger' : 'bg-warning text-dark';
+      const iconClass = type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-exclamation-circle-fill';
+      
+      const liveToastHtml = `
+        <div class="toast align-items-center text-white ${bgClass} border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2 py-3 px-3">
+              <i class="bi ${iconClass} fs-5"></i>
+              <div class="fw-semibold" style="font-size: 0.875rem;">${message}</div>
+            </div>
+            <button type="button" class="btn-close ${type === 'danger' ? 'btn-close-white' : ''} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>`;
+        
+      container.insertAdjacentHTML('beforeend', liveToastHtml);
+      const newToast = container.lastElementChild;
+      const bsToast = new bootstrap.Toast(newToast, { autohide: true, delay: 5000 });
+      bsToast.show();
+    }
+
+    if (form) {
+      form.addEventListener("submit", function (event) {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        } else {
+          if (courseSelect) courseSelect.removeAttribute("disabled");
+          if (lessonSelect) lessonSelect.removeAttribute("disabled");
+        }
+        form.classList.add("was-validated");
+      }, false);
+    }
+  });
+</script>
+
+<style>
+  .was-validated .form-control:invalid,
+  .was-validated .form-select:invalid,
+  .was-validated .premium-input-group textarea:invalid {
+    border-color: #c53030 !important;
+    background-position: right calc(0.375em + 0.1875rem) center !important;
+  }
+  
+  .invalid-feedback {
+    display: none;
+    width: 100%;
+    color: #c53030 !important;
+    font-weight: 600;
+  }
+  
+  .was-validated :invalid ~ .invalid-feedback {
+    display: block !important;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,180 @@
+{# adminpanel/templates/adminpanel/user_list.html #}
+{% extends "base.html" %}
+
+{% block title %}Manage Users — Admin Panel{% endblock %}
+
+{% block content %}
+<style>
+  .avatar-placeholder {
+    width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;
+  }
+  @media (max-width: 767.98px) {
+    .custom-student-table thead { display: none; }
+    .custom-student-table tbody tr { display: block; margin-bottom: 1rem; border: 1px solid #dde1e8; border-radius: 0.5rem; padding: 0.5rem; background-color: #fff; }
+    .custom-student-table td { display: flex; justify-content: space-between; align-items: center; text-align: right; padding: 0.5rem 0.75rem; border: none; }
+    .custom-student-table td::before { content: attr(data-label); font-weight: 600; color: #5a6170; text-align: left; font-size: 0.85rem; text-transform: uppercase; margin-right: 0.5rem; }
+    .custom-student-table td.text-end { text-align: right !important; justify-content: flex-end; }
+    .custom-student-table td.text-end::before { display: none; }
+  }
+  /* ធ្វើឱ្យតារាងរត់ព្រិលៗបន្តិច ពេលកំពុង Loading ទាញទិន្នន័យ AJAX */
+  .fade-loading { opacity: 0.4; pointer-events: none; transition: opacity 0.15s ease; }
+</style>
+
+<div class="container py-1">
+
+  <!-- Page Header -->
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <nav class="small text-muted mb-1">
+        <a href="{% url 'adminpanel_home' %}" class="text-decoration-none">Admin Panel</a>
+        <i class="bi bi-chevron-right small mx-1"></i> Users
+      </nav>
+      <h1 class="fw-bold display-6 mb-1">All Users</h1>
+      <p class="text-muted mb-0">Search, filter, and manage account status, role, and group membership.</p>
+    </div>
+    <a href="{% url 'adminpanel_group_list' %}" class="btn btn-outline-primary rounded-pill px-4 py-2 btn-icon" title="Manage Groups"><i class="bi bi-diagram-3-fill"></i></a>
+  </div>
+
+  <!-- Search + Filters Form (មានការថែម ID និង Class សម្រាប់ JS ចាប់) -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="card-body p-4">
+      <form method="get" id="filter-form" class="row g-3 align-items-end">
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold text-secondary small text-uppercase mb-1">Search</label>
+          <div class="premium-search-field-box">
+            <input type="text" name="search" id="search-input" class="form-control rounded-pill"
+                   placeholder="Username, name or email…" value="{{ request.GET.search|default:'' }}">
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold text-secondary small text-uppercase mb-1">Role</label>
+          <select name="role" class="form-select rounded-pill filter-select">
+            <option value="">All Roles</option>
+            {% for value, label in role_choices %}
+              <option value="{{ value }}" {% if request.GET.role == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold text-secondary small text-uppercase mb-1">Status</label>
+          <select name="status" class="form-select rounded-pill filter-select">
+            <option value="">All Status</option>
+            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            <option value="staff" {% if request.GET.status == 'staff' %}selected{% endif %}>Staff</option>
+            <option value="superuser" {% if request.GET.status == 'superuser' %}selected{% endif %}>Superuser</option>
+          </select>
+        </div>
+
+        <div class="col-md-2 d-flex gap-2 align-items-end">
+          <button type="submit" class="btn btn-primary flex-grow-1 rounded-pill">
+            <i class="bi bi-funnel-fill me-1"></i> Filter
+          </button>
+          {% if request.GET.search or request.GET.role or request.GET.status %}
+            <a href="{{ request.path }}" id="clear-filters" class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center justify-content-center">
+              <i class="bi bi-x-circle"></i>
+            </a>
+          {% endif %}
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Users Table Container (កន្លែងដែល JS ត្រូវយកតារាង Partial មកប្តូរជំនួស) -->
+  <div class="w-100 overflow-hidden mb-4" id="table-container">
+    {% include "adminpanel/includes/user_table_partial.html" %}
+  </div>
+
+</div>
+<!-- ⚙️ SCRIPT ការពារ REFRESH ទំព័រ និងដោះស្រាយបញ្ហា SEARCH NOT FOUND -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const tableContainer = document.getElementById('table-container');
+    const filterForm = document.getElementById('filter-form');
+    const searchInput = document.getElementById('search-input');
+
+    // មុខងារទាញយកទិន្នន័យតាម AJAX Fetch API
+    function fetchFilteredData(url) {
+      tableContainer.classList.add('fade-loading');
+      
+      fetch(url, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest' // ប្រាប់ Django view ថាជា AJAX request
+        }
+      })
+      .then(response => response.text())
+      .then(html => {
+        tableContainer.innerHTML = html;
+        tableContainer.classList.remove('fade-loading');
+        // ដូរឈ្មោះ URL លើ Browser Bar តែមិន Refresh ទំព័រឡើយ
+        window.history.pushState({ path: url }, '', url);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        tableContainer.classList.remove('fade-loading');
+        if (window.showToast) {
+          showToast('error', 'Could not load users. Please try again.', 'Load Failed');
+        }
+      });
+    }
+
+    // 🛠️ បង្កើតមុខងាររួមមួយសម្រាប់ប្រមូលទិន្នន័យពី Form ទៅបង្កើតជា URL ឱ្យបានត្រឹមត្រូវ
+    function triggerFormSubmit() {
+      const formData = new FormData(filterForm);
+      const params = new URLSearchParams(formData).toString();
+      // ប្រើ encodeURI ដើម្បីការពារកុំឱ្យវង្វេងអក្សរខ្មែរ ឬចន្លោះដកឃ្លា (Space)
+      const url = encodeURI(`${window.location.pathname}?${params}`);
+      fetchFilteredData(url);
+    }
+
+    // ១. ស្ទាក់ចាប់ការចុចប្តូរទំព័រ (Pagination)
+    tableContainer.addEventListener('click', function(e) {
+      const pageLink = e.target.closest('.ajax-page-link');
+      if (pageLink) {
+        e.preventDefault(); // ឃាត់មិនឱ្យ Browser refresh ទំព័រ
+        const url = pageLink.getAttribute('href');
+        fetchFilteredData(url);
+      }
+    });
+
+    // ២. ស្ទាក់ចាប់ពេលអ្នកប្រើប្រាស់ចុចប៊ូតុង Filter ឬចុច Enter លើ Form
+    filterForm.addEventListener('submit', function(e) {
+      e.preventDefault(); // ឃាត់មិនឱ្យ Form refresh ទំព័រ
+      triggerFormSubmit();
+    });
+
+    // ៣. គ្រាន់តែដូរ Dropdown (Role / Status) គឺ Filter ភ្លាមៗ (Real-time ពិតប្រាកដ)
+    document.querySelectorAll('.filter-select').forEach(select => {
+      select.addEventListener('change', function() {
+        triggerFormSubmit(); // <--- កែសម្រួល៖ ហៅមុខងារទាញទិន្នន័យផ្ទាល់តែម្តង
+      });
+    });
+
+    // ៤. វាយអក្សរ Search ដើរភ្លាមៗ (Live Search) បន្ទាប់ពីឈប់វាយ ៤០០ មីលីវិនាទី
+    let typingTimer;
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+          triggerFormSubmit(); // <--- កែសម្រួល៖ ហៅមុខងារទាញទិន្នន័យផ្ទាល់តែម្តង
+        }, 400);
+      });
+    }
+
+    // ៥. ចុចប៊ូតុង Clear Filters
+    const clearBtn = document.getElementById('clear-filters');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        filterForm.reset();
+        fetchFilteredData(window.location.pathname);
+        this.remove();
+      });
+    }
+  });
+</script>
+{% endblock %}

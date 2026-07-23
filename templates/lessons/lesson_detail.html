@@ -1,0 +1,259 @@
+{# templates/lessons/lesson_detail.html #}
+{% extends "base.html" %}
+{% load static %}
+{% load lesson_tags %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+{% endblock %}
+{% block title %}
+  {{ lesson.title }} — {{ lesson.course.title }}
+{% endblock %}
+
+{% block content %}
+  <div class="container py-1">
+    <div class="ld-topbar fade-in-up">
+      <nav class="ld-breadcrumb">
+        <a href="{% url 'course_list' %}"><i class="bi bi-house-fill"></i></a>
+        <span class="ld-breadcrumb__sep"><i class="bi bi-chevron-right"></i></span>
+        <a href="{% url 'course_detail' lesson.course.id %}">{{ lesson.course.title|truncatewords:4 }}</a>
+        <span class="ld-breadcrumb__sep"><i class="bi bi-chevron-right"></i></span>
+        <span class="ld-breadcrumb__current">Lesson {{ lesson.order }}</span>
+      </nav>
+      <div class="ld-topbar__actions">
+        {% if request.user.role == 'STUDENT' and is_enrolled %}
+          <form method="post" action="{% url 'toggle_lesson_completion' lesson.id %}" class="d-inline m-0">
+            {% csrf_token %}
+            {% if is_completed %}
+              <button type="submit" class="btn btn-success rounded-pill px-3 fw-semibold shadow-sm" style="background-color: var(--success); border-color: var(--success);">
+                <i class="bi bi-check-circle-fill me-1"></i> Completed
+              </button>
+            {% else %}
+              <button type="submit" class="btn btn-outline-success rounded-pill px-3 fw-semibold shadow-sm" style="color: var(--success); border-color: var(--success);"><i class="bi bi-circle me-1"></i> Mark as Completed</button>
+            {% endif %}
+          </form>
+        {% endif %}
+
+        {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or lesson.course.instructor == request.user.instructor_profile %}
+          <a href="{% url 'lesson_update' lesson.id %}" class="btn btn-outline-primary rounded-pill px-3 fw-semibold btn-icon" title="Edit"><i class="bi bi-pencil-square"></i></a>
+          <a href="{% url 'lesson_delete' lesson.id %}" class="btn btn-outline-danger rounded-pill px-3 fw-semibold btn-icon" title="Delete"><i class="bi bi-trash3-fill"></i></a>
+        {% endif %}
+        <a href="{% url 'course_detail' lesson.course.id %}" class="btn btn-style-secondary rounded-pill px-3 fw-semibold btn-icon" title="Back"><i class="bi bi-arrow-left"></i></a>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ LESSON HEADER — Title + Meta ═══════════════════════════════════════════════ -->
+    <div class="ld-header fade-in-up" style="animation-delay: 0.05s;">
+      <div class="ld-header__left">
+        <div class="ld-header__badge-group">
+          <span class="ld-header__badge"><i class="bi bi-bookmark-fill me-1"></i> Unit #{{ lesson.order }}</span>
+          {% if lesson.has_video %}
+            <span class="ld-header__badge ld-header__badge--green"><i class="bi bi-play-circle-fill me-1"></i> Has Video</span>
+          {% endif %}
+        </div>
+        <h1 class="ld-header__title">{{ lesson.title }}</h1>
+        <p class="ld-header__course">
+          <i class="bi bi-folder2-open me-1"></i>
+          <a href="{% url 'course_detail' lesson.course.id %}">{{ lesson.course.title }}</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="ld-layout">
+      <!-- LEFT COLUMN — Video + Notes -->
+      <div class="ld-main">
+        <!-- Video Player Container -->
+        <div class="ld-player fade-in-up" style="animation-delay: 0.1s;">
+          <div class="ld-player__accent"></div>
+          {% if lesson.youtube_embed_url %}
+            <div class="ld-player__frame">
+              <div class="ratio ratio-16x9">
+                <iframe id="youtubePlayer" 
+                        src="{{ lesson.youtube_embed_url }}" 
+                        title="{{ lesson.title }}" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        referrerpolicy="strict-origin-when-cross-origin" 
+                        allowfullscreen>
+                </iframe>
+
+              </div>
+            </div>
+          {% elif lesson.video_file %}
+            <div class="ld-player__frame">
+              <div class="ratio ratio-16x9">
+                <video id="nativeVideo" controls controlslist="nodownload" class="w-100 h-100" style="background: #0b1e33;">
+                  <source src="{{ lesson.video_file.url }}" type="video/mp4" />Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          {% else %}
+            <div class="ld-player__empty">
+              <div class="ld-player__empty-content">
+                <div class="ld-player__empty-orb"></div>
+                <i class="bi bi-play-circle ld-player__empty-icon"></i>
+                <h5>No Video Available</h5>
+                <p>The instructor hasn't uploaded a video lecture for this lesson yet.</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="ld-notes fade-in-up" style="animation-delay: 0.15s;">
+          <div class="ld-notes__header">
+            <div class="ld-notes__icon">
+              <i class="bi bi-journal-text"></i>
+            </div>
+            <h3 class="ld-notes__title">Lesson Notes &amp; Guidelines</h3>
+          </div>
+          <div class="ld-notes__body">
+            <div class="ld-notes__text lesson-desc-box" style="white-space: pre-line;">
+              {{ lesson.description|default:'No additional study notes have been provided for this lesson.'|youtube_timestamps }}
+            </div>
+          </div>
+        </div>
+       <!-- PDF Resource Card -->
+        {% if lesson.pdf_resource %}
+          <div class="ld-pdf fade-in-up" style="animation-delay: 0.2s;">
+            <div class="ld-pdf__content">
+              <div class="ld-pdf__icon-wrap">
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+              </div>
+              <div class="ld-pdf__info">
+                <h5 class="ld-pdf__title">Reference Materials</h5>
+                <p class="ld-pdf__desc">Download the attached PDF resource for this lesson.</p>
+              </div>
+            </div>
+            <a href="{{ lesson.pdf_resource.url }}" class="ld-pdf__download" download><i class="bi bi-download me-2"></i> Download PDF</a>
+          </div>
+        {% endif %}
+</div>
+
+
+<div class="ld-sidebar">
+  <div class="ld-sidebar__sticky">
+    
+    <div class="ld-assignments fade-in-up" style="animation-delay: 0.25s;">
+      <div class="ld-assignments__header">
+        <div class="ld-assignments__header-left">
+          <div class="ld-assignments__header-icon">
+            <i class="bi bi-clipboard-check-fill"></i>
+          </div>
+          <h5 class="ld-assignments__title">Assignments</h5>
+        </div>
+        {% if request.user.is_superuser or request.user.role == 'INSTRUCTOR' or request.user.role == 'EMPLOYEE' %}
+            <a href="{% url 'assignment_create' %}?lesson_id={{ lesson.id }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold btn-icon" title="Add New Task"><i class="bi bi-plus-lg"></i></a>
+          {% endif %}
+      </div>
+
+      <div class="ld-assignments__list w-100">
+        {% for assignment in lesson.assignments.all %}
+          <div class="ld-assignment-card p-3 mb-2">
+            
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+              <h6 class="ld-assignment-card__title fw-bold m-0" style="font-size: 0.95rem;">
+                {% if request.user.role == 'STUDENT' %}
+                  {% if assignment.user_has_submitted %}
+                    <a href="{% url 'student_submissions_dashboard' %}" class="text-decoration-none text-dark transition-smooth hover-link-primary">
+                      {{ assignment.title }} <i class="bi bi-box-arrow-up-right small text-muted ms-1" style="font-size: 0.75rem;"></i>
+                    </a>
+                  {% else %}
+                    <a href="{% url 'submission_create' assignment.id %}" class="text-decoration-none text-primary transition-smooth">
+                      {{ assignment.title }} <i class="bi bi-arrow-right-circle-fill ms-1"></i>
+                    </a>
+                  {% endif %}
+                {% else %}
+                  <a href="{% url 'assignment_detail' assignment.id %}" class="text-decoration-none text-dark">
+                    {{ assignment.title }}
+                  </a>
+                {% endif %}
+              </h6>
+
+              {% if request.user.role == 'STUDENT' %}
+                {% if assignment.user_has_submitted %}
+                  <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.75rem;">
+                    <i class="bi bi-check-circle-fill me-1"></i> Submitted
+                  </span>
+                {% else %}
+                  <a href="{% url 'submission_create' assignment.id %}" class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-bold text-white shadow-sm" style="font-size: 0.75rem;">
+                    Submit
+                  </a>
+                {% endif %}
+              {% endif %}
+            </div>
+            
+            {% if assignment.assignment_file %}
+              <div class="mt-2 mb-2">
+                <a href="{{ assignment.assignment_file.url }}" class="btn btn-sm btn-light border text-secondary rounded-pill px-3 py-1" style="font-size: 0.75rem; background-color: #f8f9fb;" download>
+                  <i class="bi bi-download me-1 text-primary"></i> Download Task Resource
+                </a>
+              </div>
+            {% endif %}
+
+            <div class="ld-assignment-card__meta d-flex flex-column gap-2 mt-2 pt-2 border-top border-light" style="font-size: 0.8rem;">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted"><i class="bi bi-award me-1"></i> Max Score:</span>
+                <span class="fw-bold text-dark">{{ assignment.max_score|floatformat:0 }} pts</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted"><i class="bi bi-calendar-x me-1"></i> Due Date:</span>
+                <span class="fw-semibold text-secondary small">{{ assignment.due_date|date:"d M Y" }}</span>
+              </div>
+            </div>
+
+          </div> 
+          
+          {% if not forloop.last %}<hr class="mx-3 my-0 opacity-10">{% endif %}
+          
+        {% empty %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-clipboard-x display-6 opacity-30 d-block mb-2"></i>
+            <p class="small mb-0">No assignments published for this lesson module.</p>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div> 
+  </div> 
+</div> 
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const nativeVideo = document.getElementById('nativeVideo');
+    const ytIframe = document.getElementById('youtubePlayer');
+
+    document.addEventListener('click', function(e) {
+      const timestampLink = e.target.closest('.yt-timestamp') || e.target.closest('a[data-seconds]');
+      
+      if (timestampLink) {
+        e.preventDefault();
+        const seconds = parseInt(timestampLink.getAttribute('data-seconds'), 10);
+        
+        if (!isNaN(seconds)) {
+          console.log("Forcing YouTube timeline relocation to:", seconds, "seconds");
+          if (ytIframe && ytIframe.contentWindow) {
+            ytIframe.contentWindow.postMessage(JSON.stringify({
+              'event': 'command',
+              'func': 'seekTo',
+              'args': [seconds, true]
+            }), '*');
+            
+            ytIframe.contentWindow.postMessage(JSON.stringify({
+              'event': 'command',
+              'func': 'playVideo',
+              'args': []
+            }), '*');
+          } 
+          else if (nativeVideo) {
+            nativeVideo.currentTime = seconds;
+            nativeVideo.play();
+          }
+          const playerContainer = document.querySelector('.ld-player');
+          if (playerContainer) {
+            playerContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

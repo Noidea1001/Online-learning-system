@@ -1,0 +1,501 @@
+{# templates/quizzes/student_quiz_list.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Test History & Activity{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/quizzes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container sqz-page">
+
+  {% if view_mode == 'available' %}
+  <!-- ══════════════════════════════════════════
+       AVAILABLE TESTS VIEW
+       ══════════════════════════════════════════ -->
+
+  <!-- Header -->
+  <div class="sqz-header">
+    <div>
+      <h1 class="sqz-header__title">My Available Tests</h1>
+      <p class="sqz-header__sub">Tests from your enrolled courses ready for you to take.</p>
+    </div>
+    <div class="sqz-header__action">
+      <a href="?view=history" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold btn-sm">
+        <i class="bi bi-clock-history me-1"></i><span class="d-none d-sm-inline">View </span>History
+      </a>
+    </div>
+  </div>
+
+  <!-- Tab view switch -->
+  <div class="sqz-tabs">
+    <a href="?view=available" class="sqz-tab active">
+      <i class="bi bi-ui-checks"></i><span>Available</span>
+    </a>
+    <a href="?view=history" class="sqz-tab">
+      <i class="bi bi-clock-history"></i><span>History</span>
+    </a>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="sqz-filter-bar">
+    <div class="sqz-filter-row">
+      <!-- Search -->
+      <div class="sqz-filter-search">
+        <div class="input-group input-group-sm">
+          <input type="text" id="testSearchInput" class="form-control"
+                 placeholder="Search by test title…" autocomplete="off">
+        </div>
+      </div>
+      <!-- Course filter -->
+      <div class="sqz-filter-select">
+        <select id="courseSelectFilter" class="form-select form-select-sm">
+          <option value="all">All Courses</option>
+          {% for course in courses %}
+            <option value="{{ course.id }}">{{ course.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Status pills -->
+      <div class="sqz-pills" id="statusPills" role="group" aria-label="Filter by status">
+        <button type="button" class="sqz-pill active" data-status="all">All</button>
+        <button type="button" class="sqz-pill" data-status="todo">To Do</button>
+        <button type="button" class="sqz-pill" data-status="in_progress">In Progress</button>
+        <button type="button" class="sqz-pill" data-status="completed">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results count area -->
+  <div class="sqz-results-header" id="sqzResultsMeta">
+    <span class="sqz-results-count" id="sqzResultsCount"></span>
+  </div>
+
+  <!-- Quiz grid -->
+  <div class="sqz-grid">
+    {% for quiz in quizzes %}
+      <div class="qcard {% if quiz.attempts_exhausted %}qcard--exhausted{% endif %}"
+           data-title="{{ quiz.title|lower }}"
+           data-course="{{ quiz.course.id }}"
+           data-status="{% if quiz.in_progress_attempt %}in_progress{% elif quiz.attempts_exhausted %}completed{% else %}todo{% endif %}">
+
+        <!-- Top accent bar -->
+        {% if quiz.in_progress_attempt %}
+          <div class="qcard__bar qcard__bar--warning"></div>
+        {% elif quiz.attempts_exhausted %}
+          <div class="qcard__bar qcard__bar--success"></div>
+        {% else %}
+          <div class="qcard__bar qcard__bar--primary"></div>
+        {% endif %}
+
+        <div class="qcard__body">
+          <!-- Course badge + status -->
+          <div class="qcard__head-row">
+            <span class="qcard__course" title="{{ quiz.course.title }}">{{ quiz.course.title }}</span>
+            {% if quiz.in_progress_attempt %}
+              <span class="sqz-inprogress-badge"><i class="bi bi-hourglass-split"></i> In Progress</span>
+            {% elif quiz.attempts_exhausted %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle qcard__status-badge">Done</span>
+            {% endif %}
+          </div>
+
+          <!-- Title -->
+          <h2 class="qcard__title" title="{{ quiz.title }}">{{ quiz.title }}</h2>
+
+          <!-- Description -->
+          <p class="qcard__desc">
+            {% if quiz.description %}{{ quiz.description }}{% else %}<em class="opacity-50">No description provided.</em>{% endif %}
+          </p>
+
+          <!-- Meta info -->
+          <div class="qcard__meta">
+            {% if quiz.time_limit_minutes %}
+              <div class="qcard__meta-item">
+                <i class="bi bi-stopwatch text-primary"></i>
+                <span>{{ quiz.time_limit_minutes }} min</span>
+              </div>
+            {% else %}
+              <div class="qcard__meta-item">
+                <i class="bi bi-infinity text-muted"></i>
+                <span>No limit</span>
+              </div>
+            {% endif %}
+
+            <div class="qcard__meta-item">
+              <i class="bi bi-question-circle text-primary"></i>
+              <span>{{ quiz.question_count }} Q{{ quiz.question_count|pluralize }}</span>
+            </div>
+
+            <div class="qcard__meta-item">
+              <i class="bi bi-star text-primary"></i>
+              <span>{{ quiz.total_points }} pt{{ quiz.total_points|pluralize }}</span>
+            </div>
+
+            {% if quiz.due_date %}
+              <div class="qcard__meta-item">
+                <i class="bi bi-calendar-x text-danger"></i>
+                <span>Due {{ quiz.due_date|date:"M d" }}</span>
+              </div>
+            {% elif quiz.max_attempts > 1 %}
+              <div class="qcard__meta-item">
+                <i class="bi bi-arrow-repeat text-muted"></i>
+                <span>{{ quiz.max_attempts }} max att.</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Attempt history section (only if meaningful data) -->
+          {% if quiz.max_attempts > 1 or quiz.attempts_count > 0 %}
+          <div class="qcard__history">
+            <div class="qcard__history-header">
+              <span class="qcard__history-label">
+                {{ quiz.attempts_count }}&thinsp;/&thinsp;{{ quiz.max_attempts }} attempts used
+              </span>
+              {% if quiz.best_score is not None %}
+                <span class="qcard__best-badge">
+                  <i class="bi bi-trophy-fill"></i> Best: {{ quiz.best_score|floatformat:"0" }}%
+                </span>
+              {% endif %}
+            </div>
+
+            <!-- Attempts progress bar -->
+            <div class="qcard__progress-bar">
+              {% if quiz.attempts_exhausted %}
+                <div class="qcard__progress-fill qcard__progress-fill--muted" style="width:100%;"></div>
+              {% else %}
+                <div class="qcard__progress-fill qcard__progress-fill--primary js-progress-fill"
+                     data-width="{% widthratio quiz.attempts_count quiz.max_attempts 100 %}"></div>
+              {% endif %}
+            </div>
+
+            <!-- Past attempt result pills -->
+            {% if quiz.completed_attempts %}
+            <div class="qcard__pills">
+              <span class="qcard__pill-label"><i class="bi bi-clock-history"></i></span>
+              {% for attempt in quiz.completed_attempts %}
+                <a href="{% url 'quiz_result' attempt.id %}"
+                   class="qcard__pill {% if attempt.passed %}qcard__pill--pass{% elif attempt.passed == False %}qcard__pill--fail{% else %}qcard__pill--pending{% endif %}"
+                   title="Attempt {{ forloop.counter }}: {{ attempt.score|floatformat:0 }}% — click to view">
+                  #{{ forloop.counter }}: {{ attempt.score|floatformat:"0" }}%
+                </a>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <!-- CTA action button -->
+          <div class="qcard__action">
+            {% if quiz.attempts_exhausted %}
+              <span class="qcard__btn qcard__btn--disabled">
+                <i class="bi bi-lock-fill"></i> No Attempts Left
+              </span>
+            {% elif quiz.in_progress_attempt %}
+              <a href="{% url 'quiz_take' quiz.id %}" class="qcard__btn qcard__btn--warning">
+                <i class="bi bi-play-fill"></i> Continue Test
+              </a>
+            {% else %}
+              <a href="{% url 'quiz_take' quiz.id %}" class="qcard__btn qcard__btn--primary">
+                <i class="bi bi-pencil-square"></i>
+                {% if quiz.attempts_count > 0 %}Retake Test{% else %}Start Test{% endif %}
+              </a>
+            {% endif %}
+          </div>
+
+        </div><!-- /.qcard__body -->
+      </div><!-- /.qcard -->
+    {% empty %}
+      <div class="sqz-empty" style="grid-column: 1 / -1;">
+        <div class="sqz-empty__icon"><i class="bi bi-emoji-smile"></i></div>
+        <div class="sqz-empty__title">All caught up!</div>
+        <p class="sqz-empty__sub">No tests available right now. Check your completed history.</p>
+        <a href="?view=history" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+          <i class="bi bi-clock-history me-1"></i> View My History
+        </a>
+      </div>
+    {% endfor %}
+  </div><!-- /.sqz-grid -->
+
+  <!-- No results message (shown by JS when all items filtered) -->
+  <div class="sqz-empty" id="sqzNoMatch" style="display:none;">
+    <div class="sqz-empty__icon"><i class="bi bi-search"></i></div>
+    <div class="sqz-empty__title">No matches</div>
+    <p class="sqz-empty__sub">Try adjusting your search or filter.</p>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-4" aria-label="Page navigation">
+      <ul class="pagination justify-content-center gap-1">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link rounded-pill">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link rounded-pill" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+
+  {% else %}
+  <!-- ══════════════════════════════════════════
+       TEST HISTORY & ACTIVITY VIEW
+       ══════════════════════════════════════════ -->
+
+  <!-- Header -->
+  <div class="sqz-header">
+    <div>
+      <h1 class="sqz-header__title">Test History &amp; Activity</h1>
+      <p class="sqz-header__sub">Review all past scores and continue any incomplete tests.</p>
+    </div>
+    <div class="sqz-header__action">
+      <a href="?view=available" class="btn btn-outline-primary rounded-pill px-3 fw-semibold btn-sm">
+        <i class="bi bi-pencil-square me-1"></i><span class="d-none d-sm-inline">Available </span>Tests
+      </a>
+    </div>
+  </div>
+
+  <!-- Tab view switch -->
+  <div class="sqz-tabs">
+    <a href="?view=available" class="sqz-tab">
+      <i class="bi bi-ui-checks"></i><span>Available</span>
+    </a>
+    <a href="?view=history" class="sqz-tab active">
+      <i class="bi bi-clock-history"></i><span>History</span>
+    </a>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="sqz-filter-bar">
+    <div class="sqz-filter-row">
+      <!-- Search -->
+      <div class="sqz-filter-search">
+        <div class="input-group input-group-sm">
+          <input type="text" id="testSearchInput" class="form-control"
+                 placeholder="Search by test title…" autocomplete="off">
+        </div>
+      </div>
+      <!-- Course filter -->
+      <div class="sqz-filter-select">
+        <select id="courseSelectFilter" class="form-select form-select-sm">
+          <option value="all">All Courses</option>
+          {% for course in courses %}
+            <option value="{{ course.id }}">{{ course.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Status pills -->
+      <div class="sqz-pills" id="statusPills" role="group" aria-label="Filter by status">
+        <button type="button" class="sqz-pill active" data-status="all">All</button>
+        <button type="button" class="sqz-pill" data-status="in_progress">In Progress</button>
+        <button type="button" class="sqz-pill" data-status="completed">Completed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results count area -->
+  <div class="sqz-results-header" id="sqzResultsMeta">
+    <span class="sqz-results-count" id="sqzResultsCount"></span>
+  </div>
+
+  <!-- Attempts List -->
+  <div class="sqz-list" id="sqzAttemptList">
+    {% for attempt in attempts %}
+      <div class="sqz-item"
+           data-title="{{ attempt.quiz.title|lower }}"
+           data-course="{{ attempt.quiz.course.id }}"
+           data-status="{% if attempt.is_completed %}completed{% else %}in_progress{% endif %}">
+
+        <!-- Accent bar -->
+        <div class="sqz-item__bar
+          {% if attempt.is_completed %}
+            {% if attempt.passed %}sqz-item__bar--pass{% elif attempt.passed == False %}sqz-item__bar--fail{% else %}sqz-item__bar--neutral{% endif %}
+          {% else %}sqz-item__bar--progress{% endif %}">
+        </div>
+
+        <!-- Info -->
+        <div class="sqz-item__info">
+          <span class="sqz-item__course-tag" title="{{ attempt.quiz.course.title }}">{{ attempt.quiz.course.title }}</span>
+          <h3 class="sqz-item__title" title="{{ attempt.quiz.title }}">{{ attempt.quiz.title }}</h3>
+          <div class="sqz-item__date">
+            <i class="bi bi-calendar-event"></i>
+            {{ attempt.started_at|date:"M j, Y" }} &middot; {{ attempt.started_at|date:"H:i" }}
+          </div>
+        </div>
+
+        <!-- Score -->
+        <div class="sqz-item__score">
+          {% if attempt.is_completed %}
+            {% if attempt.needs_grading %}
+              <span class="sqz-item__score-val sqz-item__score-val--warning">{{ attempt.score|floatformat:"0" }}%</span>
+              <span class="sqz-item__score-lbl sqz-item__score-lbl--pending">Pending</span>
+            {% else %}
+              <span class="sqz-item__score-val {% if attempt.passed %}sqz-item__score-val--pass{% else %}sqz-item__score-val--fail{% endif %}">
+                {{ attempt.score|floatformat:"0" }}%
+              </span>
+              <span class="sqz-item__score-lbl {% if attempt.passed %}sqz-item__score-lbl--pass{% else %}sqz-item__score-lbl--fail{% endif %}">
+                {% if attempt.passed %}Passed ✓{% else %}Failed ✗{% endif %}
+              </span>
+            {% endif %}
+          {% else %}
+            <span class="sqz-item__score-val sqz-item__score-val--warning">—</span>
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:0.58rem;font-weight:800;padding:2px 6px;border-radius:5px;margin-top:2px;white-space:nowrap;">In Progress</span>
+          {% endif %}
+        </div>
+
+        <!-- Action -->
+        <div class="sqz-item__action">
+          {% if attempt.is_completed %}
+            <a href="{% url 'quiz_result' attempt.id %}" class="sqz-item__btn sqz-item__btn--results">
+              <i class="bi bi-bar-chart-fill"></i>
+              <span class="d-none d-sm-inline">Results</span>
+            </a>
+          {% else %}
+            <a href="{% url 'quiz_take' attempt.quiz.id %}" class="sqz-item__btn sqz-item__btn--continue">
+              <i class="bi bi-play-fill"></i>
+              <span class="d-none d-sm-inline">Continue</span>
+            </a>
+          {% endif %}
+        </div>
+
+      </div><!-- /.sqz-item -->
+    {% empty %}
+      <div class="sqz-empty">
+        <div class="sqz-empty__icon"><i class="bi bi-clipboard2-data"></i></div>
+        <div class="sqz-empty__title">No attempts found</div>
+        <p class="sqz-empty__sub">
+          {% if status_filter == 'in_progress' %}You have no in-progress tests right now.
+          {% elif status_filter == 'completed' %}You haven't completed any tests yet.
+          {% else %}You haven't started or taken any tests yet.{% endif %}
+        </p>
+        <a href="?view=available" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+          <i class="bi bi-ui-checks me-1"></i> Browse Available Tests
+        </a>
+      </div>
+    {% endfor %}
+  </div><!-- /.sqz-list -->
+
+  <!-- No results message (shown by JS when all items filtered) -->
+  <div class="sqz-empty" id="sqzNoMatch" style="display:none;">
+    <div class="sqz-empty__icon"><i class="bi bi-search"></i></div>
+    <div class="sqz-empty__title">No matches</div>
+    <p class="sqz-empty__sub">Try adjusting your search or filter.</p>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-4" aria-label="Page navigation">
+      <ul class="pagination justify-content-center gap-1">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link rounded-pill">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link rounded-pill" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+  {% endif %}
+</div><!-- /.container.sqz-page -->
+
+<!-- ════════════════════════════════
+     Client-side filtering JS
+     ════════════════════════════════ -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const searchInput   = document.getElementById('testSearchInput');
+  const courseFilter  = document.getElementById('courseSelectFilter');
+  const pills         = document.querySelectorAll('#statusPills .sqz-pill');
+  const items         = document.querySelectorAll('.sqz-item, .qcard');
+  const noMatch       = document.getElementById('sqzNoMatch');
+  const countEl       = document.getElementById('sqzResultsCount');
+
+  let activeStatus = 'all';
+
+  function updateCount(visible) {
+    if (!countEl) return;
+    if (items.length === 0) { countEl.textContent = ''; return; }
+    countEl.textContent = visible + ' result' + (visible !== 1 ? 's' : '');
+  }
+
+  function filter() {
+    const q  = searchInput  ? searchInput.value.toLowerCase().trim() : '';
+    const cId = courseFilter ? courseFilter.value : 'all';
+    let visible = 0;
+
+    items.forEach(el => {
+      const title  = (el.dataset.title  || '');
+      const course = (el.dataset.course || '');
+      const status = (el.dataset.status || '');
+
+      const ok =
+        title.includes(q) &&
+        (cId === 'all' || course === cId) &&
+        (activeStatus === 'all' || status === activeStatus);
+
+      el.style.display = ok ? '' : 'none';
+      if (ok) visible++;
+    });
+
+    if (noMatch) noMatch.style.display = (visible === 0 && items.length > 0) ? '' : 'none';
+    updateCount(visible);
+  }
+
+  pills.forEach(p => {
+    p.addEventListener('click', function () {
+      pills.forEach(x => x.classList.remove('active'));
+      this.classList.add('active');
+      activeStatus = this.dataset.status;
+      filter();
+    });
+  });
+
+  if (searchInput)  searchInput.addEventListener('input', filter);
+  if (courseFilter) courseFilter.addEventListener('change', filter);
+
+  // Init count
+  if (items.length > 0) updateCount(items.length);
+});
+
+/* Apply progress bar widths from data-width attributes (avoids Django tags in inline CSS) */
+document.querySelectorAll('.js-progress-fill[data-width]').forEach(function (el) {
+  var pct = parseFloat(el.dataset.width) || 0;
+  el.style.width = Math.min(Math.max(pct, 0), 100) + '%';
+});
+</script>
+{% endblock %}

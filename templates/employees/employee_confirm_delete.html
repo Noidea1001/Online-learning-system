@@ -1,0 +1,109 @@
+{# templates/employees/employee_confirm_delete.html #}
+{% extends "base.html" %}
+{% block title %}Delete Employee — {{ employee.user.get_full_name|default:employee.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+
+      <!-- Back Navigation -->
+      <div class="mb-4">
+        <a href="{% url 'employee_list' %}"
+           class="text-decoration-none text-secondary d-inline-flex align-items-center gap-1 small transition-smooth">
+          <i class="bi bi-arrow-left"></i> Back to Employees Directory
+        </a>
+      </div>
+
+      <!-- Delete Confirmation Card -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+
+        <!-- Danger accent bar -->
+        <div class="form-header-accent-danger"></div>
+
+        <div class="card-body p-4 p-md-5 text-center">
+
+          <!-- Warning Icon -->
+          <div class="mx-auto mb-4 text-danger warning-icon-glow" style="font-size:3.5rem;width:fit-content;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+
+          <h2 class="fw-bold text-dark mb-2" style="font-weight:800;letter-spacing:-0.02em;">
+            Delete Employee Account?
+          </h2>
+
+          <p class="text-muted mb-4 small px-lg-4" style="line-height:1.6;">
+            This action <strong class="text-danger">cannot be undone</strong>.
+            The employee account and all associated data will be permanently removed from the system.
+          </p>
+
+          <!-- Employee Summary Box -->
+          <div class="bg-light rounded-4 p-4 mb-4 text-start border border-light-subtle">
+            <h6 class="fw-bold text-secondary mb-3 small text-uppercase" style="letter-spacing:.05em;">
+              Employee to be deleted:
+            </h6>
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="avatar-placeholder bg-danger-subtle text-danger border border-white">
+                {{ employee.user.username|slice:":2"|upper }}
+              </div>
+              <div>
+                <span class="fw-bold text-dark d-block" style="font-size:1.05rem;">
+                  {{ employee.user.get_full_name|default:employee.user.username }}
+                </span>
+                <small class="text-muted">@{{ employee.user.username }}</small>
+              </div>
+            </div>
+
+            <div class="row g-3 small border-top pt-3 mt-1">
+              <div class="col-sm-6">
+                <strong class="text-muted d-block mb-1 text-uppercase font-monospace"
+                        style="font-size:.7rem;letter-spacing:.05em;">Department</strong>
+                <span class="text-dark fw-medium">{{ employee.department|default:"—" }}</span>
+              </div>
+              <div class="col-sm-6">
+                <strong class="text-muted d-block mb-1 text-uppercase font-monospace"
+                        style="font-size:.7rem;letter-spacing:.05em;">Job Title</strong>
+                <span class="text-dark fw-medium">{{ employee.job_title|default:"—" }}</span>
+              </div>
+              <div class="col-sm-6 text-truncate">
+                <strong class="text-muted d-block mb-1 text-uppercase font-monospace"
+                        style="font-size:.7rem;letter-spacing:.05em;">Email Address</strong>
+                <span class="text-dark fw-medium">{{ employee.user.email|default:"—" }}</span>
+              </div>
+              <div class="col-sm-6">
+                <strong class="text-muted d-block mb-1 text-uppercase font-monospace"
+                        style="font-size:.7rem;letter-spacing:.05em;">Hire Date</strong>
+                <span class="text-dark fw-medium">{{ employee.hire_date|date:"d M Y"|default:"—" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <form method="post" class="m-0">
+            {% csrf_token %}
+            <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-4">
+              <a href="{% url 'employee_list' %}"
+                 class="btn btn-light rounded-pill px-4 py-2 fw-semibold transition-smooth text-secondary border order-2 order-sm-1">
+                Cancel
+              </a>
+              <button type="submit"
+                      class="btn btn-danger rounded-pill px-4 py-2 fw-semibold shadow-danger-btn transition-smooth order-1 order-sm-2">
+                <i class="bi bi-trash-fill me-2"></i>Yes, Delete Employee
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+      <!-- Security footer note -->
+      <p class="text-center text-muted small mt-4 opacity-75">
+        <i class="bi bi-shield-lock-fill me-1 text-secondary"></i>
+        Security Guardrails Active &bull; Permanent Deletion Action
+      </p>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

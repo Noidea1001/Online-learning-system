@@ -1,0 +1,165 @@
+{# templates/category/category_detail.html #}
+{% extends "base.html" %}
+{% block title %}Category Details - {{ category.name }}{% endblock %}
+{% block content %}
+<div class="container py-1">
+
+  <div class="mb-4">
+    <a href="{% url 'category_list' %}" 
+       class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold transition-smooth custom-back-link">
+      <i class="bi bi-arrow-left"></i> Back to Course Categories
+    </a>
+  </div>
+
+  <div class="row g-4">
+    
+    <div class="col-lg-5 col-md-12">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white border border-light-subtle">
+        
+        <div class="form-header-accent-instructor" style="height: 5px; background: linear-gradient(90deg, #1e5aa8 0%, #1e5aa8 100%);"></div>
+
+        <!-- Dynamic Dark Gradient Profile Top Banner Component -->
+        <div class="pt-5 pb-4 px-3 text-center text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #0b1e33 0%, #123256 100%);">
+          <div class="position-absolute rounded-circle bg-primary opacity-10" style="width: 150px; height: 150px; top: -50px; right: -20px; filter: blur(40px);"></div>
+          
+          <div class="avatar-large mx-auto mb-3 shadow-lg position-relative d-flex align-items-center justify-content-center" 
+               style="z-index: 2; width: 84px; height: 84px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); font-size: 2rem; color: #fff;">
+            <i class="bi bi-tags-fill"></i>
+          </div>
+          
+          <h4 class="fw-bold mb-2 text-white position-relative text-truncate px-2" style="z-index: 2; font-weight: 800; letter-spacing: -0.02em;">
+            {{ category.name }}
+          </h4>
+          
+          <span class="badge bg-white text-primary rounded-pill px-3 py-1.5 small fw-bold position-relative shadow-sm d-inline-flex align-items-center gap-1" style="z-index: 2; font-size: 0.725rem; color: #1e5aa8 !important;">
+            <i class="bi bi-bookmark-fill"></i> Subject Category
+          </span>
+        </div>
+
+        <!-- Information Fields Container Area -->
+        <div class="card-body p-4 p-md-5">
+          <div class="profile-info d-flex flex-column gap-4">
+            
+            <div class="profile-field">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider">Category ID</small>
+              <p class="mb-0 fw-bold text-dark font-monospace" style="font-size: 0.95rem;">#{{ category.id }}</p>
+            </div>
+
+            <div class="profile-field">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider">Category Name</small>
+              <p class="mb-0 fw-bold text-dark fs-5 tracking-tight">{{ category.name }}</p>
+            </div>
+
+            <div class="profile-field">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider">Associated Course Records</small>
+              <p class="mb-0 fw-semibold text-secondary d-flex align-items-center gap-2" style="font-size: 0.95rem;">
+                <i class="bi bi-journal-code text-muted fs-5"></i> 
+                <span>
+                  {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+                    {{ category.courses.count }} Platform Course{{ category.courses.count|pluralize }} registered
+                  {% else %}
+                    Syllabus matrix tracking context active
+                  {% endif %}
+                </span>
+              </p>
+            </div>
+
+            <div class="profile-field border-top pt-3.5 border-light-subtle">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider">Access Control Status</small>
+              <p class="mb-0 text-success small d-inline-flex align-items-center fw-bold gap-2" style="font-size: 0.85rem;">
+                  <span class="pulse-indicator bg-success shadow-sm" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block;"></span> Active Subject Classification
+              </p>
+            </div>
+          </div>
+
+          {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+            <div class="d-flex flex-row gap-2.5 mt-5 pt-4 border-top border-light-subtle align-items-center mobile-buttons-flex">
+              <a href="{% url 'category_update' category.id %}" 
+                 class="btn btn-primary flex-grow-1 rounded-pill py-2.5 fw-bold transition-smooth d-inline-flex align-items-center justify-content-center gap-2 shadow-sm text-nowrap btn-icon"
+                 style="background: linear-gradient(135deg, #1e5aa8 0%, #1e5aa8 100%); border: none; font-size: 0.9rem;" title="Edit Category"><i class="bi bi-pencil-square"></i></a>
+
+              <a href="{% url 'category_delete' category.id %}" 
+                 class="btn btn-outline-danger rounded-pill d-flex align-items-center justify-content-center transition-smooth"
+                 style="width: 44px; height: 44px; flex-shrink: 0;"
+                 title="Delete Category">
+                <i class="bi bi-trash-fill"></i>
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7 col-md-12">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white border border-light-subtle d-flex flex-column h-100">
+        
+        <!-- Premium Header Accent Bar -->
+        <div class="form-header-accent-instructor" style="height: 5px; background: linear-gradient(90deg, #1e5aa8 0%, #1e5aa8 100%);"></div>
+
+        <div class="card-body p-4 p-md-5 d-flex flex-column h-100">
+          <h5 class="fw-bold mb-4 d-flex align-items-center text-dark tracking-tight" style="font-weight: 700;">
+            <i class="bi bi-journal-code text-primary me-2" style="color: #1e5aa8 !important; font-size: 1.2rem;"></i> 
+            {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+              Courses in this Category
+            {% else %}
+              Your Assigned Courses
+            {% endif %}
+          </h5>
+
+                 <!-- Courses Iteration Group List Matrix -->
+          <div class="d-flex flex-column gap-3 flex-grow-1">
+            
+            {% with has_visible_courses=False %}
+              
+              {% for course in category.courses.all %}
+                {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or course.instructor.user == request.user %}
+                  
+                  <div class="course-card d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center p-3 border rounded-3 gap-3 bg-white transition-smooth" style="border-color: #dde1e8 !important;">
+                    <div class="d-flex align-items-center gap-3 overflow-hidden">
+                      <div class="course-icon bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; flex-shrink: 0; background-color: rgba(30, 90, 168, 0.08) !important; color: #1e5aa8; font-size: 1.2rem;">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                      </div>
+                      <div class="overflow-hidden flex-grow-1">
+                        <h6 class="fw-bold mb-1 text-dark text-truncate" style="font-size: 0.95rem; letter-spacing: -0.01em;">{{ course.title }}</h6>
+                        <small class="text-muted d-block text-truncate" style="font-size: 0.775rem;">
+                          <i class="bi bi-person-circle me-1"></i>Instructor: <span class="fw-medium text-secondary">{{ course.instructor.user.get_full_name|default:course.instructor.user.username|default:"Unassigned" }}</span>
+                        </small>
+                      </div>
+                    </div>
+                    
+                    <a href="{% url 'course_detail' course.id %}" 
+                       class="btn btn-sm btn-outline-primary rounded-pill px-3.5 py-2 text-nowrap align-self-stretch align-self-sm-center text-center transition-smooth fw-bold"
+                       style="color: #1e5aa8; border-color: #1e5aa8; font-size: 0.8rem;">
+                      View Course
+                    </a>
+                  </div>
+                  
+                {% endif %}
+              {% endfor %}
+
+              {% if not category.courses.all %}
+                <div class="d-flex flex-column align-items-center justify-content-center text-center py-5 my-auto flex-grow-1">
+                  <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm border border-light-subtle" style="width: 72px; height: 72px; background-color: #f8f9fb !important;">
+                    <i class="bi bi-journal-x text-muted" style="font-size: 2rem; color: #1e5aa8 !important;"></i>
+                  </div>
+                  <h5 class="fw-bold text-dark mb-1" style="font-weight: 700; letter-spacing: -0.01em;">No Associated Courses</h5>
+                  <p class="text-muted small mb-0 mx-auto" style="max-width: 320px; font-size: 0.85rem; line-height: 1.5;">
+                    {% if request.user.role == 'INSTRUCTOR' %}
+                      You do not have any active training courses registered under this category classification.
+                    {% else %}
+                      There are currently no training course modules registered under this subject category classification.
+                    {% endif %}
+                  </p>
+                </div>
+              {% endif %}
+
+            {% endwith %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

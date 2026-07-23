@@ -1,0 +1,180 @@
+{# templates/reviews/review_form.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Write a Review — {{ course.title }} — OLS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+<style>
+  /* Sized and Interactive Star Widget */
+  .interactive-stars {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    font-size: 1.75rem;
+    cursor: pointer;
+  }
+  .interactive-stars i {
+    color: var(--border-strong, #c7cdd8);
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+  /* Hover and active logic via JS classes */
+  .interactive-stars i.hovered,
+  .interactive-stars i.selected {
+    color: var(--accent-warm, #b7791f) !important;
+  }
+  .interactive-stars i:hover ~ i,
+  .interactive-stars i.hovered ~ i,
+  .interactive-stars i.selected ~ i {
+    color: var(--accent-warm, #b7791f) !important;
+  }
+  .interactive-stars i:active {
+    transform: scale(0.9);
+  }
+  /* Hide the actual native select input cleanly */
+  .hidden-native-field select {
+    display: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-container">
+  <div class="form-card">
+    
+    <!-- Card Header -->
+    <div class="form-card__header">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="badge bg-warning-light text-warning fw-bold px-2.5 py-1 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Course Review</span>
+      </div>
+      <h2 class="form-card__title">Write a Review</h2>
+      <p class="form-card__subtitle">Share your real learning experience for: <span class="fw-semibold text-secondary">{{ course.title }}</span></p>
+    </div>
+
+    <!-- Card Body -->
+    <div class="form-card__body">
+      <form method="post" id="reviewForm" novalidate>
+        {% csrf_token %}
+        
+        {% for field in form %}
+          <div class="form-group-custom {% if field.name == 'rating' %}hidden-native-field{% endif %}">
+            <label for="{{ field.id_for_label }}" class="form-label-custom">
+              {% if field.name == 'rating' %}
+                <i class="bi bi-star-fill text-warning"></i> Choose Rating Scale
+              {% elif field.name == 'comment' %}
+                <i class="bi bi-chat-text-fill text-primary"></i> Comment Narrative
+              {% else %}
+                {{ field.label }}
+              {% endif %}
+            </label>
+            
+            <!-- If it's the rating field, inject the custom premium star view underneath -->
+            {% if field.name == 'rating' %}
+              <div class="mb-2">
+                <div class="interactive-stars" id="starWidget">
+                  <i class="bi bi-star" data-value="5"></i>
+                  <i class="bi bi-star" data-value="4"></i>
+                  <i class="bi bi-star" data-value="3"></i>
+                  <i class="bi bi-star" data-value="2"></i>
+                  <i class="bi bi-star" data-value="1"></i>
+                </div>
+              </div>
+            {% endif %}
+
+            {{ field }}
+            
+            {% if field.help_text %}
+              <small class="form-text text-muted d-block mt-1">{{ field.help_text }}</small>
+            {% endif %}
+            
+            {% if field.errors %}
+              <div class="text-danger small mt-2 fw-medium d-flex align-items-center gap-1">
+                <i class="bi bi-exclamation-circle-fill"></i> {{ field.errors|striptags }}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <!-- Actions -->
+        <div class="d-flex align-items-center gap-2 mt-4">
+          <button type="submit" class="btn-submit">
+            <i class="bi bi-send-fill me-1"></i> Submit Review
+          </button>
+          <a href="{% url 'course_detail' course.id %}" class="btn-cancel">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const starWidget = document.getElementById('starWidget');
+    if (!starWidget) return;
+
+    const stars = Array.from(starWidget.querySelectorAll('i'));
+    const nativeSelect = document.querySelector('.hidden-native-field select');
+    
+    let currentRating = nativeSelect ? nativeSelect.value : 0;
+
+    function renderStars(rating, type = 'selected') {
+      stars.forEach(star => {
+        const val = parseInt(star.getAttribute('data-value'));
+        if (type === 'hover') {
+          if (val <= rating) {
+            star.classList.add('hovered');
+            star.classList.remove('bi-star');
+            star.classList.add('bi-star-fill');
+          } else {
+            star.classList.remove('hovered');
+            if (val > currentRating) {
+              star.classList.remove('bi-star-fill');
+              star.classList.add('bi-star');
+            }
+          }
+        } else {
+          if (val <= rating) {
+            star.classList.add('selected');
+            star.classList.remove('bi-star');
+            star.classList.add('bi-star-fill');
+          } else {
+            star.classList.remove('selected');
+            star.classList.remove('bi-star-fill');
+            star.classList.add('bi-star');
+          }
+        }
+      });
+    }
+
+    if (currentRating > 0) {
+      renderStars(currentRating);
+    }
+
+    stars.forEach(star => {
+      // Hover event
+      star.addEventListener('mouseenter', () => {
+        const value = parseInt(star.getAttribute('data-value'));
+        renderStars(value, 'hover');
+      });
+
+      // Click event
+      star.addEventListener('click', () => {
+        currentRating = parseInt(star.getAttribute('data-value'));
+        renderStars(currentRating, 'selected');
+        if (nativeSelect) {
+          nativeSelect.value = currentRating;
+        }
+      });
+    });
+
+    starWidget.addEventListener('mouseleave', () => {
+      stars.forEach(star => star.classList.remove('hovered'));
+      renderStars(currentRating, 'selected');
+    });
+  });
+</script>
+{% endblock %}

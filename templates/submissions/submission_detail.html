@@ -1,0 +1,184 @@
+{# templates/submissions/submission_detail.html #}
+{% extends "base.html" %}
+
+{% block title %}Submission Detail - {{ submission.student.user.get_full_name|default:submission.student.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <!-- Control Center Navigation Header Row -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <a href="{% if request.user.role == 'STUDENT' %}{% url 'student_submissions_dashboard' %}{% else %}{% url 'submission_list' %}{% endif %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold">
+        <i class="bi bi-arrow-left"></i> Back to Directory Dashboard
+      </a>
+    </div>
+    
+    {% if request.user.is_lms_admin or request.user.role == 'INSTRUCTOR' %}
+      <div>
+        <a href="{% url 'submission_grade' submission.id %}" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm text-nowrap">
+          <i class="bi bi-pencil-square me-1"></i> Edit Evaluation / Grade
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4 g-lg-5">
+    
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 border border-light-subtle bg-white">
+        <div class="form-header-accent-assignment" style="height: 6px; background: linear-gradient(90deg, #1e5aa8 0%, #1e5aa8 100%);"></div>
+        
+        <div class="bg-gradient-dark p-4 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #1c1f26 0%, #1c1f26 100%); border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div class="d-flex align-items-center gap-3 position-relative" style="z-index: 2;">
+            <div class="bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center fw-bold" style="width: 44px; height: 44px; flex-shrink: 0; background-color: rgba(99, 102, 241, 0.15) !important;">
+              {{ submission.student.user.username|slice:":2"|upper }}
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-white">{{ submission.student.user.get_full_name|default:submission.student.user.username }}</h5>
+              <small class="d-block mt-0.5 opacity-50" style="font-size: 0.8rem;">Candidate Username: @{{ submission.student.user.username }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <div class="d-flex flex-column gap-4">
+            
+            <div class="profile-field">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Assignment Topic</small>
+              <h5 class="fw-bold text-dark mb-0">{{ submission.assignment.title }}</h5>
+              <small class="text-muted d-block mt-1" style="font-size: 0.8rem;">
+                Course: {{ submission.assignment.lesson.course.title|default:submission.assignment.course.title|default:"Global Course Framework" }}
+              </small>
+            </div>
+
+            <div class="profile-field border-top pt-3">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Submitted Timeline Log</small>
+              <span class="badge bg-light text-dark border px-2.5 py-2 fw-medium" style="font-size: 0.8rem;">
+                <i class="bi bi-clock text-primary me-1"></i>{{ submission.submitted_at|date:"d M Y • H:i" }}
+              </span>
+            </div>
+
+            {% if submission.submitted_file %}
+              <div class="profile-field border-top pt-3">
+                <small class="text-muted fw-bold text-uppercase d-block mb-2 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Delivered Work Asset File</small>
+                <div class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between gap-3">
+                  <div class="d-flex align-items-center gap-2 text-truncate">
+                    <i class="bi bi-file-earmark-arrow-down-fill text-primary display-6"></i>
+                    <div class="text-truncate">
+                      <span class="fw-bold text-dark d-block small text-truncate">{{ submission.submitted_file.name }}</span>
+                    </div>
+                  </div>
+                  <a href="{{ submission.submitted_file.url }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm" download>
+                    Download
+                  </a>
+                </div>
+              </div>
+            {% endif %}
+
+            {% if submission.comment %}
+              <div class="profile-field border-top pt-3">
+                <small class="text-muted fw-bold text-uppercase d-block mb-2 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Student Comments / Notes</small>
+                <div class="p-3 bg-light rounded-3 border text-secondary small" style="white-space: pre-line; line-height: 1.6;">
+                  {{ submission.comment }}
+                </div>
+              </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  
+    <div class="col-lg-6">
+      
+      <!-- EVALUATION CARD STATE DISPLAY -->
+      <div class="card border-0 shadow-sm rounded-4 border border-light-subtle overflow-hidden bg-white mb-4">
+        <div class="card-body p-4 p-md-5">
+          <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-award-fill text-success me-2"></i>Performance Review Status</h5>
+          
+          <div class="p-4 rounded-4 border text-center {% if submission.score is not None %}bg-success-subtle border-success-subtle{% else %}bg-warning-subtle border-warning-subtle{% endif %}">
+            {% if submission.score is not None %}
+              <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 54px; height: 54px;">
+                <i class="bi bi-bookmark-star-fill fs-3"></i>
+              </div>
+              <h5 class="fw-bold text-success mb-1">Grading Evaluation Approved</h5>
+              <p class="text-muted small mb-3">Reviewed Task Instance Score Matrix</p>
+              
+              <div class="display-5 fw-bold text-dark mb-1" style="font-weight: 800;">
+                {{ submission.score }} <span class="fs-5 text-muted fw-semibold">/ {{ submission.assignment.max_score }} Pts</span>
+              </div>
+            {% else %}
+              <div class="bg-warning text-dark-emphasis rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 54px; height: 54px; background-color: rgba(255, 193, 7, 0.2) !important;">
+                <i class="bi bi-hourglass-split fs-3" style="color: #7c4a15;"></i>
+              </div>
+              <h5 class="fw-bold text-warning-emphasis mb-1" style="color: #7c4a15 !important;">Awaiting Grading Evaluation</h5>
+              <p class="text-muted small mb-0">Pending constructive analytical breakdown review from the course framework instructor.</p>
+            {% endif %}
+          </div>
+
+          <!-- INSTRUCTOR STRUCTURAL FEEDBACK TEXT BLOCK AREA -->
+          <div class="mt-4 border-top pt-4">
+            <small class="text-muted fw-bold text-uppercase d-block mb-2 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Instructor Assessment Review Notes</small>
+            {% if submission.feedback %}
+              <div class="p-3 bg-light rounded-3 border text-dark" style="white-space: pre-line; line-height: 1.6; font-size: 0.925rem;">
+                <i class="bi bi-chat-left-quote-fill text-muted me-1 small"></i> {{ submission.feedback }}
+              </div>
+            {% else %}
+              <div class="text-center py-4 bg-light rounded-3 border border-dashed text-muted small">
+                <i class="bi bi-chat-square-dots d-block fs-3 opacity-30 mb-1"></i>
+                No formal written descriptive critique parameter logs recorded yet.
+              </div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+
+      {% if form %}
+        <div class="card border-0 shadow-sm rounded-4 border border-light-subtle overflow-hidden bg-white">
+          <div class="card-body p-4 p-md-5 bg-light-subtle border-start border-4 border-success">
+            <h5 class="fw-bold mb-1 text-dark"><i class="bi bi-shield-check me-2 text-success"></i>Quick Evaluation Panel</h5>
+            <p class="text-muted small mb-4">Update scores and notes right from the current viewing terminal interface.</p>
+            
+            <form method="POST" action="{% url 'submission_grade' submission.id %}" class="needs-validation" novalidate>
+              {% csrf_token %}
+              
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary text-uppercase">Assigned Mark (Max: {{ submission.assignment.max_score }})</label>
+                <input type="number" name="score" class="form-control rounded-3" step="0.01" min="0" max="{{ submission.assignment.max_score }}" value="{{ submission.score|default:'' }}" required placeholder="Ex: 85.50">
+              </div>
+              
+              <div class="mb-4">
+                <label class="form-label small fw-bold text-secondary text-uppercase">Descriptive Feedback Notes</label>
+                <textarea name="feedback" class="form-control rounded-3" rows="3" placeholder="Provide constructive feedback, notes, or improvement remarks for the student...">{{ submission.feedback|default:'' }}</textarea>
+              </div>
+
+              <button type="submit" class="btn btn-success rounded-pill px-4 w-100 fw-bold shadow-sm">
+                Commit & Lock Evaluation Marks
+              </button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const quickGradeForm = document.querySelector(".needs-validation");
+    if (quickGradeForm) {
+      quickGradeForm.addEventListener("submit", function (e) {
+        if (!quickGradeForm.checkValidity()) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        quickGradeForm.classList.add("was-validated");
+      });
+    }
+  });
+</script>
+{% endblock %}

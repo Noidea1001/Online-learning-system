@@ -1,0 +1,628 @@
+{# templates/quizzes/quiz_builder.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if quiz %}Edit Test{% else %}Create Test{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/quizzes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+
+      <div class="mb-4">
+        <a href="{% url 'quiz_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold">
+          <i class="bi bi-arrow-left"></i> Back to Tests
+        </a>
+      </div>
+
+      <!-- Quiz meta card -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="card-body p-4 p-md-5">
+          <div class="border-bottom pb-4 mb-4">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-bold small mb-2 d-inline-flex align-items-center gap-1">
+              <i class="bi bi-ui-checks-grid"></i> Test Builder
+            </span>
+            <h2 class="fw-bold text-dark mb-1" style="font-weight: 800; letter-spacing: -0.02em;">
+              {% if quiz %}Edit Test{% else %}Create a New Test{% endif %}
+            </h2>
+            <p class="text-muted mb-0 small">Set up the test details, then add your questions below.</p>
+          </div>
+
+          {% if quiz and quiz.has_attempts %}
+            <div class="alert alert-warning rounded-3 border-0 shadow-sm mb-4">
+              <i class="bi bi-lock-fill me-2"></i>This test already has student attempts — questions are locked. Use <strong>Duplicate</strong> from the test list to make changes.
+            </div>
+          {% endif %}
+
+          <form method="post" id="quizForm" novalidate>
+            {% csrf_token %}
+            <div class="row g-3 g-md-4">
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">
+                  Test Title <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="title" class="form-control rounded-3" required maxlength="255"
+                       value="{{ field_values.title }}" placeholder="e.g. Chapter 3 Quiz">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Instructions</label>
+                <textarea name="description" class="form-control rounded-3" rows="2"
+                          placeholder="Shown to students before they start (optional)">{{ field_values.description }}</textarea>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">
+                  Course <span class="text-danger">*</span>
+                </label>
+                <select name="course" id="courseSelect" class="form-select rounded-3" required data-lessons-url="{% url 'ajax_load_lessons' %}">
+                  <option value="">Select Course</option>
+                  {% for c in courses %}
+                    <option value="{{ c.id }}" {% if field_values.course == c.id|stringformat:"s" %}selected{% endif %}>{{ c.title }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Lesson (optional)</label>
+                <select name="lesson" id="lessonSelect" class="form-select rounded-3">
+                  <option value="">Course-Wide Test</option>
+                  {% if quiz.lesson %}<option value="{{ quiz.lesson.id }}" selected>{{ quiz.lesson.title }}</option>{% endif %}
+                </select>
+              </div>
+
+              <div class="col-md-3 col-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">
+                  <i class="bi bi-stopwatch me-1"></i>Time Limit
+                </label>
+                <div class="input-group">
+                  <input type="number" min="1" name="time_limit_minutes" class="form-control"
+                         value="{{ field_values.time_limit_minutes }}" placeholder="Untimed">
+                </div>
+              </div>
+
+              <div class="col-md-3 col-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Max Attempts</label>
+                <input type="number" min="1" name="max_attempts" class="form-control rounded-3"
+                       value="{{ field_values.max_attempts }}">
+              </div>
+
+              <div class="col-md-3 col-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Passing Score</label>
+                <div class="input-group">
+                  <input type="number" min="0" max="100" name="passing_score" class="form-control rounded-start-3"
+                         value="{{ field_values.passing_score }}" placeholder="Optional (%)">
+                </div>
+              </div>
+
+              <div class="col-md-3 col-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Due Date</label>
+                <input type="datetime-local" name="due_date" class="form-control rounded-3"
+                       value="{{ quiz.due_date|date:'Y-m-d\TH:i' }}">
+              </div>
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="shuffleSwitch" name="shuffle_questions"
+                         {% if quiz.shuffle_questions %}checked{% endif %}>
+                  <label class="form-check-label small fw-semibold text-secondary" for="shuffleSwitch">
+                    Shuffle question order and answer choices for each student
+                  </label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Questions builder -->
+      <div id="questionsContainer"></div>
+
+      <div class="d-flex flex-column-reverse flex-sm-row gap-2 mb-4 mobile-buttons-flex">
+        <button type="button" id="addQuestionBtn" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold flex-sm-grow-1 transition-smooth">
+          <i class="bi bi-plus-lg me-1"></i> Add Question
+        </button>
+        <button type="button" id="browseBankBtn" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold flex-sm-grow-1 transition-smooth">
+          <i class="bi bi-collection me-1"></i> From Question Bank
+        </button>
+      </div>
+
+      <!-- Sticky action bar -->
+      <div class="d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-2 gap-sm-3 sticky-bottom bg-body py-3 mobile-buttons-flex" style="bottom: 0;">
+        <button type="button" id="saveDraftBtn" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold transition-smooth">
+          <i class="bi bi-file-earmark-text me-1"></i> Save Draft
+        </button>
+        <button type="button" id="publishBtn" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-nowrap transition-smooth btn-premium-action shadow-primary-matrix">
+          <i class="bi bi-broadcast me-1"></i> Publish Test
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Delete question confirmation modal -->
+<div class="modal fade" id="deleteQuestionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-body p-4 text-center">
+        <div class="bank-delete-modal__icon">
+          <i class="bi bi-trash3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Delete this question?</h5>
+        <p class="text-muted mb-0">This only removes it from the test — it won't affect the question bank.</p>
+      </div>
+      <div class="modal-footer border-0 pt-0 pb-4 px-4 justify-content-center gap-2">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="confirmDeleteQuestionBtn" class="btn btn-danger rounded-pill px-4 fw-semibold">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Browse Question Bank modal -->
+<div class="modal fade" id="bankModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">Question Bank</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <div id="bankModalBody">
+          <div class="bank-modal-empty">
+            <i class="bi bi-collection display-4 d-block mb-2 text-secondary"></i>
+            Select a course above first.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <a href="{% url 'question_bank_list' %}" target="_blank" class="text-decoration-none small fw-semibold me-auto">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Manage full bank
+        </a>
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="bankInsertBtn" class="btn btn-primary rounded-pill px-4 fw-semibold" disabled>
+          Insert Selected (<span id="bankSelectedCount">0</span>)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<template id="questionTemplate">
+  <div class="card border-0 shadow-sm rounded-4 mb-3 question-card">
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-bold question-index-badge">Question 1</span>
+        <div class="d-flex flex-wrap gap-1">
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-circle btn-icon save-to-bank-btn" title="Save to Question Bank"><i class="bi bi-collection"></i></button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle btn-icon move-up-btn" title="Move Up"><i class="bi bi-arrow-up"></i></button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle btn-icon move-down-btn" title="Move Down"><i class="bi bi-arrow-down"></i></button>
+          <button type="button" class="btn btn-sm btn-outline-danger rounded-circle btn-icon delete-question-btn" title="Delete Question"><i class="bi bi-trash"></i></button>
+        </div>
+      </div>
+
+      <textarea class="form-control rounded-3 mb-3 question-text" rows="2" placeholder="Type your question here..."></textarea>
+
+      <div class="row g-2 mb-3">
+        <div class="col-sm-7">
+          <select class="form-select form-select-sm rounded-3 question-type">
+            <option value="SINGLE">Single Choice (one correct answer)</option>
+            <option value="MULTIPLE">Multiple Choice — partial credit (several correct answers)</option>
+            <option value="TRUE_FALSE">True / False</option>
+            <option value="SHORT_ANSWER">Short Answer — graded manually</option>
+          </select>
+        </div>
+        <div class="col-sm-5">
+          <div class="input-group input-group-sm">
+            <input type="number" min="1" value="1" class="form-control question-points">
+          </div>
+        </div>
+      </div>
+
+      <div class="choices-section">
+        <div class="choices-list mb-2"></div>
+
+        <button type="button" class="btn btn-sm btn-link text-decoration-none add-choice-btn px-0">
+          <i class="bi bi-plus-circle me-1"></i> Add Answer Option
+        </button>
+      </div>
+
+      <div class="short-answer-section d-none">
+        <label class="form-label small fw-semibold text-secondary text-uppercase" style="font-size: 0.75rem;">
+          Sample Answer <span class="text-muted normal-case fw-normal" style="text-transform: none;">(optional — shown to you while grading, not to students)</span>
+        </label>
+        <textarea class="form-control rounded-3 question-sample-answer" rows="2" placeholder="What a good answer looks like..."></textarea>
+        <p class="small text-muted mt-2 mb-0"><i class="bi bi-info-circle me-1"></i>This question is graded manually after students submit — it won't be auto-scored.</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="choiceTemplate">
+  <div class="d-flex align-items-center gap-2 mb-2 choice-row">
+    <input type="checkbox" class="form-check-input choice-correct flex-shrink-0" title="Mark as correct answer">
+    <input type="text" class="form-control form-control-sm rounded-3 choice-text" placeholder="Answer option">
+    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle btn-icon delete-choice-btn flex-shrink-0" title="Remove Option">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+</template>
+{{ initial_questions|json_script:"initial-questions-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const initialQuestions = JSON.parse(document.getElementById('initial-questions-data').textContent);
+  const container = document.getElementById('questionsContainer');
+  const qTemplate = document.getElementById('questionTemplate');
+  const cTemplate = document.getElementById('choiceTemplate');
+  const locked = "{% if quiz and quiz.has_attempts %}false{% else %}false{% endif %}" === "true";
+  const csrfToken = document.querySelector('#quizForm [name=csrfmiddlewaretoken]').value;
+  const bankItemsUrl = "{% url 'question_bank_items' %}";
+  const bankSaveUrl = "{% url 'question_bank_save' %}";
+
+  function renumber() {
+    container.querySelectorAll('.question-card').forEach((card, i) => {
+      card.querySelector('.question-index-badge').textContent = 'Question ' + (i + 1);
+    });
+  }
+
+  function createChoiceRow(choice) {
+    const node = cTemplate.content.firstElementChild.cloneNode(true);
+    node.querySelector('.choice-text').value = choice ? choice.text : '';
+    node.querySelector('.choice-correct').checked = !!(choice && choice.is_correct);
+    node.querySelector('.delete-choice-btn').addEventListener('click', () => node.remove());
+    return node;
+  }
+
+  function toggleSections(card) {
+    const type = card.querySelector('.question-type').value;
+    const isShortAnswer = type === 'SHORT_ANSWER';
+    card.querySelector('.choices-section').classList.toggle('d-none', isShortAnswer);
+    card.querySelector('.short-answer-section').classList.toggle('d-none', !isShortAnswer);
+  }
+
+  // If a question is switched down from Multiple Choice to a
+  // single-answer type (Single Choice / True-False) while more than one
+  // box is already checked, keep only the first checked one so the
+  // saved data stays valid for that type.
+  function collapseToSingleCorrect(card) {
+    const type = card.querySelector('.question-type').value;
+    if (type === 'MULTIPLE') return;
+    let seenChecked = false;
+    card.querySelectorAll('.choice-correct').forEach((box) => {
+      if (box.checked) {
+        if (seenChecked) box.checked = false;
+        seenChecked = true;
+      }
+    });
+  }
+
+  function createQuestionCard(question) {
+    const node = qTemplate.content.firstElementChild.cloneNode(true);
+    node.querySelector('.question-text').value = question ? question.text : '';
+    node.querySelector('.question-type').value = question ? question.type : 'SINGLE';
+    node.querySelector('.question-points').value = question ? question.points : 1;
+    node.querySelector('.question-sample-answer').value = (question && question.sample_answer) || '';
+
+    const choicesList = node.querySelector('.choices-list');
+    const choices = (question && question.choices && question.choices.length)
+      ? question.choices
+      : [{ text: '', is_correct: false }, { text: '', is_correct: false }];
+    choices.forEach(c => choicesList.appendChild(createChoiceRow(c)));
+
+    node.querySelector('.add-choice-btn').addEventListener('click', () => {
+      choicesList.appendChild(createChoiceRow(null));
+    });
+    node.querySelector('.delete-question-btn').addEventListener('click', () => {
+      // Skip the confirmation for a blank card the instructor hasn't
+      // typed anything into yet — nothing to lose, so asking just adds
+      // friction. Anything with real content gets the modal.
+      if (!collectCardData(node)) {
+        node.remove();
+        renumber();
+        return;
+      }
+      pendingDeleteNode = node;
+      if (deleteQuestionModal) {
+        deleteQuestionModal.show();
+      } else {
+        node.remove();
+        renumber();
+      }
+    });
+    node.querySelector('.save-to-bank-btn').addEventListener('click', () => saveCardToBank(node));
+    node.querySelector('.move-up-btn').addEventListener('click', () => {
+      const prev = node.previousElementSibling;
+      if (prev) container.insertBefore(node, prev);
+      renumber();
+    });
+    node.querySelector('.move-down-btn').addEventListener('click', () => {
+      const next = node.nextElementSibling;
+      if (next) container.insertBefore(next, node);
+      renumber();
+    });
+    node.querySelector('.question-type').addEventListener('change', () => {
+      collapseToSingleCorrect(node);
+      toggleSections(node);
+    });
+
+    // Single-answer types (Single Choice, True/False) behave like radio
+    // buttons — checking one clears the rest. This is delegated on the
+    // list itself, reading the question's *current* type at the moment
+    // of the click, rather than binding fixed per-checkbox listeners
+    // based on whatever type was selected when the card was created —
+    // that's what let a question stay stuck in single-select mode even
+    // after switching its dropdown to Multiple Choice.
+    choicesList.addEventListener('change', (e) => {
+      if (!e.target.classList.contains('choice-correct')) return;
+      const currentType = node.querySelector('.question-type').value;
+      if (currentType !== 'MULTIPLE' && e.target.checked) {
+        choicesList.querySelectorAll('.choice-correct').forEach((b) => {
+          if (b !== e.target) b.checked = false;
+        });
+      }
+    });
+
+    toggleSections(node);
+
+    if (locked) {
+      node.querySelectorAll('input, textarea, select, button').forEach(el => el.disabled = true);
+    }
+
+    return node;
+  }
+
+  // Hydrate with existing questions, or start with one blank question for new tests.
+  if (initialQuestions.length) {
+    initialQuestions.forEach(q => container.appendChild(createQuestionCard(q)));
+  } else if (!locked) {
+    container.appendChild(createQuestionCard(null));
+  }
+  renumber();
+
+  document.getElementById('addQuestionBtn').addEventListener('click', () => {
+    container.appendChild(createQuestionCard(null));
+    renumber();
+    container.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  if (locked) {
+    document.getElementById('addQuestionBtn').disabled = true;
+  }
+
+  function collectCardData(card) {
+    const type = card.querySelector('.question-type').value;
+    const choiceRows = card.querySelectorAll('.choice-row');
+    const choices = [];
+    if (type !== 'SHORT_ANSWER') {
+      choiceRows.forEach(row => {
+        const text = row.querySelector('.choice-text').value.trim();
+        if (text) {
+          choices.push({ text: text, is_correct: row.querySelector('.choice-correct').checked });
+        }
+      });
+    }
+    const text = card.querySelector('.question-text').value.trim();
+    if (!text) return null;
+    return {
+      text: text,
+      type: type,
+      points: parseInt(card.querySelector('.question-points').value, 10) || 1,
+      sample_answer: card.querySelector('.question-sample-answer').value.trim(),
+      choices: choices,
+    };
+  }
+
+  function collectQuestions() {
+    const cards = container.querySelectorAll('.question-card');
+    const data = [];
+    cards.forEach(card => {
+      const cardData = collectCardData(card);
+      if (cardData) data.push(cardData);
+    });
+    return data;
+  }
+
+  // ── Save a single question to the bank ──────────────────
+  function saveCardToBank(card) {
+    const courseId = document.getElementById('courseSelect').value;
+    if (!courseId) {
+      if (window.showToast) showToast('error', 'Pick a course above before saving to the bank.', 'No Course Selected');
+      return;
+    }
+    const cardData = collectCardData(card);
+    if (!cardData) {
+      if (window.showToast) showToast('error', 'Add question text before saving it to the bank.', 'Nothing to Save');
+      return;
+    }
+
+    const btn = card.querySelector('.save-to-bank-btn');
+    btn.disabled = true;
+
+    fetch(bankSaveUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify(Object.assign({ course: courseId }, cardData)),
+    })
+      .then(r => r.json().then(body => ({ ok: r.ok, body })))
+      .then(({ ok, body }) => {
+        if (ok) {
+          if (window.showToast) showToast('success', 'Saved to the question bank.', 'Saved');
+        } else {
+          if (window.showToast) showToast('error', body.error || 'Could not save this question.', 'Save Failed');
+        }
+      })
+      .catch(() => {
+        if (window.showToast) showToast('error', 'Could not reach the server.', 'Save Failed');
+      })
+      .finally(() => { btn.disabled = false; });
+  }
+
+  // ── Delete question confirmation modal ───────────────────
+  const deleteQuestionModalEl = document.getElementById('deleteQuestionModal');
+  const deleteQuestionModal = window.bootstrap ? new bootstrap.Modal(deleteQuestionModalEl) : null;
+  let pendingDeleteNode = null;
+
+  document.getElementById('confirmDeleteQuestionBtn').addEventListener('click', () => {
+    if (pendingDeleteNode) {
+      pendingDeleteNode.remove();
+      pendingDeleteNode = null;
+      renumber();
+    }
+    if (deleteQuestionModal) deleteQuestionModal.hide();
+  });
+
+  // ── Browse Question Bank modal ───────────────────────────
+  const bankModalEl = document.getElementById('bankModal');
+  const bankModal = window.bootstrap ? new bootstrap.Modal(bankModalEl) : null;
+  const bankModalBody = document.getElementById('bankModalBody');
+  const bankInsertBtn = document.getElementById('bankInsertBtn');
+  const bankSelectedCount = document.getElementById('bankSelectedCount');
+  let bankSelectedIds = new Set();
+  let bankItemsCache = [];
+
+  function updateBankInsertState() {
+    bankSelectedCount.textContent = bankSelectedIds.size;
+    bankInsertBtn.disabled = bankSelectedIds.size === 0;
+  }
+
+  function renderBankItems(items) {
+    bankItemsCache = items;
+    bankSelectedIds = new Set();
+    updateBankInsertState();
+
+    if (!items.length) {
+      bankModalBody.innerHTML = `
+        <div class="bank-modal-empty">
+          <i class="bi bi-collection display-4 d-block mb-2 text-secondary"></i>
+          No saved questions for this course yet. Use the <i class="bi bi-collection"></i> icon on a question below to save one.
+        </div>`;
+      return;
+    }
+
+    bankModalBody.innerHTML = '';
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'bank-modal-item';
+      row.dataset.id = item.id;
+
+      const typeLabels = { SINGLE: 'Single Choice', MULTIPLE: 'Multiple Choice', TRUE_FALSE: 'True / False', SHORT_ANSWER: 'Short Answer' };
+      row.innerHTML = `
+        <input type="checkbox" class="form-check-input">
+        <div>
+          <div class="bank-modal-item__text"></div>
+          <div class="bank-modal-item__meta">${typeLabels[item.type] || item.type} · ${item.points} pt${item.points === 1 ? '' : 's'}</div>
+        </div>`;
+      row.querySelector('.bank-modal-item__text').textContent = item.text;
+
+      const checkbox = row.querySelector('input');
+      function toggle() {
+        checkbox.checked = !checkbox.checked;
+        row.classList.toggle('is-selected', checkbox.checked);
+        if (checkbox.checked) bankSelectedIds.add(item.id);
+        else bankSelectedIds.delete(item.id);
+        updateBankInsertState();
+      }
+      row.addEventListener('click', (e) => { if (e.target !== checkbox) toggle(); });
+      checkbox.addEventListener('click', (e) => e.stopPropagation());
+      checkbox.addEventListener('change', () => {
+        row.classList.toggle('is-selected', checkbox.checked);
+        if (checkbox.checked) bankSelectedIds.add(item.id);
+        else bankSelectedIds.delete(item.id);
+        updateBankInsertState();
+      });
+
+      bankModalBody.appendChild(row);
+    });
+  }
+
+  document.getElementById('browseBankBtn').addEventListener('click', () => {
+    const courseId = document.getElementById('courseSelect').value;
+    if (!courseId) {
+      if (window.showToast) showToast('error', 'Pick a course above first.', 'No Course Selected');
+      return;
+    }
+    bankModalBody.innerHTML = '<div class="bank-modal-empty"><i class="bi bi-hourglass-split display-4 d-block mb-2 text-secondary"></i>Loading…</div>';
+    if (bankModal) bankModal.show();
+
+    fetch(`${bankItemsUrl}?course=${courseId}`)
+      .then(r => r.json())
+      .then(data => renderBankItems(data.items || []))
+      .catch(() => {
+        bankModalBody.innerHTML = '<div class="bank-modal-empty">Could not load the question bank.</div>';
+      });
+  });
+
+  bankInsertBtn.addEventListener('click', () => {
+    const selected = bankItemsCache.filter(item => bankSelectedIds.has(item.id));
+    selected.forEach(item => container.appendChild(createQuestionCard(item)));
+    renumber();
+    if (bankModal) bankModal.hide();
+    if (selected.length && container.lastElementChild) {
+      container.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  function submitForm(action) {
+    const form = document.getElementById('quizForm');
+
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.name = 'questions_json';
+    hidden.value = JSON.stringify(collectQuestions());
+    form.appendChild(hidden);
+
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = action;
+    form.appendChild(actionInput);
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      hidden.remove();
+      actionInput.remove();
+      return;
+    }
+    form.submit();
+  }
+
+  document.getElementById('saveDraftBtn').addEventListener('click', () => submitForm('draft'));
+  document.getElementById('publishBtn').addEventListener('click', () => submitForm('publish'));
+
+  // Course -> Lesson AJAX (same endpoint the assignment builder uses)
+  const courseSelect = document.getElementById('courseSelect');
+  const lessonSelect = document.getElementById('lessonSelect');
+  const lessonsUrl = courseSelect.dataset.lessonsUrl;
+  const initialLessonId = "{{ quiz.lesson_id|default:'' }}";
+
+  function loadLessons(courseId, selectedId) {
+    if (!courseId) {
+      lessonSelect.innerHTML = '<option value="">Course-Wide Test</option>';
+      return;
+    }
+    fetch(`${lessonsUrl}?course_id=${courseId}`)
+      .then(r => r.json())
+      .then(lessons => {
+        let html = '<option value="">Course-Wide Test</option>';
+        lessons.forEach(l => {
+          const sel = String(l.id) === String(selectedId) ? 'selected' : '';
+          html += `<option value="${l.id}" ${sel}>${l.title}</option>`;
+        });
+        lessonSelect.innerHTML = html;
+      })
+      .catch(() => {
+        if (window.showToast) showToast('error', 'Could not load lessons for this course.', 'Load Failed');
+      });
+  }
+
+  courseSelect.addEventListener('change', () => loadLessons(courseSelect.value, null));
+  if (courseSelect.value) loadLessons(courseSelect.value, initialLessonId);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,218 @@
+{# templates/reviews/review_list.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+{% endblock %}
+
+{% block title %}Course Reviews Moderation — OLS{% endblock %}
+{% block content %}
+<div class="container py-1">
+
+  <!-- Cinematic Dashboard Header Component -->
+  <div class="review-header">
+    <div class="review-header__orb"></div>
+    <div class="row align-items-center g-4 review-header__content">
+      <div class="col-lg-7">
+        <span class="badge-moderation text-uppercase fw-bold mb-3">
+          <i class="bi bi-shield-lock-fill me-1"></i> Moderation Desk
+        </span>
+        <h1 class="review-header__title mb-2">Course Testimonials</h1>
+        <p class="review-header__desc mb-0">Manage, audit, and filter incoming student testimonials. Approve to go live across the platform or permanently restrict content.</p>
+      </div>
+      <div class="col-lg-5">
+        <div class="row g-3 justify-content-lg-end">
+          <div class="col-6 col-sm-5 col-lg-5">
+            <div class="stat-mini-card">
+              <div class="stat-mini-card__icon">
+                <i class="bi bi-chat-square-text"></i>
+              </div>
+              <h4 class="stat-mini-card__number">{{ reviews|length }}</h4>
+              <span class="stat-mini-card__label">Total Dataset</span>
+            </div>
+          </div>
+          <div class="col-6 col-sm-5 col-lg-5">
+            <div class="stat-mini-card">
+              <div class="stat-mini-card__icon stat-mini-card__icon--pending">
+                <i class="bi bi-clock-history"></i>
+              </div>
+              <h4 class="stat-mini-card__number text-warning">{{ pending_count|default:"0" }}</h4>
+              <span class="stat-mini-card__label">Pending Action</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtration Form Inputs Control Row Layout -->
+  <div class="row g-3 align-items-center mb-4">
+    <div class="col flex-grow-1">
+      <div class="ll-search mb-0 position-relative">
+        <i class="bi bi-search ll-search__icon"></i>
+        <input type="text" 
+               id="reviewSearchInput"
+               name="search" 
+               class="ll-search__input" 
+               placeholder="Search by student, course or comment..."
+               value="{{ request.GET.search|default:'' }}">
+      </div>
+    </div>
+    
+    <!-- Status Filter Dropdown -->
+    <div class="col-sm-auto" style="min-width: 180px;">
+      <select id="reviewStatusSelect" name="status" class="form-select ll-filter-select">
+        <option value="all" {% if request.GET.status == 'all' or not request.GET.status %}selected{% endif %}>All Reviews</option>
+        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending Audit</option>
+        <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Published Live</option>
+      </select>
+    </div>
+
+    <!-- Submit Action Button -->
+    <div class="col-auto">
+      <button type="button" id="reviewFilterBtn" class="btn btn-primary btn-filter-submit px-4 shadow-primary rounded-pill d-flex align-items-center gap-2 btn-icon" style="height: 52px; background: linear-gradient(135deg, #1e5aa8 0%, #1e5aa8 100%); border: none;" title="Filter"><i class="bi bi-funnel-fill"></i></button>
+    </div>
+  </div>
+
+  <!-- Review Cards Stack Loop -->
+  <div class="d-flex flex-column gap-3 list-scroll">
+    {% for review in reviews %}
+      <div class="review-card">
+        <div class="row g-3 align-items-start">
+          
+                    <div class="col-md-3">
+            <div class="d-flex align-items-center gap-3">
+              
+              <div class="avatar-circle {% cycle 'bg-primary-light text-primary' 'bg-success-light text-success' 'bg-info-light text-info' 'bg-warning-light text-warning' %} rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+                  {{ review.student.user.username|slice:":2"|upper }}
+                {% else %}
+                  AN
+                {% endif %}
+              </div>
+              
+              <div>
+                <h6 class="mb-0 fw-bold text-dark">
+                  {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+                    {{ review.student.user.get_full_name|default:review.student.user.username }}
+                  {% else %}
+                    <span class="text-secondary opacity-75"><i class="bi bi-shield-lock-fill me-1 text-muted"></i>Anonymous Student</span>
+                  {% endif %}
+                </h6>
+                
+                <small class="text-muted">
+                  {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+                    @{{ review.student.user.username }}
+                  {% else %}
+                    @verified_student
+                  {% endif %}
+                </small>
+              </div>
+            </div>
+            
+            <div class="mt-3">
+              <span class="text-xs text-muted d-block mb-1">Course Targeted:</span>
+              <span class="fw-semibold text-secondary small">{{ review.course.title }}</span>
+            </div>
+          </div>
+          <!-- Rating and Text Content -->
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+              <div class="rating-stars" title="{{ review.rating }} out of 5 stars">
+                {% for i in "12345"|make_list %}
+                  {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                {% endfor %}
+              </div>
+              <div>
+                {% if review.is_approved %}
+                  <span class="status-badge status-badge--approved">
+                    <span class="status-dot status-dot--approved"></span> Live / Approved
+                  </span>
+                {% else %}
+                  <span class="status-badge status-badge--pending">
+                    <span class="status-dot status-dot--pending"></span> Pending Audit
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="comment-box mt-2 text-secondary">
+              "{{ review.comment }}"
+            </div>
+          </div>
+
+                   <!-- Responsive Operations CTAs Buttons Matrix -->
+          <div class="col-md-3 text-md-end">
+            <div class="d-flex flex-column flex-md-column gap-2 justify-content-start justify-content-md-end h-100 align-items-start align-items-md-end">
+      
+              <a href="{% url 'review_detail' review.id %}" class="btn btn-outline-secondary btn-action w-100 justify-content-center text-nowrap btn-icon" title="View Details"><i class="bi bi-eye-fill"></i></a>
+
+              {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+                
+                {% if not review.is_approved %}
+                  <form method="post" action="{% url 'review_approve' review.id %}" class="w-100 m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-action w-100 justify-content-center shadow-sm text-nowrap">
+                      <i class="bi bi-patch-check-fill me-1"></i> Approve Review
+                    </button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{% url 'review_approve' review.id %}" class="w-100 m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-warning border border-1 border-warning text-warning btn-action w-100 justify-content-center text-nowrap">
+                      <i class="bi bi-x-circle-fill me-1"></i> Unapprove Review
+                    </button>
+                  </form>
+                {% endif %}
+                
+                <a href="{% url 'review_delete' review.id %}" class="btn btn-outline-danger btn-action w-100 justify-content-center text-nowrap btn-icon" title="Delete Review"><i class="bi bi-trash-fill"></i></a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-center py-5 border rounded bg-light">
+        <i class="bi bi-folder-x text-muted" style="font-size: 3rem;"></i>
+        <h5 class="fw-bold text-dark mt-3">No reviews found</h5>
+        <p class="text-muted small mb-0">There are no testimonials matching your current filter criteria.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('reviewSearchInput');
+    const statusSelect = document.getElementById('reviewStatusSelect');
+    const filterBtn = document.getElementById('reviewFilterBtn');
+
+    function executeFilter() {
+      const currentUrl = new URL(window.location.href);
+      const searchValue = searchInput.value.trim();
+      const statusValue = statusSelect.value;
+
+      if (searchValue) {
+        currentUrl.searchParams.set('search', searchValue);
+      } else {
+        currentUrl.searchParams.delete('search');
+      }
+
+      if (statusValue && statusValue !== 'all') {
+        currentUrl.searchParams.set('status', statusValue);
+      } else {
+        currentUrl.searchParams.delete('status');
+      }
+
+      window.location.href = currentUrl.toString();
+    }
+    filterBtn.addEventListener('click', executeFilter);
+    statusSelect.addEventListener('change', executeFilter);
+    
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        executeFilter();
+      }
+    });
+  });
+</script>
+{% endblock %}

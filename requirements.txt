@@ -1,0 +1,10 @@
+asgiref
+dj-database-url
+Django==5.2.15
+psycopg[binary]
+whitenoise
+gunicorn
+Pillow
+django-cloudinary-storage
+cloudinary
+python-dotenv

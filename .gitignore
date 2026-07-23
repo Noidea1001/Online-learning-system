@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# IDEs & editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel/

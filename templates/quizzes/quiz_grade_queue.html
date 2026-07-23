@@ -1,0 +1,83 @@
+{# templates/quizzes/quiz_grade_queue.html #}
+{% extends "base.html" %}
+{% block title %}Grade Answers — {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <div class="mb-4">
+    <a href="{% url 'quiz_detail' quiz.id %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold">
+      <i class="bi bi-arrow-left"></i> Back to Test Results
+    </a>
+  </div>
+
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="fw-bold display-6 mb-1">Grade Short Answers</h1>
+      <p class="text-muted mb-0">{{ quiz.title }} • {{ quiz.course.title }}</p>
+    </div>
+    <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill px-3 py-2 fw-bold">
+      <i class="bi bi-hourglass-split me-1"></i>{{ pending_answers|length }} pending
+    </span>
+  </div>
+
+  {% if pending_answers %}
+    <div class="list-scroll">
+      {% for answer in pending_answers %}
+        <div class="card border-0 shadow-sm rounded-4 mb-3" id="answer-{{ answer.id }}">
+          <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+              <div>
+                <span class="badge bg-primary-subtle text-primary rounded-pill px-2.5 py-1.5 small fw-bold mb-2 d-inline-block">
+                  {{ answer.attempt.student.user.username }}
+                </span>
+                <h6 class="fw-bold mb-0">{{ answer.question.text }}</h6>
+              </div>
+              <span class="badge bg-light text-dark border px-2.5 py-1.5 small flex-shrink-0">{{ answer.question.points }} pt{{ answer.question.points|pluralize }} max</span>
+            </div>
+
+            <label class="small fw-semibold text-secondary text-uppercase d-block mb-1" style="font-size: 0.7rem;">Student's Answer</label>
+            <div class="p-3 rounded-3 bg-light border small mb-3">
+              {% if answer.text_answer %}
+                {{ answer.text_answer|linebreaksbr }}
+              {% else %}
+                <span class="text-muted fst-italic">No answer submitted.</span>
+              {% endif %}
+            </div>
+
+            {% if answer.question.sample_answer %}
+              <label class="small fw-semibold text-secondary text-uppercase d-block mb-1" style="font-size: 0.7rem;">Sample Answer</label>
+              <div class="p-3 rounded-3 bg-success-subtle border-0 small mb-3 text-success-emphasis">
+                {{ answer.question.sample_answer|linebreaksbr }}
+              </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'quiz_grade_answer' answer.id %}" class="d-flex flex-wrap align-items-center gap-2">
+              {% csrf_token %}
+              <label class="small fw-semibold text-secondary mb-0">Award points:</label>
+              <div class="input-group input-group-sm" style="max-width: 140px;">
+                <input type="number" name="points_earned" class="form-control" min="0" max="{{ answer.question.points }}" step="0.5" value="0" required>
+                <span class="input-group-text">/ {{ answer.question.points }}</span>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold">
+                <i class="bi bi-check2 me-1"></i> Save Grade
+              </button>
+              <div class="d-flex gap-1 ms-auto">
+                <button type="submit" name="quick_points" value="{{ answer.question.points }}" class="btn btn-outline-success btn-sm rounded-pill px-3" title="Award full marks">Full Credit</button>
+                <button type="submit" name="quick_points" value="0" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Award zero">No Credit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-check2-all display-1 text-success mb-3 d-block opacity-50"></i>
+      <h5 class="fw-bold text-dark">All Caught Up</h5>
+      <p class="mb-0 small">No short answers are waiting to be graded for this test.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

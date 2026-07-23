@@ -1,0 +1,217 @@
+{# templates/courses/course_list.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Explore Professional Courses{% endblock %}
+{% block content %}
+<div class="container py-1">
+  <div class="cl-hero fade-in-up">
+    <div class="cl-hero__orb cl-hero__orb--1"></div>
+    <div class="cl-hero__orb cl-hero__orb--2"></div>
+    <div class="cl-hero__orb cl-hero__orb--3"></div>
+
+    <div class="cl-hero__content">
+      <span class="cl-hero__badge">
+        <i class="bi bi-mortarboard-fill me-1"></i> Next-Gen Learning Platform
+      </span>
+      <h1 class="cl-hero__title">Discover &amp; Master<br>New Skills Today</h1>
+      <p class="cl-hero__subtitle">
+        Browse our curated library of professional courses crafted by verified industry experts.
+      </p>
+
+      <form method="get" action="{% url 'course_list' %}" class="cl-hero__search" id="heroSearchForm">
+        {% if request.GET.category %}<input type="hidden" name="category" value="{{ request.GET.category }}">{% endif %}
+        {% if request.GET.instructor %}<input type="hidden" name="instructor" value="{{ request.GET.instructor }}">{% endif %}
+        {% if request.GET.tag %}<input type="hidden" name="tag" value="{{ request.GET.tag }}">{% endif %}
+        
+        <div class="cl-hero__search-wrap">
+          <input type="text" id="courseSearch" name="search" class="cl-hero__search-input"
+                 placeholder="Search courses, topics, or instructors..."
+                 value="{{ request.GET.search|default:'' }}">
+          <button type="submit" class="cl-hero__search-btn" aria-label="Submit Search">
+            <i class="bi bi-search"></i> 
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="cl-stats fade-in-up" style="animation-delay: 0.1s;">
+    <div class="cl-stat">
+      <div class="cl-stat__icon cl-stat__icon--primary">
+        <i class="bi bi-journal-code"></i>
+      </div>
+      <div class="cl-stat__data">
+        <span class="cl-stat__value" id="statTotalCourses">{{ courses|length }}</span>
+        <span class="cl-stat__label">Total Courses</span>
+      </div>
+    </div>
+    <div class="cl-stat">
+      <div class="cl-stat__icon cl-stat__icon--success">
+        <i class="bi bi-person-check-fill"></i>
+      </div>
+      <div class="cl-stat__data">
+        <span class="cl-stat__value">{{ instructors|length }}</span>
+        <span class="cl-stat__label">Expert Mentors</span>
+      </div>
+    </div>
+    <div class="cl-stat">
+      <div class="cl-stat__icon cl-stat__icon--warning">
+        <i class="bi bi-grid-3x3-gap-fill"></i>
+      </div>
+      <div class="cl-stat__data">
+        <span class="cl-stat__value">{{ categories|length }}</span>
+        <span class="cl-stat__label">Categories</span>
+      </div>
+    </div>
+  </div>
+  <div class="cl-toolbar fade-in-up" style="animation-delay: 0.15s;">
+    <form method="get" class="cl-filter-form" id="toolbarFilterForm">
+      {% if request.GET.search %}
+        <input type="hidden" name="search" id="hiddenSearchInput" value="{{ request.GET.search }}">
+      {% endif %}
+
+      <div class="cl-filter-form__group">
+        <label class="cl-filter-form__label">Category</label>
+        <select name="category" class="cl-filter-form__select">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      {% if request.user.role != 'INSTRUCTOR' %}
+      <div class="cl-filter-form__group">
+        <label class="cl-filter-form__label">Instructor</label>
+        <select name="instructor" class="cl-filter-form__select">
+          <option value="">All Instructors</option>
+          {% for inst in instructors %}
+            <option value="{{ inst.id }}" {% if request.GET.instructor == inst.id|stringformat:"s" %}selected{% endif %}>
+              {{ inst.user.get_full_name|default:inst.user.username }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <div class="cl-filter-form__group">
+        <label class="cl-filter-form__label">Tag</label>
+        <select name="tag" class="cl-filter-form__select">
+          <option value="">All Tags</option>
+          {% for tag in tags %}
+            <option value="{{ tag.id }}" {% if request.GET.tag == tag.id|stringformat:"s" %}selected{% endif %}>
+              #{{ tag.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="cl-filter-form__actions">
+        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold d-inline-flex align-items-center gap-1">
+          <i class="bi bi-funnel-fill"></i> Filter
+        </button>
+        <a href="{% url 'course_list' %}" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold d-inline-flex align-items-center gap-1 btn-icon" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a>
+      </div>
+    </form>
+
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+    <a href="{% url 'course_create' %}" class="btn btn-primary rounded-pill px-4 fw-semibold cl-toolbar__create-btn btn-icon" title="New Course"><i class="bi bi-plus-lg"></i></a>
+    {% endif %}
+  </div>
+  <div class="cl-grid stagger-children list-scroll">
+    {% include "courses/course_grid_partial.html" %}
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('courseSearch');
+    const courseGrid = document.querySelector('.cl-grid');
+    const selectFilters = document.querySelectorAll('.cl-filter-form__select');
+    
+    if (courseGrid) {
+      let debounceTimer;
+
+      // Centralized request pipeline handling AJAX query updates
+      function updateSearchResults() {
+        const currentUrl = new URL(window.location.origin + window.location.pathname);
+        
+        // 1. Gather active text string values
+        if (searchInput && searchInput.value.trim()) {
+          currentUrl.searchParams.set('search', searchInput.value.trim());
+          const hiddenSearch = document.getElementById('hiddenSearchInput');
+          if (hiddenSearch) hiddenSearch.value = searchInput.value.trim();
+        }
+
+        // 2. Accumulate structural dropdown values
+        selectFilters.forEach(select => {
+          if (select.value) {
+            currentUrl.searchParams.set(select.name, select.value);
+          }
+        });
+
+        // Set visual performance transitions
+        courseGrid.style.opacity = '0.4';
+        courseGrid.style.transition = 'opacity 0.15s ease-in-out';
+
+        fetch(currentUrl.toString(), {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => {
+          if (!response.ok) throw new Error('Network dashboard filtration update failed');
+          return response.text();
+        })
+        .then(html => {
+          // Replace matching elements directly
+          courseGrid.innerHTML = html;
+          courseGrid.style.opacity = '1';
+
+          // Instantly sync the visual count value card metric
+          const cardsCount = courseGrid.querySelectorAll('.cl-card').length;
+          const totalStatDisplay = document.getElementById('statTotalCourses');
+          if (totalStatDisplay) totalStatDisplay.textContent = cardsCount;
+
+          // Push clean state variables directly down to browser window metrics
+          window.history.pushState({}, '', currentUrl.toString());
+        })
+        .catch(error => {
+          console.error('AJAX operational workflow query failed:', error);
+          courseGrid.style.opacity = '1';
+          if (window.showToast) {
+            showToast('error', 'Could not update the course list. Please try again.', 'Filter Failed');
+          }
+        });
+      }
+
+      // Live Typing Listeners — Updates instantly when input changes (Debounced)
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(updateSearchResults, 300);
+        });
+      }
+
+      // Dropdown Select Listeners — Triggers instantaneous AJAX updates when option changes
+      selectFilters.forEach(select => {
+        select.addEventListener('change', updateSearchResults);
+      });
+
+      // Capture manual submit form buttons and protect query states
+      const forms = [document.getElementById('heroSearchForm'), document.getElementById('toolbarFilterForm')];
+      forms.forEach(form => {
+        if (form) {
+          form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            clearTimeout(debounceTimer);
+            updateSearchResults();
+          });
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

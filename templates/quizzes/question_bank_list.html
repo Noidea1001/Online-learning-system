@@ -1,0 +1,162 @@
+{# templates/quizzes/question_bank_list.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Question Bank{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/quizzes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <div class="mb-4">
+    <a href="{% url 'quiz_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold">
+      <i class="bi bi-arrow-left"></i> Back to Tests
+    </a>
+  </div>
+
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="fw-bold display-6 mb-1">Question Bank</h1>
+      <p class="text-muted mb-0">Reusable questions saved from your tests. Pull them into any new test for that course.</p>
+    </div>
+  </div>
+
+  <form method="get" class="d-flex flex-wrap gap-2 mb-4">
+    <input type="text" name="search" value="{{ search_query }}" class="form-control rounded-pill"
+           style="max-width: 260px;" placeholder="Search question text…">
+    <select name="course" class="form-select rounded-pill" style="max-width: 220px;" onchange="this.form.submit()">
+      <option value="">All Courses</option>
+      {% for c in courses %}
+        <option value="{{ c.id }}" {% if course_filter == c.id|stringformat:"s" %}selected{% endif %}>{{ c.title }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary rounded-pill px-3 btn-icon" title="Search"><i class="bi bi-search"></i></button>
+    {% if search_query or course_filter %}
+      <a href="{% url 'question_bank_list' %}" class="btn btn-outline-secondary rounded-pill px-3 btn-icon" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a>
+    {% endif %}
+  </form>
+
+  <div class="bank-list">
+    {% for item in items %}
+      <div class="bank-card">
+        <div class="bank-card__main">
+          <div class="bank-card__meta">
+            <span class="bank-card__qnum">Q{{ page_obj.start_index|add:forloop.counter0 }}</span>
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.75rem;">
+              {{ item.get_question_type_display }}
+            </span>
+            <span class="badge bg-light text-dark border px-2.5 py-1.5 fw-medium" style="font-size: 0.75rem;">
+              {{ item.points }} pt{{ item.points|pluralize }}
+            </span>
+            <span class="text-muted small">{{ item.course.title }}</span>
+          </div>
+          <p class="bank-card__text mb-0">{{ item.text }}</p>
+          {% if item.question_type != 'SHORT_ANSWER' %}
+            <ul class="bank-card__choices">
+              {% for letter, choice in item.lettered_choices %}
+                <li class="{% if choice.is_correct %}is-correct{% endif %}">
+                  <span class="bank-card__choice-letter">{{ letter }}</span>
+                  {{ choice.text }}
+                  {% if choice.is_correct %}<i class="bi bi-check-circle-fill ms-1"></i>{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+        <form method="post" action="{% url 'question_bank_delete' item.id %}" class="js-bank-delete-form">
+          {% csrf_token %}
+          <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-2 bank-card__delete" title="Remove from bank">
+            <i class="bi bi-trash"></i>
+          </button>
+        </form>
+      </div>
+    {% empty %}
+      <div class="py-5 text-center text-muted">
+        <i class="bi bi-collection display-3 mb-3 text-secondary d-block"></i>
+        {% if search_query or course_filter %}
+          <p class="fw-semibold mb-0">No questions match your filters</p>
+          <p class="small mb-0">Try a different search or course.</p>
+        {% else %}
+          <p class="fw-semibold mb-0">Your question bank is empty</p>
+          <p class="small mb-0">Save a question from the test builder to reuse it here later.</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-4" aria-label="Page navigation">
+      <ul class="pagination justify-content-center gap-1">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link rounded-pill">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link rounded-pill" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+
+<!-- Delete confirmation modal — replaces the native confirm() popup -->
+<div class="modal fade" id="deleteBankItemModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-body p-4 text-center">
+        <div class="bank-delete-modal__icon">
+          <i class="bi bi-trash3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Remove this question?</h5>
+        <p class="text-muted mb-0">Tests that already used it are not affected.</p>
+      </div>
+      <div class="modal-footer border-0 pt-0 pb-4 px-4 justify-content-center gap-2">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="confirmBankDeleteBtn" class="btn btn-danger rounded-pill px-4 fw-semibold">Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const modalEl = document.getElementById('deleteBankItemModal');
+  const modal = window.bootstrap ? new bootstrap.Modal(modalEl) : null;
+  const confirmBtn = document.getElementById('confirmBankDeleteBtn');
+  let pendingForm = null;
+
+  document.querySelectorAll('.bank-card__delete').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      pendingForm = btn.closest('.js-bank-delete-form');
+      if (modal) {
+        modal.show();
+      } else if (pendingForm) {
+        pendingForm.submit();
+      }
+    });
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    if (pendingForm) pendingForm.submit();
+  });
+})();
+</script>
+{% endblock %}

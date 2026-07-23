@@ -1,0 +1,151 @@
+{# adminpanel/templates/adminpanel/group_form.html #}
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — Admin Panel{% endblock %}
+
+{% block extra_css %}
+<style>
+  .perm-app-card { border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; margin-bottom: 1rem; overflow: hidden; }
+  .perm-app-card__hd {
+    background: rgba(30, 90, 168,0.06);
+    padding: .75rem 1.1rem;
+    font-weight: 700;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #1e5aa8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .perm-app-card__body { padding: .9rem 1.1rem; }
+  .perm-check-row { display: flex; align-items: center; padding: .35rem 0; }
+  .perm-check-row label { cursor: pointer; }
+  .perm-search-sticky { position: sticky; top: 0; z-index: 5; background: #fff; padding-bottom: .75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <nav class="small text-muted mb-1">
+    <a href="{% url 'adminpanel_home' %}" class="text-decoration-none">Admin Panel</a>
+    <i class="bi bi-chevron-right small mx-1"></i>
+    <a href="{% url 'adminpanel_group_list' %}" class="text-decoration-none">Groups</a>
+    <i class="bi bi-chevron-right small mx-1"></i> {{ title }}
+  </nav>
+
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="fw-bold display-6 mb-1">{{ title }}</h1>
+      <p class="text-muted mb-0">Check off exactly which permissions belong to this group.</p>
+    </div>
+    <a href="{% url 'adminpanel_group_list' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 btn-icon" title="Back to Groups"><i class="bi bi-arrow-left"></i></a>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-body p-4">
+        <label class="form-label fw-semibold small text-uppercase text-secondary">Group Name</label>
+        <input type="text" name="name" class="form-control form-control-lg rounded-pill"
+               placeholder="e.g. Course Moderators" value="{{ group.name|default:'' }}" required>
+      </div>
+    </div>
+
+    {% if members %}
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold text-uppercase text-secondary mb-2"><i class="bi bi-people-fill me-2"></i>Members ({{ members|length }})</h2>
+          <div class="d-flex flex-wrap gap-2">
+            {% for m in members %}
+              <a href="{% url 'adminpanel_user_detail' m.pk %}" class="badge bg-light text-dark border px-3 py-2 text-decoration-none">
+                {{ m.get_full_name|default:m.username }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body p-4">
+        <div class="perm-search-sticky">
+          <h2 class="h6 fw-bold text-uppercase text-secondary mb-2"><i class="bi bi-shield-lock-fill me-2"></i>Permissions</h2>
+          <input type="text" id="permSearchInput" class="form-control rounded-pill mb-1"
+                 placeholder="Filter permissions by app, model or name…" onkeyup="filterPermissions()">
+        </div>
+
+        <div id="permMatrix" class="list-scroll">
+          {% for key, group_data in grouped_permissions.items %}
+            <div class="perm-app-card" data-search-key="{{ group_data.app_label }} {{ group_data.model_name }}">
+              <div class="perm-app-card__hd">
+                <span><i class="bi bi-box-seam me-2"></i>{{ group_data.app_label }} · {{ group_data.model_name }}</span>
+                <span class="small fw-normal">
+                  <a href="#" class="text-decoration-none me-2" onclick="toggleAppGroup('{{ key|slugify }}', true); return false;">Select all</a>
+                  <a href="#" class="text-decoration-none" onclick="toggleAppGroup('{{ key|slugify }}', false); return false;">Clear</a>
+                </span>
+              </div>
+              <div class="perm-app-card__body" data-group-key="{{ key|slugify }}">
+                {% for perm in group_data.permissions %}
+                  <div class="perm-check-row" data-search-key="{{ perm.name|lower }} {{ perm.codename }}">
+                    <input class="form-check-input me-2 perm-checkbox" type="checkbox" name="permissions"
+                           value="{{ perm.id }}" id="perm{{ perm.id }}"
+                           {% if perm.id in group_perm_ids %}checked{% endif %}>
+                    <label class="form-check-label" for="perm{{ perm.id }}">{{ perm.name }}</label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-muted">No permissions found in the system.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4 mb-5">
+      {% if group %}
+        <form method="post" action="{% url 'adminpanel_group_delete' group.pk %}" onsubmit="return confirm('Delete this group? This cannot be undone.');" class="d-inline m-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-danger rounded-pill px-4 py-2">
+            <i class="bi bi-trash me-2"></i>Delete Group
+          </button>
+        </form>
+      {% endif %}
+      <a href="{% url 'adminpanel_group_list' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2">Cancel</a>
+      <button type="submit" class="btn btn-primary rounded-pill px-4 py-2">
+        <i class="bi bi-check-lg me-2"></i>Save Group
+      </button>
+    </div>
+  </form>
+
+</div>
+
+<script>
+  function filterPermissions() {
+    const query = document.getElementById('permSearchInput').value.toLowerCase().trim();
+    document.querySelectorAll('.perm-app-card').forEach(card => {
+      let cardHasMatch = false;
+      card.querySelectorAll('.perm-check-row').forEach(row => {
+        const matches = row.dataset.searchKey.includes(query);
+        row.style.display = matches ? 'flex' : 'none';
+        if (matches) cardHasMatch = true;
+      });
+      const headerMatches = card.dataset.searchKey.includes(query);
+      card.style.display = (cardHasMatch || headerMatches || query === '') ? 'block' : 'none';
+    });
+  }
+
+  function toggleAppGroup(key, checked) {
+    const body = document.querySelector('.perm-app-card__body[data-group-key="' + key + '"]');
+    if (!body) return;
+    body.querySelectorAll('.perm-checkbox').forEach(cb => {
+      if (cb.closest('.perm-check-row').style.display !== 'none') {
+        cb.checked = checked;
+      }
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,161 @@
+{# templates/instructors/instructor_form.html #}
+{% extends "base.html" %}
+{% block title %}{% if instructor %}Edit Instructor{% else %}Add New Instructor{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+
+      <!-- Back Navigation Link Row -->
+      <div class="mb-4">
+        {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+          <a href="{% url 'instructor_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+            <i class="bi bi-arrow-left"></i> Back to Instructors Directory
+          </a>
+        {% else %}
+          <a href="{% url 'dashboard_home' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Main Form Base Panel -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden premium-form-card">
+        <div class="form-header-accent-instructor" style="height: 5px; background: linear-gradient(90deg, #1e5aa8 0%, #2b6cb0 100%);"></div>
+
+        <div class="card-body p-4 p-md-5">
+          <div class="border-bottom pb-4 mb-4">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-bold small mb-2 d-inline-flex align-items-center gap-1" style="background-color: rgba(13, 110, 253, 0.08) !important;">
+              <i class="bi bi-person-workspace"></i> Faculty Administration Portal
+            </span>
+            <h2 class="fw-bold text-dark mb-1 fs-3 fs-md-2" style="font-weight: 800; letter-spacing: -0.02em;">
+              {% if instructor %}Edit Instructor Profile{% else %}Create New Instructor Account{% endif %}
+            </h2>
+            <p class="text-muted mb-0 small">Register a new academic domain expert or course architect to deploy educational curricula content.</p>
+          </div>
+
+          <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            {% if form.errors or user_form.errors %}
+              <div class="alert alert-danger rounded-3 mb-4 border-0 shadow-sm">
+                <h6 class="fw-bold small text-uppercase mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please resolve input parameters:</h6>
+                <ul class="mb-0 small ps-3" style="font-size: 0.85rem;">
+                  {% for field in user_form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error|striptags }}</li>{% endfor %}{% endfor %}
+                  {% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error|striptags }}</li>{% endfor %}{% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
+            <div class="row g-3 g-md-4">
+              <!-- Credentials Context -->
+              <div class="col-12">
+                <h5 class="fw-bold text-primary border-bottom pb-2 mb-2 small text-uppercase tracking-wider">
+                  <i class="bi bi-shield-lock me-2"></i>Account Credentials
+                </h5>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Username *</label>
+                <div class="premium-input-group">
+                  {{ user_form.username }}
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Email Address *</label>
+                <div class="premium-input-group">
+                  {{ user_form.email }}
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">User Account Role *</label>
+                <div class="premium-input-group">
+                  {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+                    {{ user_form.role }}
+                  {% else %}
+                    <div class="form-control bg-light text-muted d-flex align-items-center justify-content-between" style="border-radius: 10px; padding: 0.65rem 1rem;">
+                      <span class="fw-bold text-dark"><i class="bi bi-lock-fill me-2 text-secondary"></i>{{ user_form.instance.get_role_display|default:"Instructor" }}</span>
+                      <span class="badge bg-secondary rounded-pill">Locked Profile</span>
+                    </div>
+                    <input type="hidden" name="role" value="{{ user_form.instance.role|default:'INSTRUCTOR' }}">
+                  {% endif %}
+                </div>
+                <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">Only platform administrators and management staff can reassign security roles.</div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">
+                  {% if instructor %}Password <span class="text-muted fw-normal lowercase">(leave blank to keep current)</span>{% else %}Password *{% endif %}
+                </label>
+                <div class="premium-input-group">
+                  {{ user_form.password }}
+                </div>
+                {% if user_form.password.help_text and not instructor %}
+                  <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">{{ user_form.password.help_text }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-12 mt-4">
+                <h5 class="fw-bold text-primary border-bottom pb-2 mb-2 small text-uppercase tracking-wider">
+                  <i class="bi bi-person-badge me-2"></i>Personal & Professional Info
+                </h5>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">First Name</label>
+                <div class="premium-input-group">
+                  {{ user_form.first_name }}
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Last Name</label>
+                <div class="premium-input-group">
+                  {{ user_form.last_name }}
+                </div>
+              </div>
+
+              <div class="col-md-8">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Specialty / Domain Expertise</label>
+                <div class="premium-input-group">
+                  {{ form.specialty }}
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Experience (Years)</label>
+                <div class="premium-input-group">
+                  {{ form.experience_years }}
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Biography / Background Brief</label>
+                {{ form.bio }}
+              </div>
+            </div>
+
+            <!-- Action Control Footers Row -->
+            <div class="d-flex flex-column-reverse flex-sm-row justify-content-md-end gap-2 gap-md-3 mt-5 pt-4 border-top mobile-buttons-flex">
+              {% if instructor %}
+                <a href="{% url 'instructor_detail' pk=instructor.id %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border w-100 w-md-auto transition-smooth">Cancel</a>
+              {% else %}
+                <a href="{% url 'instructor_list' %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border w-100 w-md-auto transition-smooth">Cancel</a>
+              {% endif %}
+
+              <button type="submit" class="btn btn-primary rounded-pill px-5 py-2.5 fw-bold w-100 w-md-auto text-nowrap transition-smooth btn-premium-action shadow-primary-matrix">
+                <i class="bi bi-check-circle-fill me-2"></i>Save Faculty Profile
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

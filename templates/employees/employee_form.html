@@ -1,0 +1,253 @@
+{# templates/employees/employee_form.html #}
+{% extends "base.html" %}
+{% block title %}
+    {% if employee %}Edit Employee — {{ employee.user.get_full_name|default:employee.user.username }}{% else %}Add New Employee{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+
+      <!--  Back Navigation Link Row -->
+      <div class="mb-4">
+        {% if request.user.is_superuser %}
+          <a href="{% url 'employee_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+            <i class="bi bi-arrow-left"></i> Back to Employees Directory
+          </a>
+        {% else %}
+          <a href="{% url 'dashboard_home' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Main Form Base Panel -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden premium-form-card">
+        <div style="height: 5px; background: linear-gradient(90deg, #1e5aa8 0%, #2b6cb0 100%);"></div>
+
+        <div class="card-body p-4 p-md-5">
+          <div class="border-bottom pb-4 mb-4">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-bold small mb-2 d-inline-flex align-items-center gap-1" style="background-color: rgba(13, 110, 253, 0.08) !important;">
+              <i class="bi bi-person-gear"></i> Human Resources Matrix
+            </span>
+            <h2 class="fw-bold text-dark mb-1 fs-3 fs-md-2" style="font-weight: 800; letter-spacing:-0.02em;">
+              {% if employee %}Edit Employee Profile{% else %}Create New Employee{% endif %}
+            </h2>
+            <p class="text-muted mb-0 small">
+              {% if employee %}
+                Update administrative account records and identity configurations for this system operative.
+              {% else %}
+                Fill in the secure credentials and deployment details below to register a new system employee node.
+              {% endif %}
+            </p>
+          </div>
+
+          <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger rounded-3 mb-4 border-0 shadow-sm d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                <div class="small">
+                  {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="row g-3 g-md-4">
+
+              <!-- ── SECTION 1: Account Credentials ── -->
+              <div class="col-12">
+                <h5 class="fw-bold border-bottom pb-2 mb-1 small text-uppercase" style="color:#5a6170; letter-spacing:.04em; border-color:#eef0f3 !important;">
+                  <i class="bi bi-shield-lock text-primary me-2"></i>Account Credentials
+                </h5>
+              </div>
+
+              <!-- Username -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Username *</label>
+                <div class="premium-input-group">
+                  {{ form.username }}
+                </div>
+                {% if form.username.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.username.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Email -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Email Address *</label>
+                <div class="premium-input-group">
+                  {{ form.email }}
+                </div>
+                {% if form.email.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.email.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Password -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">
+                  {% if employee %}Password <span class="text-muted fw-normal lowercase">(leave blank to preserve)</span>
+                  {% else %}Password *{% endif %}
+                </label>
+                <div class="premium-input-group">
+                  {{ form.password }}
+                </div>
+                {% if form.password.help_text and not employee %}
+                  <div class="form-text text-muted small mt-1" style="font-size:.75rem; line-height:1.4;">
+                    {{ form.password.help_text|safe }}
+                  </div>
+                {% endif %}
+                {% if form.password.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.password.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- ── SECTION 2: Personal Information ── -->
+              <div class="col-12 mt-4">
+                <h5 class="fw-bold border-bottom pb-2 mb-1 small text-uppercase" style="color:#5a6170; letter-spacing:.04em; border-color:#eef0f3 !important;">
+                  <i class="bi bi-person-badge text-primary me-2"></i>Personal Information
+                </h5>
+              </div>
+
+              <!-- First Name -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">First Name</label>
+                <div class="premium-input-group">
+                  {{ form.first_name }}
+                </div>
+                {% if form.first_name.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.first_name.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Last Name -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Last Name</label>
+                <div class="premium-input-group">
+                  {{ form.last_name }}
+                </div>
+                {% if form.last_name.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.last_name.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Phone Number -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Phone Number</label>
+                <div class="premium-input-group">
+                  {{ form.phone_number }}
+                </div>
+                {% if form.phone_number.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.phone_number.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- ── SECTION 3: Employment Details ── -->
+              <div class="col-12 mt-4">
+                <h5 class="fw-bold border-bottom pb-2 mb-1 small text-uppercase" style="color:#5a6170; letter-spacing:.04em; border-color:#eef0f3 !important;">
+                  <i class="bi bi-briefcase text-primary me-2"></i>Employment Specifications
+                </h5>
+              </div>
+
+              <!-- Department -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Department</label>
+                <div class="premium-input-group">
+                  {{ form.department }}
+                </div>
+                {% if form.department.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.department.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Job Title -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Job Title</label>
+                <div class="premium-input-group">
+                  {{ form.job_title }}
+                </div>
+                             
+              <!-- Job Title Errors Block -->
+              {% if form.job_title.errors %}
+                <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                  {{ form.job_title.errors|striptags }}
+                </div>
+              {% endif %}
+              </div> 
+              {% if request.user.is_superuser and form.salary %}
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Salary (USD)</label>
+                <div class="premium-input-group">
+                  {{ form.salary }}
+                </div>
+                {% if form.salary.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.salary.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+              {% endif %}
+
+              <!-- Hire Date -->
+              {% if form.hire_date %}
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Hire Date</label>
+                <div class="premium-input-group">
+                  {{ form.hire_date }}
+                </div>
+                {% if form.hire_date.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size:.8rem;">
+                    {{ form.hire_date.errors|striptags }}
+                  </div>
+                {% endif %}
+              </div>
+              {% endif %}
+
+            </div> <!-- Close Grid Row -->
+
+            <!-- Action Control Footers Row (Responsive Stacked Buttons on Mobile) -->
+            <div class="d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-2 gap-md-3 mt-5 pt-4 border-top">
+              
+             
+              {% if request.user.is_superuser %}
+                <a href="{% url 'employee_list' %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border w-100 w-sm-auto transition-smooth">Cancel</a>
+              {% else %}
+                <a href="{% url 'dashboard_home' %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border w-100 w-sm-auto transition-smooth">Cancel</a>
+              {% endif %}
+
+              <button type="submit" class="btn btn-primary rounded-pill px-5 py-2.5 fw-bold w-100 w-sm-auto text-nowrap transition-smooth btn-premium-action shadow-primary-matrix">
+                {% if employee %}
+                  <i class="bi bi-check-circle-fill me-2"></i>Save Employee Profile
+                {% else %}
+                  <i class="bi bi-person-plus-fill me-2"></i>Create Employee Account
+                {% endif %}
+              </button>
+            </div>
+
+          </form>
+        </div> 
+      </div> 
+
+    </div> 
+  </div> 
+</div> 
+{% endblock %}

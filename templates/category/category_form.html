@@ -1,0 +1,106 @@
+{# templates/category/category_form.html #}
+{% extends "base.html" %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Category{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+
+      <div class="mb-4">
+        <a href="{% url 'category_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+          <i class="bi bi-arrow-left"></i> Back to Categories Management
+        </a>
+      </div>
+
+      <!-- Form Card Component -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden premium-form-card">
+        
+        <!-- Premium Form Header Accent Bar -->
+        <div class="form-header-accent-instructor" style="height: 5px; background: linear-gradient(90deg, #1e5aa8 0%, #2b6cb0 100%);"></div>
+
+        <div class="card-body p-4 p-md-5">
+          
+          <div class="border-bottom pb-4 mb-4">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-bold small mb-2 d-inline-flex align-items-center gap-1" style="background-color: rgba(13, 110, 253, 0.08) !important;">
+              <i class="bi bi-tags-fill"></i> Taxonomy Classifier Module
+            </span>
+            <h2 class="fw-bold text-dark mb-1 fs-3 fs-md-2" style="font-weight: 800; letter-spacing: -0.02em;">
+              {% if form.instance.pk %}Edit Category Details{% else %}Add New Category{% endif %}
+            </h2>
+            <p class="text-muted mb-0 small">
+              {% if form.instance.pk %}
+                Update parameters for this specific course subject category structure.
+              {% else %}
+                Define a new thematic category classification to cluster educational training tracks.
+              {% endif %}
+            </p>
+          </div>
+
+          <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            <!-- Form Validation Messages Banner -->
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger rounded-3 mb-4 border-0 shadow-sm d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                <div class="small">
+                  {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="row g-3 g-md-4">
+
+              <!-- General Information Section Head -->
+              <div class="col-12">
+                <h5 class="fw-bold text-primary border-bottom pb-2 mb-2 small text-uppercase tracking-wider">
+                  <i class="bi bi-info-circle-fill me-2"></i>Category Properties
+                </h5>
+              </div>
+
+              {% for field in form %}
+                <div class="col-12">
+                  <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase tracking-wider mb-2" style="font-size: 0.75rem;">
+                    {{ field.label }} {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                  </label>
+                  
+                  <!-- Clean iconless input layout using the global architecture wrapper -->
+                  <div class="premium-input-group">
+                    {{ field }}
+                  </div>
+
+                  {% if field.help_text %}
+                    <div class="form-text text-muted small mt-1" style="font-size: 0.75rem; line-height: 1.4;">{{ field.help_text }}</div>
+                  {% endif %}
+                  
+                  {% if field.errors %}
+                    <div class="text-danger small mt-1 font-monospace" style="font-size: 0.8rem;">
+                      <i class="bi bi-x-circle me-1"></i>{{ field.errors|striptags }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+
+            </div>
+
+            <!-- Action Buttons Navigation Block -->
+            <div class="d-flex flex-column-reverse flex-sm-row justify-content-end gap-2 gap-sm-3 mt-5 pt-4 border-top">
+              <a href="{% url 'category_list' %}" 
+                 class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border w-100 w-sm-auto transition-smooth">
+                Cancel
+              </a>
+              <button type="submit" 
+                      class="btn btn-primary rounded-pill px-5 py-2.5 fw-bold w-100 w-sm-auto text-nowrap shadow-primary-matrix btn-premium-action transition-smooth">
+                <i class="bi bi-check-circle-fill me-2"></i>Save Category Properties
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

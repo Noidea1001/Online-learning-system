@@ -1,0 +1,261 @@
+{# templates/quizzes/quiz_result.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Results — {{ attempt.quiz.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/quizzes.css' %}">
+{% endblock %}
+
+{% block main_class %}container-fluid flex-grow-1{% endblock %}
+
+{% block content %}
+<div class="container res-container">
+
+  <!-- ── Page Header (Exam details at the top) ── -->
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-2">
+        {% if attempt.quiz.course %}
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle text-uppercase font-monospace" style="font-size: 0.65rem; padding: 3px 8px; border-radius: 4px;">
+            {{ attempt.quiz.course.title }}
+          </span>
+        {% endif %}
+        <span class="text-muted" style="font-size: 0.75rem; font-weight: 600;">Test Results</span>
+      </div>
+      <h1 class="page-title mb-1" style="font-size: 1.6rem; font-weight: 850; letter-spacing: -0.03em; color: var(--text, #0f172a);">
+        {{ attempt.quiz.title }}
+      </h1>
+      <p class="mb-0 text-muted" style="font-size: 0.8rem;">
+        Submitted on {{ attempt.submitted_at|date:"F d, Y" }} at {{ attempt.submitted_at|date:"H:i" }}
+        {% if attempt.is_auto_submitted %}
+          <span class="text-warning ms-1" style="font-weight: 600;">
+            <i class="bi bi-clock-history"></i> (Time Expired)
+          </span>
+        {% endif %}
+      </p>
+    </div>
+    <div class="flex-shrink-0">
+      {% if request.user.role == 'STUDENT' %}
+        <a href="{% url 'student_quiz_list' %}" class="res-back-btn" style="margin-bottom: 0;">
+          <i class="bi bi-arrow-left"></i> Back to My Tests
+        </a>
+      {% else %}
+        <a href="{% url 'quiz_detail' attempt.quiz.id %}" class="res-back-btn" style="margin-bottom: 0;">
+          <i class="bi bi-arrow-left"></i> Back to Overview
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ══ SCORE HERO CARD (Centered) ══ -->
+  <div class="score-hero">
+    <!-- Sliding colorful status banner -->
+    <div class="score-hero__banner
+      {% if attempt.needs_grading %}score-hero__banner--pending
+      {% elif attempt.passed == False %}score-hero__banner--fail
+      {% else %}score-hero__banner--pass{% endif %}">
+    </div>
+
+    <div class="score-hero__body">
+      <!-- Animated Score Gauge Ring -->
+      {% with score_val=attempt.score|floatformat:"0" %}
+        <div class="gauge-wrap">
+          <svg width="100%" height="100%" viewBox="0 0 140 140" class="gauge-svg">
+            <circle class="gauge-track" cx="70" cy="70" r="62"/>
+            <circle cx="70" cy="70" r="62"
+                    class="gauge-fill {% if attempt.needs_grading %}gauge-fill--pending{% elif attempt.passed == False %}gauge-fill--fail{% else %}gauge-fill--pass{% endif %}"
+                    id="scoreGaugeFill"
+                    stroke-dasharray="389.55"
+                    stroke-dashoffset="389.55"
+                    data-score="{{ score_val }}">
+            </circle>
+          </svg>
+          <div class="gauge-label">
+            <span class="gauge-val {% if attempt.needs_grading %}gauge-val--pending{% elif attempt.passed == False %}gauge-val--fail{% else %}gauge-val--pass{% endif %}">
+              {{ score_val }}%
+            </span>
+            <span class="gauge-sub">Score</span>
+          </div>
+        </div>
+      {% endwith %}
+
+      <!-- Status badge indicator -->
+      {% if attempt.needs_grading %}
+        <span class="status-tag status-tag--pending">
+          <i class="bi bi-hourglass-split"></i> Pending Grading
+        </span>
+      {% elif attempt.passed %}
+        <span class="status-tag status-tag--pass">
+          <i class="bi bi-check-circle-fill"></i> Passed
+        </span>
+      {% else %}
+        <span class="status-tag status-tag--fail">
+          <i class="bi bi-x-circle-fill"></i> Not Passed
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- 4-column stats strip at bottom of hero -->
+    <div class="stats-strip">
+      <div class="stat-item">
+        <div class="stat-item__val" style="color:var(--primary,#1e5aa8);">{{ attempt.score|floatformat:"-2" }}%</div>
+        <div class="stat-item__lbl">Score</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-item__val">{{ answers|length }}</div>
+        <div class="stat-item__lbl">Questions</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-item__val" style="color:var(--success,#2f855a);">{{ points_earned|floatformat:"-2" }}</div>
+        <div class="stat-item__lbl">Pts Earned</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-item__val" style="color:var(--text-muted,#64748b);">{{ attempt.quiz.total_points }}</div>
+        <div class="stat-item__lbl">Total Pts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DETAILED ANSWER REVIEW ══ -->
+  <div class="section-label">
+    <i class="bi bi-list-check text-primary"></i>
+    <span>Answer Review</span>
+  </div>
+
+  <div>
+    {% for answer in answers %}
+      {% if answer.question.question_type == 'SHORT_ANSWER' %}
+        <!-- ── Manually Graded Short Answer Card ── -->
+        <div class="rev-card {% if not answer.is_graded %}rev-card--pending{% elif answer.points_earned > 0 %}rev-card--correct{% else %}rev-card--wrong{% endif %}">
+          
+          <div class="rev-card__head">
+            <div class="d-flex align-items-start gap-2 flex-1" style="min-width:0;">
+              <span class="rev-card__num">Q{{ forloop.counter }}</span>
+              <h3 class="rev-card__qtext">{{ answer.question.text }}</h3>
+            </div>
+            
+            {% if not answer.is_graded %}
+              <span class="score-badge score-badge--pending"><i class="bi bi-hourglass-split"></i> Pending Grading</span>
+            {% elif answer.points_earned > 0 %}
+              <span class="score-badge score-badge--correct">
+                <i class="bi bi-check"></i> {{ answer.points_earned|floatformat:"-2" }}&thinsp;/&thinsp;{{ answer.question.points }} pts
+              </span>
+            {% else %}
+              <span class="score-badge score-badge--wrong">
+                <i class="bi bi-x"></i> 0&thinsp;/&thinsp;{{ answer.question.points }} pts
+              </span>
+            {% endif %}
+          </div>
+
+          <div class="rev-card__body">
+            <div class="response-box {% if not answer.text_answer %}response-box--empty{% endif %}">
+              {% if answer.text_answer %}{{ answer.text_answer|linebreaksbr }}{% else %}No answer submitted.{% endif %}
+            </div>
+          </div>
+        </div>
+
+      {% else %}
+        <!-- ── Auto Graded Choice Question Card ── -->
+        <div class="rev-card {% if answer.is_correct %}rev-card--correct{% elif answer.points_earned > 0 %}rev-card--partial{% else %}rev-card--wrong{% endif %}">
+          
+          <div class="rev-card__head">
+            <div class="d-flex align-items-start gap-2 flex-1" style="min-width:0;">
+              <span class="rev-card__num">Q{{ forloop.counter }}</span>
+              <h3 class="rev-card__qtext">{{ answer.question.text }}</h3>
+            </div>
+            
+            {% if answer.is_correct %}
+              <span class="score-badge score-badge--correct">
+                <i class="bi bi-check"></i> {{ answer.points_earned|floatformat:"-2" }} pts
+              </span>
+            {% elif answer.points_earned > 0 %}
+              <span class="score-badge score-badge--partial" title="Partial credit awarded">
+                <i class="bi bi-dash-circle"></i> {{ answer.points_earned|floatformat:"-2" }}&thinsp;/&thinsp;{{ answer.question.points }} pts
+              </span>
+            {% else %}
+              <span class="score-badge score-badge--wrong">
+                <i class="bi bi-x"></i> 0&thinsp;/&thinsp;{{ answer.question.points }} pts
+              </span>
+            {% endif %}
+          </div>
+
+          <div class="rev-card__body" style="counter-reset: option-counter;">
+            {% if answer.question.question_type == 'MULTIPLE' and answer.points_earned > 0 and not answer.is_correct %}
+              <div class="credit-alert">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>Partial credit: some, but not all, correct choices were selected.</span>
+              </div>
+            {% endif %}
+
+            <!-- Option choices loop -->
+            {% for choice in answer.question.choices.all %}
+              <div style="counter-increment: option-counter;">
+                {% if choice.is_correct %}
+                  <!-- CORRECT CHOICE -->
+                  <div class="opt-row opt-row--correct-choice mb-2">
+                    <span class="opt-icon"><i class="bi bi-check-circle-fill text-success"></i></span>
+                    <span class="opt-letter">{{ forloop.counter }}</span>
+                    <span class="opt-text fw-semibold" style="color:var(--success,#2f855a);">{{ choice.text }}</span>
+                    {% if choice in answer.selected_choices.all %}
+                      <span class="pick-tag pick-tag--correct">Your Pick ✓</span>
+                    {% endif %}
+                  </div>
+        
+                {% elif choice in answer.selected_choices.all %}
+                  <!-- USER'S WRONG CHOICE -->
+                  <div class="opt-row opt-row--wrong-choice">
+                    <span class="opt-icon"><i class="bi bi-x-circle-fill text-danger"></i></span>
+                    <span class="opt-letter">{{ forloop.counter }}</span>
+                    <span class="opt-text" style="color:var(--danger,#c53030);">{{ choice.text }}</span>
+                    <span class="pick-tag pick-tag--wrong">Your Pick ✗</span>
+                  </div>
+                {% else %}
+                  <!-- UNSELECTED NEUTRAL CHOICE -->
+                  <div class="opt-row opt-row--neutral-choice">
+                    <span class="opt-icon"><i class="bi bi-circle text-muted opacity-40"></i></span>
+                    <span class="opt-letter">{{ forloop.counter }}</span>
+                    <span class="opt-text">{{ choice.text }}</span>
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- ── Student Retry Trigger CTA ── -->
+  {% if request.user.role == 'STUDENT' and attempts_remaining > 0 %}
+    <div class="retry-container">
+      <p class="text-muted small mb-3">
+        You have <strong>{{ attempts_remaining }}</strong>
+        attempt{{ attempts_remaining|pluralize }} remaining for this test.
+      </p>
+      <a href="{% url 'quiz_take' attempt.quiz.id %}" class="retry-btn">
+        <i class="bi bi-arrow-repeat"></i> Take Test Again
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const fill = document.getElementById('scoreGaugeFill');
+  if (!fill) return;
+  const score = parseFloat(fill.dataset.score) || 0;
+  const circumference = 2 * Math.PI * 62; // r=62 -> 389.55
+  const offset = circumference * (1 - score / 100);
+  
+  requestAnimationFrame(function () {
+    setTimeout(function () {
+      fill.style.strokeDashoffset = offset;
+    }, 150);
+  });
+});
+</script>
+{% endblock %}

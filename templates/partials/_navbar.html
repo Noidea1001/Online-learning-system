@@ -1,0 +1,495 @@
+{% load static %}
+
+<!-- TOP HORIZONTAL BAR — fixed, full width, 64px tall -->
+<div class="ols-topbar" id="main-topbar" role="banner">
+
+  <div class="ols-topbar__left">
+    {% if request.user.is_authenticated %}
+    <!-- Hamburger — expands sidebar on desktop, opens drawer on mobile -->
+    <button class="ols-hamburger" id="sidebar-toggle-btn"
+            aria-label="Toggle navigation menu" aria-expanded="false"
+            type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+      </svg>
+    </button>
+    {% endif %}
+
+    <!-- OLS Brand Logo + Name -->
+    <a class="ols-brand" href="{% if request.user.is_authenticated %}{% url 'dashboard_home' %}{% else %}{% url 'home' %}{% endif %}" aria-label="Online Learning System Home">
+      <div class="ols-logo-box">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="11,2 19.5,5.5 11,9 2.5,5.5" fill="rgba(255,255,255,0.95)"/>
+          <path d="M3 7.5 C3 7.5 7 6 11 7 C15 6 19 7.5 19 7.5 L19 16 C19 16 15 15 11 16 C7 15 3 16 3 16 Z"
+                fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.9)" stroke-width="1.2" stroke-linejoin="round"/>
+          <line x1="11" y1="7" x2="11" y2="16" stroke="rgba(255,255,255,0.55)" stroke-width="1"/>
+          <line x1="19.5" y1="5.5" x2="19.5" y2="10.5" stroke="rgba(255,255,255,0.7)" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="19.5" cy="11" r="1.1" fill="rgba(255,255,255,0.85)"/>
+        </svg>
+      </div>
+      <div class="ols-brand__text">
+        <span class="ols-brand__name">Online Learning</span>
+        <span class="ols-brand__sub">System</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="ols-topbar__right">
+    {% if request.user.is_authenticated %}
+    <!-- Calendar quick action -->
+    <a href="{% url 'calendar_view' %}" class="ols-topbar__action-btn" title="Calendar" aria-label="Calendar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+        <polyline points="9 16 11 18 15 14"></polyline>
+      </svg>
+    </a>
+
+    <!-- Notifications Dropdown -->
+    <div class="dropdown">
+      <button class="ols-topbar__action-btn position-relative" type="button" id="navbarNotificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        {% if unread_notifications_count > 0 %}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; padding: 0.15em 0.4em; z-index: 5;">
+            {{ unread_notifications_count }}
+          </span>
+        {% endif %}
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end ols-notifications-dropdown" aria-labelledby="navbarNotificationsDropdown">
+        <li class="ols-notifications-dropdown__header">
+          <h6 class="ols-notifications-dropdown__title">Notifications</h6>
+          {% if unread_notifications_count > 0 %}
+            <a href="{% url 'mark_all_notifications_as_read' %}" class="ols-notifications-dropdown__clear-btn">Mark all read</a>
+          {% endif %}
+        </li>
+        <div class="ols-notifications-dropdown__list">
+          {% for notification in latest_notifications %}
+            <li>
+              <a href="{% url 'mark_notification_as_read' notification.pk %}" class="ols-notification-item {% if not notification.is_read %}ols-notification-item--unread{% endif %}">
+                <div class="ols-notification-item__icon {% if notification.notification_type == 'GRADE' %}ols-notification-item__icon--grade{% else %}ols-notification-item__icon--submission{% endif %}">
+                  {% if notification.notification_type == 'GRADE' %}
+                    <i class="bi bi-award-fill"></i>
+                  {% else %}
+                    <i class="bi bi-file-earmark-arrow-up-fill"></i>
+                  {% endif %}
+                </div>
+                <div class="ols-notification-item__content">
+                  <div class="ols-notification-item__title">{{ notification.title }}</div>
+                  <div class="ols-notification-item__desc">{{ notification.message }}</div>
+                  <span class="ols-notification-item__time">{{ notification.created_at|timesince }} ago</span>
+                </div>
+                {% if not notification.is_read %}
+                  <div class="ols-notification-item__unread-dot"></div>
+                {% endif %}
+              </a>
+            </li>
+          {% empty %}
+            <li class="text-center py-4 text-muted small">
+              <i class="bi bi-bell-slash d-block fs-3 opacity-30 mb-2"></i>
+              No notifications yet
+            </li>
+          {% endfor %}
+        </div>
+        <li class="ols-notifications-dropdown__footer">
+          <a href="{% url 'notifications_list' %}" class="ols-notifications-dropdown__view-all">
+            View All Notifications <i class="bi bi-arrow-right"></i>
+          </a>
+        </li>
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- User Avatar Dropdown -->
+    {% if request.user.is_authenticated %}
+    <div class="dropdown">
+      <button class="ols-topbar__avatar" type="button"
+              id="topbarUserDropdown" data-bs-toggle="dropdown"
+              aria-expanded="false" title="{{ request.user.username }}">
+        {% if request.user.avatar_url %}
+          <img src="{{ request.user.avatar_url }}" alt="{{ request.user.username }}" class="ols-topbar__avatar-img">
+        {% elif request.user.first_name %}{{ request.user.first_name|slice:":1"|upper }}{% if request.user.last_name %}{{ request.user.last_name|slice:":1"|upper }}{% endif %}
+        {% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end ols-user-dropdown" aria-labelledby="topbarUserDropdown">
+        <li class="ols-user-dropdown__header">
+          <span class="fw-bold">{{ request.user.get_full_name|default:request.user.username }}</span>
+          <span class="text-muted small">{{ request.user.email }}</span>
+        </li>
+        <li><a class="dropdown-item" href="{% url 'profile_edit' %}">
+          <i class="bi bi-person-gear me-2"></i>My Profile
+        </a></li>
+        <li><a class="dropdown-item" href="{% url 'dashboard_home' %}">
+          <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <form method="post" action="{% url 'logout' %}" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item text-danger fw-semibold">
+              <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+            </button>
+          </form>
+        </li>
+      </ul>
+    </div>
+    {% else %}
+    <a href="{% url 'login' %}" class="ols-topbar__action-btn" title="Sign In">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+        <polyline points="10 17 15 12 10 7"></polyline>
+        <line x1="15" y1="12" x2="3" y2="12"></line>
+      </svg>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if request.user.is_authenticated %}
+<!-- LEFT FIXED SIDEBAR — icon-only collapsed (70px), expands to 240px with full text on hamburger click -->
+<aside class="ols-sidebar" id="main-sidebar" aria-label="Main navigation">
+
+  <!-- Navigation links -->
+  <ul class="ols-nav-list" role="list">
+
+    {% if request.user.is_authenticated %}
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'dashboard_home' %}ols-nav-link--active{% endif %}"
+         href="{% url 'dashboard_home' %}" title="Dashboard">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Dashboard</span>
+      </a>
+    </li>
+    {% endif %}
+
+    {% if request.user.is_authenticated and request.user.role == 'STUDENT' %}
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'course_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'course_list' %}" title="Browse Courses">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Courses</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'student_submissions_dashboard' %}ols-nav-link--active{% endif %}"
+         href="{% url 'student_submissions_dashboard' %}" title="My Assignments">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Assignments</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if 'quiz' in request.resolver_match.url_name %}ols-nav-link--active{% endif %}"
+         href="{% url 'student_quiz_list' %}" title="My Tests">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+        </span>
+        <span class="ols-nav-label">My Tests</span>
+      </a>
+    </li>
+    {% endif %}
+
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'course_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'course_list' %}" title="Courses">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Courses</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'lesson_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'lesson_list' %}" title="Lessons">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Lessons</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'assignment_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'assignment_list' %}" title="Assignments">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1"></rect><line x1="9" y1="14" x2="15" y2="14"></line><line x1="9" y1="18" x2="15" y2="18"></line>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Assignments</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'submission_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'submission_list' %}" title="Submissions">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Submissions</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'quiz_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'quiz_list' %}" title="Quizzes">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Quizzes</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'enrollment_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'enrollment_list' %}" title="Enrollments">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>
+            <line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Enrollments</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'review_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'review_list' %}" title="Reviews">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Reviews</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'student_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'student_list' %}" title="Students">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Students</span>
+      </a>
+    </li>
+    {% endif %}
+
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'instructor_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'instructor_list' %}" title="Instructors">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M20 21a8 8 0 0 0-16 0"></path>
+            <line x1="12" y1="3" x2="12" y2="1"></line>
+            <path d="M8 12H4m16 0h-4"></path>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Instructors</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'category_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'category_list' %}" title="Categories">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Categories</span>
+      </a>
+    </li>
+    {% endif %}
+
+    {% if request.user.is_superuser %}
+    <li>
+      <a class="ols-nav-link {% if request.resolver_match.url_name == 'employee_list' %}ols-nav-link--active{% endif %}"
+         href="{% url 'employee_list' %}" title="Employees">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+            <line x1="17" y1="11" x2="22" y2="11"></line><line x1="19.5" y1="8.5" x2="19.5" y2="13.5"></line>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Employees</span>
+      </a>
+    </li>
+    <li>
+      <a class="ols-nav-link {% if 'adminpanel' in request.resolver_match.url_name %}ols-nav-link--active{% endif %}"
+         href="{% url 'adminpanel_home' %}" title="Admin Control">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Admin Control</span>
+      </a>
+    </li>
+    {% endif %}
+
+  </ul>
+
+  <!-- Bottom: Logout -->
+  <div class="ols-sidebar__bottom">
+    <form method="post" action="{% url 'logout' %}" class="m-0" id="ols-logout-form">
+      {% csrf_token %}
+      <button type="submit" class="ols-sidebar-btn" title="Sign Out">
+        <span class="ols-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </span>
+        <span class="ols-nav-label">Sign Out</span>
+      </button>
+    </form>
+  </div>
+</aside>
+
+<!-- MOBILE DRAWER — slides from left -->
+<div class="ols-drawer" id="navbar-drawer" aria-hidden="true">
+  <div class="ols-drawer__header">
+    <div>
+      <div class="ols-drawer__username">{{ request.user.get_full_name|default:request.user.username }}</div>
+      <div class="ols-drawer__role">{% if request.user.is_superuser %}Administrator{% else %}{{ request.user.role }}{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="ols-drawer__body">
+    <a class="ols-drawer__link" href="{% url 'dashboard_home' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    {% if request.user.role == 'STUDENT' %}
+    <a class="ols-drawer__link" href="{% url 'course_list' %}"><i class="bi bi-book"></i> Courses</a>
+    <a class="ols-drawer__link" href="{% url 'student_submissions_dashboard' %}"><i class="bi bi-list-check"></i> Assignments</a>
+    <a class="ols-drawer__link" href="{% url 'student_quiz_list' %}"><i class="bi bi-pencil-square"></i> My Tests</a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+    <a class="ols-drawer__link" href="{% url 'course_list' %}"><i class="bi bi-book"></i> Courses</a>
+    <a class="ols-drawer__link" href="{% url 'lesson_list' %}"><i class="bi bi-journal-text"></i> Lessons</a>
+    <a class="ols-drawer__link" href="{% url 'assignment_list' %}"><i class="bi bi-clipboard-check"></i> Assignments</a>
+    <a class="ols-drawer__link" href="{% url 'submission_list' %}"><i class="bi bi-check2-square"></i> Submissions</a>
+    <a class="ols-drawer__link" href="{% url 'quiz_list' %}"><i class="bi bi-question-circle"></i> Quizzes</a>
+    <a class="ols-drawer__link" href="{% url 'enrollment_list' %}"><i class="bi bi-person-plus"></i> Enrollments</a>
+    <a class="ols-drawer__link" href="{% url 'review_list' %}"><i class="bi bi-star-half"></i> Reviews</a>
+    <a class="ols-drawer__link" href="{% url 'student_list' %}"><i class="bi bi-people"></i> Students</a>
+    {% endif %}
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+    <a class="ols-drawer__link" href="{% url 'instructor_list' %}"><i class="bi bi-person-badge"></i> Instructors</a>
+    <a class="ols-drawer__link" href="{% url 'category_list' %}"><i class="bi bi-grid"></i> Categories</a>
+    {% endif %}
+    {% if request.user.is_superuser %}
+    <a class="ols-drawer__link" href="{% url 'employee_list' %}"><i class="bi bi-person-workspace"></i> Employees</a>
+    <a class="ols-drawer__link" href="{% url 'adminpanel_home' %}"><i class="bi bi-shield-lock"></i> Admin Control</a>
+    {% endif %}
+  </div>
+
+  <div class="ols-drawer__footer">
+    <form method="post" action="{% url 'logout' %}" class="m-0 w-100">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-danger w-100 py-2 fw-semibold">
+        <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+
+<script>
+  (function () {
+    // ── Sidebar expand/collapse (desktop) ──────────────────
+    function toggleSidebar(btn) {
+      var expanded = document.body.classList.toggle('ols-sidebar-expanded');
+      btn.setAttribute('aria-expanded', expanded);
+      try { localStorage.setItem('olsSidebarExpanded', expanded ? '1' : '0'); } catch(e) {}
+    }
+
+    // ── Mobile drawer ──────────────────────────────────────
+    function openDrawer() {
+      var drawer   = document.getElementById('navbar-drawer');
+      var backdrop = document.getElementById('drawer-backdrop');
+      if (!drawer) return;
+      drawer.classList.add('ols-drawer--open');
+      drawer.setAttribute('aria-hidden', 'false');
+      if (backdrop) { backdrop.style.display = 'block'; setTimeout(function(){ backdrop.classList.add('drawer-backdrop--visible'); }, 10); }
+    }
+    function closeDrawer() {
+      var drawer   = document.getElementById('navbar-drawer');
+      var backdrop = document.getElementById('drawer-backdrop');
+      if (!drawer) return;
+      drawer.classList.remove('ols-drawer--open');
+      drawer.setAttribute('aria-hidden', 'true');
+      if (backdrop) { backdrop.classList.remove('drawer-backdrop--visible'); setTimeout(function(){ backdrop.style.display = 'none'; }, 220); }
+    }
+    window.closeDrawer = closeDrawer;
+
+    // ── Hamburger click handler ────────────────────────────
+    var btn = document.getElementById('sidebar-toggle-btn');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (window.innerWidth >= 768) {
+          toggleSidebar(this);
+        } else {
+          var drawer = document.getElementById('navbar-drawer');
+          if (drawer && drawer.classList.contains('ols-drawer--open')) {
+            closeDrawer();
+          } else {
+            openDrawer();
+          }
+        }
+      });
+    }
+
+    // ── Restore saved sidebar state on desktop ─────────────
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.innerWidth >= 768 && document.getElementById('main-sidebar')) {
+        try {
+          if (localStorage.getItem('olsSidebarExpanded') === '1') {
+            document.body.classList.add('ols-sidebar-expanded');
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+          }
+        } catch(e) {}
+      }
+      // Mark active link by current URL
+      document.querySelectorAll('.ols-nav-link').forEach(function (link) {
+        if (link.getAttribute('href') === window.location.pathname) {
+          link.classList.add('ols-nav-link--active');
+        }
+      });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeDrawer();
+    });
+  })();
+</script>

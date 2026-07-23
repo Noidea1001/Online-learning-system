@@ -1,0 +1,101 @@
+{# templates/enrollments/enrollment_form.html #}
+{% extends "base.html" %}
+{% block title %}Edit Enrollment{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+      
+      <!-- Back Link Navigation -->
+      <div class="mb-4">
+        <a href="{% url 'enrollment_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+          <i class="bi bi-arrow-left"></i> Back to Enrollments Directory
+        </a>
+      </div>
+
+      <!-- Form Card Component -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden premium-form-card">
+        
+        <!-- Premium Form Header Accent Bar (Blue/Cyan Gradient) -->
+        <div class="form-header-accent-enrollment" style="height: 5px; background: linear-gradient(90deg, #1e5aa8 0%, #2b6cb0 100%);"></div>
+
+        <div class="card-body p-4 p-md-5">
+          
+          <div class="border-bottom pb-4 mb-4">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-bold small mb-2 d-inline-flex align-items-center gap-1" style="background-color: rgba(13, 110, 253, 0.08) !important;">
+              <i class="bi bi-person-check-fill"></i> Registrations & Access Control
+            </span>
+            <h3 class="fw-bold text-dark mb-1" style="font-weight: 800; letter-spacing: -0.02em;">Modify Enrollment</h3>
+            <p class="text-muted small mb-0">Update mapping logs between active student candidates and training program courses.</p>
+          </div>
+
+          <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger rounded-3 border-0 small mb-4 shadow-sm d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                <div class="small">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+              </div>
+            {% endif %}
+
+            <!-- Field: Student Container Mapping -->
+            <div class="mb-4">
+              <label for="{{ form.student.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase tracking-wider mb-2" style="font-size: 0.75rem;">Assigned Student *</label>
+              <div class="premium-input-group">
+                {{ form.student }}
+              </div>
+              {% if form.student.errors %}
+                <div class="text-danger small mt-1 font-monospace" style="font-size: 0.8rem;">{{ form.student.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Field: Course Container Mapping -->
+            <div class="mb-4">
+              <label for="{{ form.course.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase tracking-wider mb-2" style="font-size: 0.75rem;">Enrolled Course *</label>
+              <div class="premium-input-group">
+                {{ form.course }}
+              </div>
+              {% if form.course.errors %}
+                <div class="text-danger small mt-1 font-monospace" style="font-size: 0.8rem;">{{ form.course.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Field: Payment Status Matrix Box -->
+            <div class="mb-4">
+              <div class="p-3 rounded-3 border d-flex align-items-center justify-content-between transition-smooth" style="background: rgba(13,110,253,0.02); border-color: rgba(13,110,253,0.12) !important;">
+                <div>
+                  <label class="form-check-label fw-bold text-dark mb-0 small" style="cursor: pointer; user-select: none;" for="id_is_paid">
+                    Payment Completed
+                  </label>
+                  <div class="text-muted small mt-0.5" style="font-size: 0.75rem;">Designate whether the course license fee transaction is cleared</div>
+                </div>
+                <div class="form-check form-switch m-0" style="transform: scale(1.15);">
+                  {{ form.is_paid }}
+                </div>
+              </div>
+              {% if form.is_paid.errors %}
+                <div class="text-danger small mt-1 font-monospace" style="font-size: 0.8rem;">{{ form.is_paid.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Operational Core Buttons Footer -->
+            <div class="d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-2 gap-sm-3 mt-5 pt-4 border-top mobile-buttons-flex">
+              <a href="{% url 'enrollment_list' %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border w-100 w-sm-auto transition-smooth">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-primary rounded-pill px-5 py-2.5 fw-bold w-100 w-sm-auto text-nowrap shadow-primary-matrix btn-premium-action transition-smooth">
+                <i class="bi bi-check-circle-fill me-2"></i>Save Enrollment Changes
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

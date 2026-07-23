@@ -1,0 +1,10 @@
+{# templates/partials/_confirm_delete.html #}
+<div class="container py-2">
+  <h2 class="text-danger">Delete {{ object_label }}?</h2>
+  <p>{{ description }}</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Confirm</button>
+    <a href="{{ cancel_url }}" class="btn btn-link">Cancel</a>
+  </form>
+</div>

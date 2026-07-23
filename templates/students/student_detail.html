@@ -1,0 +1,286 @@
+{# templates/students/student_detail.html #}
+{% extends "base.html" %}
+{% block title %}Student Details — {{ student.user.get_full_name|default:student.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-md-4 px-xl-5 py-1 min-vh-100">
+
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb mb-0 px-1">
+      {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+        <li class="breadcrumb-item"><a href="{% url 'student_list' %}" class="text-decoration-none text-secondary"><i class="bi bi-people me-1"></i>Directory</a></li>
+      {% else %}
+        <li class="breadcrumb-item"><a href="{% url 'dashboard_home' %}" class="text-decoration-none text-secondary"><i class="bi bi-house-door me-1"></i>Dashboard</a></li>
+      {% endif %}
+      <li class="breadcrumb-item active text-dark fw-medium" aria-current="page">{{ student.user.get_full_name|default:student.user.username }}</li>
+    </ol>
+  </nav>
+
+  <!-- 1. ENTERPRISE PROFILE HEADER BANNER -->
+  <div class="card border border-light-subtle shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
+    <div class="card-body p-4 p-md-5">
+      <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-4">
+        
+        <!-- Avatar Placement -->
+        <div class="flex-shrink-0">
+          {% if student.user.avatar_url %}
+            <img src="{{ student.user.avatar_url }}" alt="{{ student.user.username }}" class="shadow-sm border border-3 border-white rounded-circle object-fit-cover" style="width: 110px; height: 110px;">
+          {% else %}
+            <div class="bg-primary bg-opacity-10 text-primary shadow-sm d-flex align-items-center justify-content-center fw-bold rounded-circle border border-3 border-white" style="width: 110px; height: 110px; font-size: 2.5rem;">
+              {% if student.user.first_name and student.user.last_name %}
+                {{ student.user.first_name|slice:":1"|upper }}{{ student.user.last_name|slice:":1"|upper }}
+              {% else %}
+                {{ student.user.username|slice:":2"|upper }}
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Student High-Level Overview -->
+        <div class="flex-grow-1 text-center text-md-start mb-3 mb-md-0">
+          <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-3 mb-2">
+            <h1 class="fw-bold text-dark mb-0 h2" style="font-weight: 800; letter-spacing: -0.01em;">{{ student.user.get_full_name|default:student.user.username }}</h1>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-semibold small">
+              <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Active Enrolled
+            </span>
+          </div>
+          
+          <p class="text-secondary mb-3 fs-5 fw-medium">
+            Academic Learner <span class="text-muted mx-2">•</span> <span class="text-dark">Student Portal</span>
+          </p>
+
+          <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-3 text-muted small">
+            <span><i class="bi bi-envelope me-1.5"></i>{{ student.user.email|default:"—" }}</span>
+            <span><i class="bi bi-telephone me-1.5"></i>{{ student.user.phone_number|default:"—" }}</span>
+            <span><i class="bi bi-calendar-check me-1.5"></i>Joined: {{ student.enrolled_date|date:"d M Y" }}</span>
+          </div>
+        </div>
+
+        <!-- Control Action Panel -->
+        {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or student.user == request.user %}
+        <div class="d-flex gap-2 align-self-center align-self-md-start">
+          <a href="{% url 'student_update' student.id %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm btn-icon" title="Edit Profile"><i class="bi bi-pencil"></i></a>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. BALANCED TWO-COLUMN DASHBOARD LAYOUT -->
+  <div class="row g-4">
+    
+    <!-- LEFT SIDE: Profile Information Grid (រចនាបថ Primary Details ដូច Employee) -->
+    <div class="col-lg-5">
+      <div class="card border border-light-subtle shadow-sm rounded-4 bg-white mb-4">
+        <div class="card-header bg-white border-bottom p-4">
+          <ul class="nav nav-tabs card-header-tabs border-0">
+            <li class="nav-item">
+              <button class="nav-link active fw-bold text-dark border-0 pb-3 position-relative" type="button">
+                <i class="bi bi-file-earmark-person me-2"></i>Primary Details
+              </button>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="card-body p-4 p-md-5">
+          
+          <div class="d-none d-md-block">
+            <div class="row g-4">
+              <div class="col-12 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="letter-spacing: .05em; font-size: 0.72rem;">Legal Full Name</label>
+                <p class="fs-5 text-dark fw-semibold mb-0">{{ student.user.get_full_name|default:student.user.username }}</p>
+              </div>
+
+              <div class="col-12 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="letter-spacing: .05em; font-size: 0.72rem;">System Directory Alias</label>
+                <p class="fs-5 text-secondary mb-0">@{{ student.user.username }}</p>
+              </div>
+
+              <div class="col-12 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="letter-spacing: .05em; font-size: 0.72rem;">Official Registration Date</label>
+                <p class="fs-5 text-dark mb-0"><i class="bi bi-calendar-check me-2 text-muted"></i>{{ student.enrolled_date|date:"d F Y"|default:"—" }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-block d-md-none">
+            <div class="d-flex flex-column gap-3">
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Full Name</span>
+                <span class="fw-bold text-dark text-end" style="font-size: 0.88rem;">{{ student.user.get_full_name|default:student.user.username }}</span>
+              </div>
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Username</span>
+                <span class="fw-semibold text-secondary text-end" style="font-size: 0.85rem;">@{{ student.user.username }}</span>
+              </div>
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Joined Date</span>
+                <span class="text-dark fw-semibold text-end" style="font-size: 0.85rem;">{{ student.enrolled_date|date:"d M Y" }}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card border border-light-subtle shadow-sm rounded-4 bg-white mb-4 d-flex flex-column">
+        
+        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5 class="fw-bold text-dark mb-0">
+            <i class="bi bi-journal-stack text-primary me-2"></i>Curriculum Tasks Matrix
+          </h5>
+          <span class="badge bg-light text-dark border border-secondary border-opacity-25 rounded-pill px-3 py-2 fw-semibold shadow-sm">
+            Total: <span class="text-primary fw-bold">{{ student_submissions.count }}</span> Task{{ student_submissions.count|pluralize }}
+          </span>
+        </div>
+
+        <div class="card-body p-0 flex-grow-1 d-flex flex-column">
+          {% if student_submissions %}
+            
+            <div class="d-none d-md-block table-responsive w-100 m-0 p-0 list-scroll">
+              <table class="table align-middle table-hover text-nowrap mb-0">
+                <thead class="table-light border-bottom">
+                  <tr class="small fw-bold text-secondary text-uppercase tracking-wider">
+                    <th class="py-3 ps-4">Assignment Target</th>
+                    <th class="py-3 px-3">Course Module</th>
+                    <th class="py-3 px-3">Evaluation</th>
+                    <th class="py-3 px-3">Timeline</th>
+                    <th class="text-end py-3 pe-4">Action/Feedback</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for submission in student_submissions %}
+                  <tr class="border-bottom border-light">
+                    <!-- Assignment Target -->
+                    <td class="py-3 ps-4">
+                      <span class="fw-bold text-dark" style="font-size: 0.9rem;">{{ submission.assignment.title }}</span>
+                      <small class="text-muted d-block" style="font-size: 0.75rem;">ID: #{{ submission.id }}</small>
+                    </td>
+                    
+                    <!-- Course Module -->
+                    <td class="py-3 px-3">
+                      <span class="fw-semibold text-dark d-block" style="font-size: 0.85rem;">{{ submission.assignment.lesson.title }}</span>
+                      <small class="text-muted d-block small"><i class="bi bi-folder2 me-1 text-secondary"></i>{{ submission.assignment.lesson.course.title }}</small>
+                    </td>
+                    
+                    <!-- Evaluation Status -->
+                    <td class="py-3 px-3">
+                      {% if submission.grade is not null %}
+                        <span class="badge rounded-pill fw-bold bg-success bg-opacity-10 text-success px-3 py-2" style="font-size: 0.75rem;">{{ submission.grade }} / 100</span>
+                      {% else %}
+                        <span class="badge rounded-pill fw-bold bg-warning bg-opacity-10 text-warning px-3 py-2" style="font-size: 0.75rem;">Pending</span>
+                      {% endif %}
+                    </td>
+                    
+                    <!-- Timeline -->
+                    <td class="py-3 px-3">
+                      <span class="text-secondary fw-semibold small">{{ submission.submitted_at|date:"d M Y" }}</span>
+                    </td>
+                    
+                    <!-- Actions -->
+                    <td class="py-3 pe-4 text-end">
+                      {% if submission.grade is not null and submission.feedback %}
+                        <button type="button" class="btn btn-sm btn-white border border-secondary border-opacity-25 rounded-pill px-3 fw-semibold text-secondary" data-bs-toggle="popover" data-bs-placement="left" title="Instructor Feedback Note" data-bs-content="{{ submission.feedback }}" style="font-size: 0.75rem;">View Note</button>
+                      {% else %}
+                        {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+                          <a href="{% url 'submission_detail' submission.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" style="font-size: 0.75rem;">Audit</a>
+                        {% else %}
+                          <span class="badge bg-light text-secondary border border-secondary border-opacity-10 rounded-pill px-2.5 py-1.5 fw-medium" style="font-size: 0.75rem;">Reviewing</span>
+                        {% endif %}
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div> <!-- Close Desktop Table responsive -->
+
+            <div class="d-block d-md-none p-3 list-scroll">
+              {% for submission in student_submissions %}
+                <div class="card border border-light shadow-sm rounded-3 mb-3 p-3 bg-white">
+                  
+                  <!-- ID Row -->
+                  <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;"># Task ID</span>
+                    <span class="badge bg-light text-dark border px-2 py-1 small fw-bold rounded">{{ submission.id }}</span>
+                  </div>
+
+                  <!-- Assignment Target -->
+                  <div class="d-flex justify-content-between align-items-start mb-3 gap-2">
+                    <span class="text-secondary small fw-bold text-uppercase pt-1" style="font-size: 0.72rem; letter-spacing: 0.05em; width: 40%;">Assignment</span>
+                    <span class="fw-bold text-dark text-end" style="width: 60%; font-size: 0.88rem;">{{ submission.assignment.title }}</span>
+                  </div>
+
+                  <!-- Course Module -->
+                  <div class="d-flex justify-content-between align-items-start mb-3 gap-2">
+                    <span class="text-secondary small fw-bold text-uppercase pt-1" style="font-size: 0.72rem; letter-spacing: 0.05em; width: 40%;">Course Module</span>
+                    <div class="text-end" style="width: 60%;">
+                      <span class="fw-semibold text-secondary d-block" style="font-size: 0.82rem;">{{ submission.assignment.lesson.title }}</span>
+                      <small class="text-muted d-block" style="font-size: 0.75rem;"><i class="bi bi-folder2 me-1"></i>{{ submission.assignment.lesson.course.title }}</small>
+                    </div>
+                  </div>
+
+                  <!-- Evaluation -->
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Evaluation</span>
+                    {% if submission.grade is not null %}
+                      <span class="badge rounded-pill fw-bold bg-success bg-opacity-10 text-success px-2.5 py-1.5" style="font-size: 0.75rem;">{{ submission.grade }} / 100</span>
+                    {% else %}
+                      <span class="badge rounded-pill fw-bold bg-warning bg-opacity-10 text-warning px-2.5 py-1.5" style="font-size: 0.75rem;">Pending</span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Timeline -->
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Timeline</span>
+                    <span class="text-dark fw-medium small"><i class="bi bi-calendar3 me-1.5 text-muted"></i>{{ submission.submitted_at|date:"d M Y" }}</span>
+                  </div>
+
+                  <!-- Actions Trigger Row -->
+                  <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
+                    <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">Actions</span>
+                    <div>
+                      {% if submission.grade is not null and submission.feedback %}
+                        <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-secondary" data-bs-toggle="popover" data-bs-placement="left" title="Feedback Note" data-bs-content="{{ submission.feedback }}" style="font-size: 0.75rem;">View Note</button>
+                      {% else %}
+                        {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+                          <a href="{% url 'submission_detail' submission.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" style="font-size: 0.75rem;">Audit</a>
+                        {% else %}
+                          <span class="badge bg-light text-secondary border border-secondary border-opacity-10 rounded-pill px-2.5 py-1.5 fw-medium" style="font-size: 0.75rem;">Reviewing</span>
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                  </div>
+
+                </div>
+              {% endfor %}
+            </div>
+            
+          {% else %}
+            <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center p-5">
+              <div class="mb-3 d-flex align-items-center justify-content-center rounded-circle bg-light text-muted border border-dashed" style="width: 64px; height: 64px;">
+                <i class="bi bi-inbox fs-3"></i>
+              </div>
+              <h6 class="fw-bold text-dark mb-1">No Active Submissions</h6>
+              <p class="text-muted small mx-auto mb-0" style="max-width: 280px;">This student record currently holds zero compiled tasks.</p>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div> 
+  </div> 
+</div> 
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl);
+    });
+  });
+</script>
+{% endblock %}

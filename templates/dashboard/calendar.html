@@ -1,0 +1,507 @@
+{# templates/dashboard/calendar.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Calendar — Online Learning System{% endblock %}
+{% block main_class %}flex-grow-1 p-0{% endblock %}
+
+{% block content %}
+<div class="db-shell">
+  <main class="db-main">
+
+    <!-- ── Topbar ─────────────────────────────────────── -->
+    <div class="db-topbar">
+      <div class="db-topbar__left">
+        <h1><i class="bi bi-calendar3 me-2" style="font-size:1.3rem;"></i>Calendar</h1>
+        <div class="db-topbar__meta">
+          <span class="db-topbar__date">
+            <i class="bi bi-clock"></i>
+            {% now "l, F j, Y" %}
+          </span>
+        </div>
+      </div>
+      <div class="db-topbar__actions">
+        <a href="{% url 'dashboard_home' %}" class="db-btn db-btn--ghost">
+          <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- ── Calendar Container ──────────────────────────── -->
+    <div class="cal-container">
+
+      <!-- Calendar Header -->
+      <div class="cal-header">
+        <div class="cal-header__nav">
+          <button class="cal-nav-btn" id="calPrev" title="Previous month">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <h2 class="cal-header__title" id="calTitle">July 2026</h2>
+          <button class="cal-nav-btn" id="calNext" title="Next month">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+          <button class="cal-today-btn" id="calToday">Today</button>
+        </div>
+
+        <div class="cal-header__controls">
+          <!-- Filter pills -->
+          <div class="cal-filters">
+            <button class="cal-filter cal-filter--active" data-filter="all">
+              <i class="bi bi-grid-3x3-gap-fill"></i> All
+            </button>
+            <button class="cal-filter" data-filter="assignment">
+              <i class="bi bi-file-earmark-text"></i> Assignments
+            </button>
+            <button class="cal-filter" data-filter="quiz">
+              <i class="bi bi-ui-checks-grid"></i> Quizzes
+            </button>
+          </div>
+
+          <!-- View mode toggle -->
+          <div class="cal-view-toggle">
+            <button class="cal-view-btn cal-view-btn--active" data-view="month" title="Month View">
+              <i class="bi bi-calendar-month"></i>
+            </button>
+            <button class="cal-view-btn" data-view="agenda" title="Agenda View">
+              <i class="bi bi-list-ul"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="cal-legend">
+        <div class="cal-legend__item">
+          <span class="cal-legend__dot cal-legend__dot--assignment"></span>
+          Assignment
+        </div>
+        <div class="cal-legend__item">
+          <span class="cal-legend__dot cal-legend__dot--quiz"></span>
+          Quiz / Test
+        </div>
+        <div class="cal-legend__item">
+          <span class="cal-legend__dot cal-legend__dot--graded"></span>
+          Graded
+        </div>
+        <div class="cal-legend__item">
+          <span class="cal-legend__dot cal-legend__dot--overdue"></span>
+          Overdue
+        </div>
+      </div>
+
+      <!-- Month Grid View -->
+      <div class="cal-month" id="calMonth">
+        <div class="cal-weekdays">
+          <div class="cal-weekday">Sun</div>
+          <div class="cal-weekday">Mon</div>
+          <div class="cal-weekday">Tue</div>
+          <div class="cal-weekday">Wed</div>
+          <div class="cal-weekday">Thu</div>
+          <div class="cal-weekday">Fri</div>
+          <div class="cal-weekday">Sat</div>
+        </div>
+        <div class="cal-grid" id="calGrid">
+          <!-- JS will render day cells here -->
+        </div>
+      </div>
+
+      <!-- Agenda View -->
+      <div class="cal-agenda" id="calAgenda" style="display:none;">
+        <div class="cal-agenda__list" id="calAgendaList">
+          <!-- JS will render agenda items here -->
+        </div>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="cal-stats">
+        <div class="cal-stats__item">
+          <div class="cal-stats__icon cal-stats__icon--total"><i class="bi bi-calendar-event"></i></div>
+          <div class="cal-stats__info">
+            <span class="cal-stats__val" id="statTotal">0</span>
+            <span class="cal-stats__label">Total Events</span>
+          </div>
+        </div>
+        <div class="cal-stats__item">
+          <div class="cal-stats__icon cal-stats__icon--pending"><i class="bi bi-hourglass-split"></i></div>
+          <div class="cal-stats__info">
+            <span class="cal-stats__val" id="statPending">0</span>
+            <span class="cal-stats__label">Pending</span>
+          </div>
+        </div>
+        <div class="cal-stats__item">
+          <div class="cal-stats__icon cal-stats__icon--graded"><i class="bi bi-check-circle-fill"></i></div>
+          <div class="cal-stats__info">
+            <span class="cal-stats__val" id="statGraded">0</span>
+            <span class="cal-stats__label">Graded</span>
+          </div>
+        </div>
+        <div class="cal-stats__item">
+          <div class="cal-stats__icon cal-stats__icon--overdue"><i class="bi bi-exclamation-triangle-fill"></i></div>
+          <div class="cal-stats__info">
+            <span class="cal-stats__val" id="statOverdue">0</span>
+            <span class="cal-stats__label">Overdue</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.cal-container -->
+
+  </main>
+</div>
+
+<!-- ── Event Detail Modal ──────────────────────────────── -->
+<div class="cal-modal-overlay" id="calModalOverlay">
+  <div class="cal-modal" id="calModal">
+    <button class="cal-modal__close" id="calModalClose"><i class="bi bi-x-lg"></i></button>
+    <div class="cal-modal__icon" id="calModalIcon"></div>
+    <h3 class="cal-modal__title" id="calModalTitle"></h3>
+    <div class="cal-modal__meta" id="calModalMeta"></div>
+    <div class="cal-modal__details">
+      <div class="cal-modal__row">
+        <span class="cal-modal__label"><i class="bi bi-book me-1"></i> Course</span>
+        <span class="cal-modal__value" id="calModalCourse"></span>
+      </div>
+      <div class="cal-modal__row">
+        <span class="cal-modal__label"><i class="bi bi-calendar-event me-1"></i> Due Date</span>
+        <span class="cal-modal__value" id="calModalDate"></span>
+      </div>
+      <div class="cal-modal__row">
+        <span class="cal-modal__label"><i class="bi bi-clock me-1"></i> Time</span>
+        <span class="cal-modal__value" id="calModalTime"></span>
+      </div>
+      <div class="cal-modal__row" id="calModalScoreRow" style="display:none;">
+        <span class="cal-modal__label"><i class="bi bi-trophy me-1"></i> Score</span>
+        <span class="cal-modal__value" id="calModalScore"></span>
+      </div>
+    </div>
+    <div class="cal-modal__status" id="calModalStatus"></div>
+    <a href="#" class="cal-modal__action" id="calModalAction" style="display:none;">
+      <i class="bi bi-arrow-right-circle me-1"></i>
+      <span id="calModalActionText">Take Action</span>
+    </a>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── Data ──────────────────────────────────────────
+  const ALL_EVENTS = JSON.parse('{{ events_json|escapejs }}');
+  const TODAY = '{{ today }}';
+  let currentYear = '{{ current_year }}';
+  let currentMonth = '{{ current_month }}';
+  let activeFilter = 'all';
+  let activeView = 'month';
+
+  // ── DOM refs ──────────────────────────────────────
+  const $title    = document.getElementById('calTitle');
+  const $grid     = document.getElementById('calGrid');
+  const $month    = document.getElementById('calMonth');
+  const $agenda   = document.getElementById('calAgenda');
+  const $aList    = document.getElementById('calAgendaList');
+  const $overlay  = document.getElementById('calModalOverlay');
+  const $modal    = document.getElementById('calModal');
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // ── Helpers ───────────────────────────────────────
+  function filtered() {
+    if (activeFilter === 'all') return ALL_EVENTS;
+    return ALL_EVENTS.filter(e => e.type === activeFilter);
+  }
+
+  function eventsOnDate(dateStr) {
+    return filtered().filter(e => e.date === dateStr);
+  }
+
+  function statusLabel(s) {
+    const m = {pending:'Pending', submitted:'Submitted', graded:'Graded', overdue:'Overdue'};
+    return m[s] || s;
+  }
+
+  function statusClass(s) {
+    return 'cal-status--' + s;
+  }
+
+  function typeIcon(type) {
+    return type === 'quiz'
+      ? '<i class="bi bi-ui-checks-grid"></i>'
+      : '<i class="bi bi-file-earmark-text"></i>';
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  // ── Render Month Grid ─────────────────────────────
+  function renderMonth() {
+    $title.textContent = MONTHS[currentMonth - 1] + ' ' + currentYear;
+
+    const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    const daysInPrev = new Date(currentYear, currentMonth - 1, 0).getDate();
+
+    let html = '';
+
+    // Previous month trailing days
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const day = daysInPrev - i;
+      html += `<div class="cal-day cal-day--outside"><span class="cal-day__num">${day}</span></div>`;
+    }
+
+    // Current month days
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = dateStr === TODAY;
+      const dayEvents = eventsOnDate(dateStr);
+      const hasEvents = dayEvents.length > 0;
+
+      let cls = 'cal-day';
+      if (isToday) cls += ' cal-day--today';
+      if (hasEvents) cls += ' cal-day--has-events';
+
+      html += `<div class="${cls}" data-date="${dateStr}">`;
+      html += `<span class="cal-day__num">${d}</span>`;
+
+      if (hasEvents) {
+        const maxShow = 3;
+        dayEvents.slice(0, maxShow).forEach(ev => {
+          html += `<div class="cal-chip cal-chip--${ev.type} cal-chip--s-${ev.status}" data-eid="${ev.id}" title="${ev.title}">`;
+          html += `<span class="cal-chip__dot"></span>`;
+          html += `<span class="cal-chip__text">${ev.title}</span>`;
+          html += `</div>`;
+        });
+        if (dayEvents.length > maxShow) {
+          html += `<div class="cal-chip cal-chip--more">+${dayEvents.length - maxShow} more</div>`;
+        }
+      }
+
+      html += `</div>`;
+    }
+
+    // Next month leading days
+    const totalCells = firstDay + daysInMonth;
+    const remainder = totalCells % 7;
+    if (remainder > 0) {
+      for (let i = 1; i <= 7 - remainder; i++) {
+        html += `<div class="cal-day cal-day--outside"><span class="cal-day__num">${i}</span></div>`;
+      }
+    }
+
+    $grid.innerHTML = html;
+
+    // Attach click handlers to chips and day cells
+    $grid.querySelectorAll('.cal-chip[data-eid]').forEach(chip => {
+      chip.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const ev = ALL_EVENTS.find(x => x.id === this.dataset.eid);
+        if (ev) openModal(ev);
+      });
+    });
+
+    $grid.querySelectorAll('.cal-day.cal-day--has-events').forEach(cell => {
+      cell.addEventListener('click', function(e) {
+        const dateStr = this.dataset.date;
+        const dayEvents = eventsOnDate(dateStr);
+        if (dayEvents.length > 0) {
+          openModal(dayEvents[0]);
+        }
+      });
+    });
+
+    updateStats();
+  }
+
+  // ── Render Agenda View ────────────────────────────
+  function renderAgenda() {
+    $title.textContent = MONTHS[currentMonth - 1] + ' ' + currentYear;
+    const events = filtered().filter(e => {
+      if (!e.date) return false;
+      const parts = e.date.split('-');
+      return parseInt(parts[0]) === currentYear && parseInt(parts[1]) === currentMonth;
+    }).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+    if (events.length === 0) {
+      $aList.innerHTML = `
+        <div class="cal-agenda__empty">
+          <div class="cal-agenda__empty-icon"><i class="bi bi-calendar-x"></i></div>
+          <h4>No Events This Month</h4>
+          <p>There are no assignments or quizzes scheduled for this period.</p>
+        </div>`;
+      updateStats();
+      return;
+    }
+
+    // Group by date
+    const grouped = {};
+    events.forEach(ev => {
+      if (!grouped[ev.date]) grouped[ev.date] = [];
+      grouped[ev.date].push(ev);
+    });
+
+    let html = '';
+    Object.keys(grouped).sort().forEach(dateStr => {
+      const dayEvents = grouped[dateStr];
+      const isToday = dateStr === TODAY;
+
+      html += `<div class="cal-agenda__day ${isToday ? 'cal-agenda__day--today' : ''}">`;
+      html += `<div class="cal-agenda__date">`;
+      html += `<span class="cal-agenda__date-num">${new Date(dateStr + 'T00:00:00').getDate()}</span>`;
+      html += `<span class="cal-agenda__date-label">${new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short' })}</span>`;
+      if (isToday) html += `<span class="cal-agenda__today-badge">Today</span>`;
+      html += `</div>`;
+
+      html += `<div class="cal-agenda__events">`;
+      dayEvents.forEach(ev => {
+        html += `<div class="cal-agenda__event cal-agenda__event--${ev.type}" data-eid="${ev.id}">`;
+        html += `<div class="cal-agenda__event-stripe cal-agenda__event-stripe--${ev.status}"></div>`;
+        html += `<div class="cal-agenda__event-body">`;
+        html += `<div class="cal-agenda__event-top">`;
+        html += `<span class="cal-agenda__event-icon">${typeIcon(ev.type)}</span>`;
+        html += `<span class="cal-agenda__event-title">${ev.title}</span>`;
+        html += `<span class="cal-badge cal-badge--${ev.status}">${statusLabel(ev.status)}</span>`;
+        html += `</div>`;
+        html += `<div class="cal-agenda__event-bottom">`;
+        html += `<span class="cal-agenda__event-course"><i class="bi bi-book me-1"></i>${ev.course}</span>`;
+        if (ev.time) html += `<span class="cal-agenda__event-time"><i class="bi bi-clock me-1"></i>${ev.time}</span>`;
+        if (ev.score) html += `<span class="cal-agenda__event-score"><i class="bi bi-trophy me-1"></i>${ev.score}</span>`;
+        html += `</div>`;
+        html += `</div>`;
+        html += `</div>`;
+      });
+      html += `</div></div>`;
+    });
+
+    $aList.innerHTML = html;
+
+    // Attach click handlers
+    $aList.querySelectorAll('.cal-agenda__event[data-eid]').forEach(el => {
+      el.addEventListener('click', function() {
+        const ev = ALL_EVENTS.find(x => x.id === this.dataset.eid);
+        if (ev) openModal(ev);
+      });
+    });
+
+    updateStats();
+  }
+
+  // ── Update Stats ──────────────────────────────────
+  function updateStats() {
+    const evts = filtered();
+    document.getElementById('statTotal').textContent = evts.length;
+    document.getElementById('statPending').textContent = evts.filter(e => e.status === 'pending' || e.status === 'submitted').length;
+    document.getElementById('statGraded').textContent = evts.filter(e => e.status === 'graded').length;
+    document.getElementById('statOverdue').textContent = evts.filter(e => e.status === 'overdue').length;
+  }
+
+  // ── Modal ─────────────────────────────────────────
+  function openModal(ev) {
+    document.getElementById('calModalIcon').innerHTML =
+      `<div class="cal-modal__icon-circle cal-modal__icon-circle--${ev.type}">${typeIcon(ev.type)}</div>`;
+    document.getElementById('calModalTitle').textContent = ev.title;
+    document.getElementById('calModalMeta').innerHTML =
+      `<span class="cal-badge cal-badge--${ev.type}-type">${ev.type === 'quiz' ? 'Quiz / Test' : 'Assignment'}</span>`;
+    document.getElementById('calModalCourse').textContent = ev.course;
+    document.getElementById('calModalDate').textContent = formatDate(ev.date);
+    document.getElementById('calModalTime').textContent = ev.time || '—';
+
+    const scoreRow = document.getElementById('calModalScoreRow');
+    if (ev.score) {
+      scoreRow.style.display = '';
+      document.getElementById('calModalScore').textContent = ev.score;
+    } else {
+      scoreRow.style.display = 'none';
+    }
+
+    const statusEl = document.getElementById('calModalStatus');
+    statusEl.innerHTML = `<span class="cal-status ${statusClass(ev.status)}">${statusLabel(ev.status)}</span>`;
+
+    const actionEl = document.getElementById('calModalAction');
+    const actionText = document.getElementById('calModalActionText');
+    if (ev.url) {
+      actionEl.style.display = '';
+      actionEl.href = ev.url;
+      if (ev.status === 'pending' && ev.type === 'assignment') actionText.textContent = 'Submit Now';
+      else if (ev.status === 'pending' && ev.type === 'quiz') actionText.textContent = 'Take Test';
+      else actionText.textContent = 'View Details';
+    } else {
+      actionEl.style.display = 'none';
+    }
+
+    $overlay.classList.add('cal-modal-overlay--visible');
+    $modal.classList.add('cal-modal--visible');
+  }
+
+  function closeModal() {
+    $overlay.classList.remove('cal-modal-overlay--visible');
+    $modal.classList.remove('cal-modal--visible');
+  }
+
+  // ── Navigation ────────────────────────────────────
+  document.getElementById('calPrev').addEventListener('click', function() {
+    currentMonth--;
+    if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+    render();
+  });
+
+  document.getElementById('calNext').addEventListener('click', function() {
+    currentMonth++;
+    if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+    render();
+  });
+
+  document.getElementById('calToday').addEventListener('click', function() {
+    const t = TODAY.split('-');
+    currentYear = parseInt(t[0]);
+    currentMonth = parseInt(t[1]);
+    render();
+  });
+
+  // ── Filters ───────────────────────────────────────
+  document.querySelectorAll('.cal-filter').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.cal-filter').forEach(b => b.classList.remove('cal-filter--active'));
+      this.classList.add('cal-filter--active');
+      activeFilter = this.dataset.filter;
+      render();
+    });
+  });
+
+  // ── View Toggle ───────────────────────────────────
+  document.querySelectorAll('.cal-view-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('cal-view-btn--active'));
+      this.classList.add('cal-view-btn--active');
+      activeView = this.dataset.view;
+      if (activeView === 'month') {
+        $month.style.display = '';
+        $agenda.style.display = 'none';
+      } else {
+        $month.style.display = 'none';
+        $agenda.style.display = '';
+      }
+      render();
+    });
+  });
+
+  // ── Modal Close ───────────────────────────────────
+  document.getElementById('calModalClose').addEventListener('click', closeModal);
+  $overlay.addEventListener('click', function(e) {
+    if (e.target === $overlay) closeModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // ── Render ────────────────────────────────────────
+  function render() {
+    if (activeView === 'month') renderMonth();
+    else renderAgenda();
+  }
+
+  render();
+})();
+</script>
+{% endblock %}

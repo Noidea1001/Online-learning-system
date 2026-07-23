@@ -1,0 +1,146 @@
+{# adminpanel/templates/adminpanel/audit_log_list.html #}
+{% extends "base.html" %}
+
+{% block title %}Audit Log — Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <nav class="small text-muted mb-1">
+        <a href="{% url 'adminpanel_home' %}" class="text-decoration-none">Admin Panel</a>
+        <i class="bi bi-chevron-right small mx-1"></i> Audit Log
+      </nav>
+      <h1 class="fw-bold display-6 mb-1">Activity &amp; Audit Log</h1>
+      <p class="text-muted mb-0">Every create, update, delete and login event tracked across the platform.</p>
+    </div>
+  </div>
+
+  <form method="get" class="d-flex flex-wrap gap-2 mb-4">
+    <input type="text" name="search" value="{{ search_query }}" class="form-control rounded-pill"
+           style="max-width: 240px;" placeholder="Search actor, target, notes…">
+
+    <select name="action" class="form-select rounded-pill" style="max-width: 170px;" onchange="this.form.submit()">
+      <option value="">All Actions</option>
+      {% for value, label in action_choices %}
+        <option value="{{ value }}" {% if action_filter == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="model" class="form-select rounded-pill" style="max-width: 170px;" onchange="this.form.submit()">
+      <option value="">All Types</option>
+      {% for ct in tracked_content_types %}
+        <option value="{{ ct.model }}" {% if model_filter == ct.model %}selected{% endif %}>{{ ct.name|title }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="date" name="date_from" value="{{ date_from }}" class="form-control rounded-pill" style="max-width: 160px;">
+    <input type="date" name="date_to" value="{{ date_to }}" class="form-control rounded-pill" style="max-width: 160px;">
+
+    <button type="submit" class="btn btn-primary rounded-pill px-3 btn-icon" title="Filter"><i class="bi bi-funnel"></i></button>
+    {% if search_query or action_filter or model_filter or date_from or date_to %}
+      <a href="{% url 'adminpanel_audit_log' %}" class="btn btn-outline-secondary rounded-pill px-3 btn-icon" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a>
+    {% endif %}
+  </form>
+
+  <div class="w-100 overflow-hidden">
+    <div class="table-responsive list-scroll">
+      <table class="table align-middle mb-0 custom-student-table">
+        <thead>
+          <tr>
+            <th class="ps-4">When</th>
+            <th>Actor</th>
+            <th>Action</th>
+            <th>Target</th>
+            <th class="pe-4">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td class="ps-4" data-label="When">
+                <span class="d-block small fw-semibold text-dark">{{ log.created_at|date:"M d, Y" }}</span>
+                <span class="d-block small text-muted">{{ log.created_at|date:"H:i" }}</span>
+              </td>
+              <td data-label="Actor">
+                {% if log.actor %}
+                  <span class="d-flex align-items-center gap-2">
+                    <span class="avatar-placeholder bg-primary-subtle text-primary" style="width:28px;height:28px;font-size:0.7rem;">{{ log.actor.username|slice:":2"|upper }}</span>
+                    <span class="fw-semibold text-dark small">{{ log.actor.username }}</span>
+                  </span>
+                {% else %}
+                  <span class="text-muted small fst-italic">System</span>
+                {% endif %}
+              </td>
+              <td data-label="Action">
+                {% if log.action == 'CREATE' %}
+                  <span class="badge bg-success-subtle text-success border px-3 py-2 fw-semibold">Created</span>
+                {% elif log.action == 'UPDATE' %}
+                  <span class="badge bg-primary-subtle text-primary border px-3 py-2 fw-semibold">Updated</span>
+                {% elif log.action == 'DELETE' %}
+                  <span class="badge bg-danger-subtle text-danger border px-3 py-2 fw-semibold">Deleted</span>
+                {% elif log.action == 'LOGIN' %}
+                  <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fw-semibold">Logged In</span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border px-3 py-2 fw-semibold">Failed Login</span>
+                {% endif %}
+              </td>
+              <td data-label="Target">
+                {% if log.content_type %}
+                  <span class="fw-semibold d-block text-dark">{{ log.object_repr|default:"—" }}</span>
+                  <span class="d-block small text-muted">{{ log.model_label }}</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="pe-4" data-label="Notes">
+                <span class="small text-muted">{{ log.description|default:"—" }}</span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-5 text-muted">
+                <i class="bi bi-clock-history display-1 text-secondary mb-3 d-block opacity-50"></i>
+                <h5 class="fw-bold text-dark">No Activity Yet</h5>
+                <p class="mb-0 small">Actions across the platform will show up here as they happen.</p>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="mt-4" aria-label="Page navigation">
+      <ul class="pagination justify-content-center gap-1">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link rounded-pill">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link rounded-pill" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{# templates/submissions/submission_form.html #}
+{% extends "base.html" %}
+{% block title %}Submit Assignment - {{ assignment.title }}{% endblock %}
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+      <div class="mb-4">
+        {% if assignment.lesson %}
+          <a href="{% url 'lesson_detail' assignment.lesson.id %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+            <i class="bi bi-arrow-left-circle-fill fs-5 text-primary"></i> Back to Lesson
+          </a>
+        {% else %}
+          <a href="{% url 'student_submissions_dashboard' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+            <i class="bi bi-arrow-left-circle-fill fs-5 text-primary"></i> Back to Dashboard
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white premium-form-card">
+        
+        <div class="form-header-accent-submission" style="height: 5px; background: linear-gradient(90deg, #1e5aa8 0%, #2b6cb0 100%);"></div>
+
+        <div class="card-body p-4 p-md-5">
+          
+          <!-- Title Matrix Banner -->
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start border-bottom pb-4 mb-4 gap-3">
+            <div>
+              <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-bold small mb-2 d-inline-flex align-items-center gap-1" style="background-color: rgba(13, 110, 253, 0.08) !important;">
+                <i class="bi bi-journal-upload"></i> Project Submission Flow
+              </span>
+              <h2 class="fw-bold text-dark mb-1 fs-3 fs-md-2" style="font-weight: 800; letter-spacing: -0.02em; line-height: 1.3;">
+                {{ assignment.title }}
+              </h2>
+            </div>
+            <div class="text-md-end flex-shrink-0">
+              <span class="badge bg-light text-dark border px-3 py-2 fw-medium d-inline-block shadow-sm rounded-3 mb-1" style="font-size: 0.8rem;">
+                <i class="bi bi-calendar-x text-danger me-1"></i> Due: {{ assignment.due_date|date:"d M Y • H:i" }}
+              </span>
+              <div class="text-muted small mt-1" style="font-size: 0.75rem;">Max Score: <strong class="text-success">{{ assignment.max_score }} Pts</strong></div>
+            </div>
+          </div>
+
+          <!-- Task Reference Block Instructions -->
+          <div class="p-3 bg-light rounded-3 mb-4 border border-light-subtle" style="background-color: #f8f9fb !important;">
+            <small class="text-muted fw-bold text-uppercase d-block mb-1.5 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">
+              <i class="bi bi-info-circle-fill text-primary me-1"></i> Task Instructions
+            </small>
+            <div class="text-secondary" style="font-size: 0.875rem; line-height: 1.6; white-space: pre-line;">
+              {{ assignment.description|default:"Please review the task instructions carefully before submitting your work." }}
+            </div>
+          </div>
+          
+          <!-- Form Validation Error Banner -->
+          {% if form.errors %}
+            <div class="alert alert-danger rounded-3 mb-4 border-0 shadow-sm d-flex align-items-start gap-3">
+              <i class="bi bi-exclamation-triangle-fill fs-5 text-danger flex-shrink-0"></i>
+              <div>
+                <h6 class="fw-bold small text-uppercase mb-1">Submission Failed:</h6>
+                <ul class="mb-0 small ps-3" style="font-size: 0.8rem;">
+                  {% for field, errors in form.errors.items %}
+                    <li><strong>{{ field.label|default:field|capfirst }}:</strong> {{ errors|striptags }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Main Submission Form Matrix -->
+          <form method="post" action="" enctype="multipart/form-data" id="submissionForm" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <div class="row g-4">
+              
+              <div class="col-12">
+                <label class="form-label fw-bold text-secondary small text-uppercase tracking-wider mb-2 d-flex align-items-center gap-2" style="font-size: 0.75rem;">
+                  Text Content / Online Code Editor Answer
+                </label>
+                <div class="premium-input-group" data-icon="title">
+                  <textarea name="text_content" 
+                            id="id_text_content"
+                            class="form-control {% if form.text_content.errors %}is-invalid{% endif %}" 
+                            rows="6" 
+                            placeholder="Type your text answer, detailed explanations, or paste your workspace URLs (e.g., GitHub, Google Drive link) here...">{% if form.data.text_content %}{{ form.data.text_content }}{% else %}{{ form.instance.text_content|default:'' }}{% endif %}</textarea>
+                </div>
+                {% if form.text_content.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size: 0.8rem;">{{ form.text_content.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-bold text-secondary small text-uppercase tracking-wider mb-2 d-flex align-items-center gap-2" style="font-size: 0.75rem;">
+                  Upload Project / Practical Solution File
+                </label>
+                
+                <div class="premium-dropzone-box text-center">
+                  <input type="file" 
+                         name="submitted_file" 
+                         id="submittedFile"
+                         data-max-size="25"
+                         class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer {% if form.submitted_file.errors %}is-invalid{% endif %}" style="z-index: 5;" />
+                  
+                  <div class="dropzone-content-matrix position-relative" style="z-index: 2;">
+                    <div class="bg-primary-subtle text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 54px; height: 54px; background-color: rgba(13, 110, 253, 0.06) !important;">
+                      <i class="bi bi-cloud-arrow-up-fill fs-3 animate-bounce"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1 dropzone-title">Drag & Drop your project file here or click to browse</h6>
+                    <p class="text-muted small mb-0">Supported extensions: ZIP, PDF, DOCX, or images</p>
+                  </div>
+                </div>
+
+                <div class="form-text text-muted small mt-2" style="font-size: 0.75rem;">
+                  Maximum single file size allocation constraint: <strong class="text-danger">25MB</strong>.
+                </div>
+
+                {% if form.submitted_file.errors %}
+                  <div class="text-danger small mt-1 font-monospace" style="font-size: 0.8rem;">{{ form.submitted_file.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+            </div>
+
+            <div class="d-flex flex-column-reverse flex-md-row justify-content-md-end gap-2 gap-md-3 mt-5 pt-4 border-top">
+              {% if assignment.lesson %}
+                <a href="{% url 'lesson_detail' assignment.lesson.id %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border border-light-subtle w-100 w-md-auto transition-smooth">
+                  Cancel
+                </a>
+              {% else %}
+                <a href="{% url 'student_submissions_dashboard' %}" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold text-secondary border border-light-subtle w-100 w-md-auto transition-smooth">
+                  Cancel
+                </a>
+              {% endif %}
+              <button type="submit" id="submitBtn" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold w-100 w-md-auto text-nowrap transition-smooth btn-premium-action">
+                <i class="bi bi-send-check-fill me-2"></i>Submit Assignment
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,144 @@
+{# templates/users/profile_edit.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}My Profile — Online Learning System{% endblock %}
+{% block main_class %}flex-grow-1 p-0{% endblock %}
+
+{% block content %}
+<div class="db-shell">
+  <main class="db-main">
+
+    <!-- ── Topbar ─────────────────────────────────────── -->
+    <div class="db-topbar">
+      <div class="db-topbar__left">
+        <h1><i class="bi bi-person-bounding-box me-2" style="font-size:1.3rem;"></i>My Profile Settings</h1>
+        <div class="db-topbar__meta">
+          <span class="db-topbar__date">
+            <i class="bi bi-shield-check"></i> Account Profile & Avatar Picture
+          </span>
+        </div>
+      </div>
+      <div class="db-topbar__actions">
+        <a href="{% url 'dashboard_home' %}" class="db-btn db-btn--ghost">
+          <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- ── Profile Form Card ────────────────────────────── -->
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="db-panel p-4 p-md-5">
+
+          <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            <!-- Avatar Header Box -->
+            <div class="d-flex flex-column flex-sm-row align-items-center gap-4 mb-4 pb-4 border-bottom">
+              <div class="position-relative">
+                {% if request.user.avatar_url %}
+                  <img src="{{ request.user.avatar_url }}" id="avatarPreview" alt="Profile Picture" class="rounded-circle object-fit-cover shadow-sm" style="width:110px; height:110px; border:4px solid var(--surface-2);">
+                {% else %}
+                  <div id="avatarInitials" class="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:110px; height:110px; background:linear-gradient(135deg, #0f2c52, #1e5aa8); color:#fff; font-size:2.2rem; border:4px solid var(--surface-2);">
+                    {% if request.user.first_name %}{{ request.user.first_name|slice:":1"|upper }}{% if request.user.last_name %}{{ request.user.last_name|slice:":1"|upper }}{% endif %}
+                    {% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}
+                  </div>
+                  <img src="" id="avatarPreview" alt="Profile Picture" class="rounded-circle object-fit-cover shadow-sm d-none" style="width:110px; height:110px; border:4px solid var(--surface-2);">
+                {% endif %}
+              </div>
+
+              <div class="text-center text-sm-start">
+                <h4 class="fw-bold text-dark mb-1">{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="text-muted small mb-2"><i class="bi bi-envelope me-1"></i>{{ request.user.email|default:"No email set" }}</p>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 rounded-pill">
+                  <i class="bi bi-person-badge me-1"></i>{{ request.user.get_role_display|default:request.user.role }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold text-dark">First Name</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold text-dark">Last Name</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold text-dark">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold text-dark">Phone Number</label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}
+                  <div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-dark">
+                  <i class="bi bi-camera me-1 text-primary"></i>Profile Picture / Avatar Photo
+                </label>
+                {{ form.profile_picture }}
+                <div class="form-text text-muted small">Upload JPG, PNG, or WEBP image (Recommended: square photo 400x400).</div>
+                {% if form.profile_picture.errors %}
+                  <div class="text-danger small mt-1">{{ form.profile_picture.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+              <a href="{% url 'dashboard_home' %}" class="btn btn-light px-4 rounded-3 border fw-semibold">Cancel</a>
+              <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold shadow-sm">
+                <i class="bi bi-check2-circle me-1"></i>Save Profile Changes
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Live Avatar Image Preview JS
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.querySelector('input[type="file"][name="profile_picture"]');
+    const preview = document.getElementById('avatarPreview');
+    const initials = document.getElementById('avatarInitials');
+
+    if (fileInput && preview) {
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('d-none');
+            if (initials) initials.classList.add('d-none');
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

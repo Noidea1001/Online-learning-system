@@ -1,0 +1,293 @@
+{# templates/employees/employee_list.html #}
+{% extends "base.html" %}
+
+{% block title %}Employees Management{% endblock %}
+
+{% block extra_css %}
+<style>
+  .student-profile-box .avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <!-- Page Header -->
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
+    <div>
+      <h1 class="fw-bold display-6 mb-1">Employees Directory</h1>
+      <p class="text-muted mb-0">Monitor, modify, and manage all registered employees in the system</p>
+    </div>
+    
+    {% if request.user.is_superuser %}
+      <a href="{% url 'employee_create' %}" class="btn btn-primary shadow-sm rounded-pill px-4 py-2 btn-icon" title="Add New Employee"><i class="bi bi-person-plus-fill"></i></a>
+    {% endif %}
+  </div>
+
+  <!-- Search + Filters Bar -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="form-header-accent-instructor"></div>
+    <div class="card-body p-4">
+      <form method="get" class="row g-3 align-items-end">
+
+       <!-- Search -->
+        <div class="col-md-4">
+          <label class="form-label fw-semibold text-secondary small text-uppercase mb-1">Search</label>
+          <div class="premium-search-field-box">
+            <input type="text"
+                  name="search"
+                  class="form-search-input-control"
+                  placeholder="Name, username or email…"
+                  value="{{ request.GET.search|default:'' }}">
+          </div>
+        </div>
+
+
+        <!-- Department filter -->
+        <div class="col-md-3">
+          <label class="form-label fw-semibold text-secondary small text-uppercase mb-1">Department</label>
+          <div class="premium-search-field-box">
+            <select name="department" class="premium-select-field-control rounded-pill">
+              <option value="">All Departments</option>
+              {% for dept in departments %}
+                <option value="{{ dept }}" {% if request.GET.department == dept %}selected{% endif %}>{{ dept }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Status filter -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold text-secondary small text-uppercase mb-1">Status</label>
+          <select name="status" class="premium-select-field-control rounded-pill">
+            <option value="">All Status</option>
+            <option value="active"   {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-md-3 d-flex gap-2 align-items-end">
+          <button type="submit" class="btn btn-primary flex-grow-1 rounded-pill">
+            <i class="bi bi-funnel-fill me-1"></i> Filter
+          </button>
+          
+          {% if request.GET.search or request.GET.department or request.GET.status %}
+            <a href="{{ request.path }}" 
+               class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center justify-content-center">
+              <i class="bi bi-x-circle"></i>
+            </a>
+          {% endif %}
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Employees Table -->
+  <div class="w-100 overflow-hidden">
+    <div class="table-responsive list-scroll">
+      <table class="table align-middle mb-0 custom-student-table">
+          <thead>
+            <tr>
+              <th class="ps-4"># ID</th>
+              <th>Employee Details</th>
+              <th>Department</th>
+              <th>Job Title</th>
+              <th>Email Address</th>
+              <th>Hire Date</th>
+              <th>Status</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for employee in employees %}
+              <tr>
+
+                <!-- ID -->
+                <td class="ps-4" data-label="# ID">
+                  <span class="badge bg-light text-secondary border px-3 py-2 fw-bold font-monospace">
+                    {{ employee.id }}
+                  </span>
+                </td>
+
+                <!-- Employee Details -->
+                <td data-label="Employee Details">
+                  <div class="d-flex align-items-center gap-3 student-profile-box">
+                    {% if employee.image %}
+                      <img src="{{ employee.image.url }}" alt="{{ employee.user.username }}" class="rounded-circle object-fit-cover" style="width: 48px; height: 48px;">
+                    {% elif employee.user.avatar_url %}
+                      <img src="{{ employee.user.avatar_url }}" alt="{{ employee.user.username }}" class="rounded-circle object-fit-cover" style="width: 48px; height: 48px;">
+                    {% else %}
+                      <div class="avatar-placeholder bg-primary-subtle text-primary">
+                        {{ employee.user.username|slice:":2"|upper }}
+                      </div>
+                    {% endif %}
+                    <div class="text-truncate-wrapper">
+                      <span class="fw-bold d-block text-dark">
+                        {{ employee.user.get_full_name|default:employee.user.username }}
+                      </span>
+                      <small class="text-muted">@{{ employee.user.username }}</small>
+                    </div>
+                  </div>
+                </td>
+
+                              <!-- Department -->
+                <td data-label="Department">
+                  {% if employee.department %}
+                    <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fw-semibold">
+                      <i class="bi bi-building me-1"></i>{{ employee.department }}
+                    </span>
+                  {% else %}
+                    <span class="text-muted small">—</span>
+                  {% endif %}
+                </td>
+
+                <!-- Job Title -->
+                <td data-label="Job Title">
+                  <span class="fw-medium text-dark">{{ employee.job_title|default:"—" }}</span>
+                </td>
+
+                <!-- Email -->
+                <td data-label="Email Address">
+                  {% if employee.user.email %}
+                    <a href="mailto:{{ employee.user.email }}" class="text-decoration-none text-break small">
+                      <i class="bi bi-envelope me-1 text-muted"></i>{{ employee.user.email }}
+                    </a>
+                  {% else %}
+                    <span class="text-muted small">—</span>
+                  {% endif %}
+                </td>
+
+                <!-- Hire Date -->
+                <td data-label="Hire Date">
+                  <span class="small text-secondary">
+                    <i class="bi bi-calendar-check me-1"></i>
+                    {{ employee.hire_date|date:"d M Y"|default:"—" }}
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td data-label="Status">
+                  {% if employee.status == 'active' %}
+                    <span class="badge bg-success-subtle text-success border px-3 py-2 fw-semibold">
+                      <i class="bi bi-circle-fill me-1"></i>Active
+                    </span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger border px-3 py-2 fw-semibold">
+                      <i class="bi bi-circle-fill me-1"></i>Inactive
+                    </span>
+                  {% endif %}
+                </td>
+
+                <!-- Actions -->
+                <td class="text-end pe-4" data-label="Actions" style="width: 120px;">
+                  <div class="d-flex justify-content-end align-items-center gap-2">
+
+                    <!-- Desktop: Icons only (សន្សំទំហំ) -->
+                    <div class="d-none d-md-flex gap-1">
+                      <a href="{% url 'employee_detail' employee.id %}" 
+                         class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1"
+                         title="View Detail">
+                        <i class="bi bi-eye"></i>
+                      </a>
+
+                      {% if request.user.is_superuser %}
+                        <a href="{% url 'employee_update' employee.id %}" 
+                           class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1"
+                           title="Edit">
+                          <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'employee_delete' employee.id %}" 
+                           class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1"
+                           title="Delete">
+                          <i class="bi bi-trash"></i>
+                        </a>
+                      {% endif %}
+                    </div>
+
+                    <!-- Mobile: Clean 3-dots Dropdown -->
+                    <div class="d-md-none">
+                      <button class="btn btn-sm btn-light border rounded-circle p-2 shadow-sm"
+                              type="button"
+                              data-bs-toggle="dropdown"
+                              aria-expanded="false"
+                              title="Actions">
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <li>
+                          <a class="dropdown-item" href="{% url 'employee_detail' employee.id %}">
+                            <i class="bi bi-eye me-2 text-secondary"></i> View Detail
+                          </a>
+                        </li>
+                        {% if request.user.is_superuser %}
+                          <li><hr class="dropdown-divider"></li>
+                          <li>
+                            <a class="dropdown-item text-primary" href="{% url 'employee_update' employee.id %}">
+                              <i class="bi bi-pencil me-2"></i> Edit Employee
+                            </a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item text-danger" href="{% url 'employee_delete' employee.id %}">
+                              <i class="bi bi-trash me-2"></i> Delete Employee
+                            </a>
+                          </li>
+                        {% endif %}
+                      </ul>
+                    </div>
+
+                  </div>
+                </td>
+
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="text-center py-5 text-muted">
+                  <i class="bi bi-people display-1 text-secondary mb-3 d-block opacity-50"></i>
+                  <h5 class="fw-bold text-dark">No Employees Found</h5>
+                  <p class="mb-0 small">No employees match your current filters. Try adjusting the search.</p>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+    <nav class="mt-4" aria-label="Page navigation">
+      <ul class="pagination justify-content-center gap-1">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link rounded-pill" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+          </li>
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link rounded-pill" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

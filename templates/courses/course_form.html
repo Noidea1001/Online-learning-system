@@ -1,0 +1,256 @@
+{# templates/courses/course_form.html #}
+{% extends "base.html" %}
+{% block title %}{{ action }} Course{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+
+      <!-- Navigation Link -->
+      <div class="mb-4">
+        <a href="{% url 'course_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+          <i class="bi bi-arrow-left"></i> Back to Courses
+        </a>
+      </div>
+
+      <!-- Core Configuration Card Wrapper -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden premium-form-card">
+        <div style="height: 5px; background: linear-gradient(90deg, #1e5aa8 0%, #2b6cb0 100%);"></div>
+
+        <div class="card-body p-4 p-md-5">
+          <div class="border-bottom pb-4 mb-4">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-bold small mb-2 d-inline-flex align-items-center gap-1" style="background-color: rgba(13, 110, 253, 0.08) !important;">
+              <i class="bi bi-journal-plus"></i> Course Administration Module
+            </span>
+            <h2 class="fw-bold text-dark mb-1 fs-3 fs-md-2" style="font-weight: 800; letter-spacing: -0.02em;">
+              {{ action }} Course Track
+            </h2>
+            <p class="text-muted mb-0 small">Configure parameters to update your online training program roadmap catalog.</p>
+          </div>
+
+          <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors or form.errors %}
+              <div class="alert alert-danger rounded-3 mb-4 border-0 shadow-sm">
+                <h6 class="fw-bold small text-uppercase mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please review form validations:</h6>
+                <ul class="mb-0 small ps-3" style="font-size: 0.85rem;">
+                  {% for field, errors in form.errors.items %}
+                    <li><strong>{{ field.label|default:field|capfirst }}:</strong> {{ errors|striptags }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
+            <div class="row g-3 g-md-4">
+              <div class="col-12">
+                <h5 class="fw-bold text-primary border-bottom pb-2 mb-2 small text-uppercase">
+                  <i class="bi bi-info-circle-fill me-2"></i>1. Core Course Context Meta
+                </h5>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Course Title *</label>
+                <div class="premium-input-group">
+                  {{ form.title }}
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Detailed Syllabus / Description *</label>
+                {{ form.description }}
+              </div>
+
+              <div class="col-12 mt-4">
+                <h5 class="fw-bold text-primary border-bottom pb-2 mb-2 small text-uppercase">
+                  <i class="bi bi-cash-stack me-2"></i>2. Access Rights & Cost Parameterization
+                </h5>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Access Classification *</label>
+                <div class="premium-input-group">
+                  {{ form.is_free }}
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6" id="price-field-wrap">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Enrollment Retail Price (USD)</label>
+                <div class="premium-input-group">
+                  {{ form.price }}
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Academic Department Category</label>
+                <div class="premium-input-group">
+                  {{ form.category }}
+                </div>
+              </div>
+
+              {% if form.instructor %}
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Course Instructor *</label>
+                <div class="premium-input-group">
+                  {{ form.instructor }}
+                </div>
+              </div>
+              {% endif %}
+
+                         <!-- 1. Course Tags Module (Bootstrap Button Group Tags) -->
+              <div class="col-12 mt-3">
+                <label class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem;">Course Tags</label>
+                <div class="d-flex flex-wrap gap-2 p-3 rounded-4 border bg-light bg-opacity-10 list-scroll list-scroll--sm">
+                  {% for choice in form.tags %}
+                    <div class="d-inline-block">
+                      <input type="checkbox"
+                             name="tags"
+                             value="{{ choice.data.value }}"
+                             id="{{ choice.id_for_label }}"
+                             {% if choice.data.selected %}checked{% endif %}
+                             class="btn-check">
+                      <label for="{{ choice.id_for_label }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-medium">
+                        <i class="bi bi-hash"></i>{{ choice.data.label }}
+                      </label>
+                    </div>
+                  {% empty %}
+                    <span class="text-muted small">No tags available. <a href="{% url 'tag_create' %}" class="text-primary">Add tags here</a>.</span>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- 2. Visual Branding Assets Module -->
+              <div class="col-12 mt-4">
+                <h5 class="fw-bold text-primary border-bottom pb-2 mb-2 small text-uppercase">
+                  <i class="bi bi-image-fill me-2"></i>3. Visual Branding Assets
+                </h5>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Course Cover Thumbnail</label>
+                <div class="text-center position-relative p-4 border border-2 border-secondary border-dashed rounded-4 bg-light">
+                  <input type="file" name="image" id="courseImageInput" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="z-index: 5;" accept="image/*" />
+                  <div class="position-relative" style="z-index: 2;">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 52px; height: 52px;">
+                      <i class="bi bi-image fs-4"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1" id="imageDropzoneTitle">Drag &amp; Drop track cover artwork here or click to browse</h6>
+                    <p class="text-muted small mb-0" id="imageDropzoneSubtitle">Accepted Formats: PNG, JPG, or WebP</p>
+                  </div>
+                </div>
+                <div id="imagePreviewBadge" class="d-none mt-2">
+                  <span class="badge bg-success rounded-pill px-2.5 py-1.5 small fw-bold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-image-fill"></i> Asset Cached: <span id="imageNameTarget" class="text-truncate" style="max-width: 240px;"></span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- 3. Release Status Control Layout (Bootstrap Switch សុទ្ធ) -->
+              <div class="col-12 mt-4">
+                <h5 class="fw-bold text-primary border-bottom pb-2 mb-2 small text-uppercase">
+                  <i class="bi bi-globe me-2"></i>4. Release &amp; Visibility Status
+                </h5>
+              </div>
+
+              <div class="col-12">
+                <div class="form-check form-switch d-flex align-items-center gap-3 p-3 rounded-4 border bg-primary bg-opacity-10 border-primary border-opacity-25 m-0">
+                  <input type="checkbox" 
+                         name="is_published" 
+                         id="{{ form.is_published.id_for_label }}" 
+                         {% if form.is_published.value %}checked{% endif %} 
+                         class="form-check-input m-0 flex-shrink-0" 
+                         style="width: 2.5rem; height: 1.25rem; cursor: pointer; float: none;">
+                  <label for="{{ form.is_published.id_for_label }}" class="form-check-label fw-semibold text-dark mb-0 small" style="cursor:pointer; user-select: none;">
+                    Publish this track instance (immediately visible to global candidate users)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Button Row Operations Actions Hub (Responsive Stack automatically via Bootstrap Utilities) -->
+            <div class="d-flex flex-column-reverse flex-md-row justify-content-md-end gap-2 gap-md-3 mt-5 pt-4 border-top">
+              <a href="{% url 'course_list' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2.5 fw-semibold w-100 w-md-auto">Cancel</a>
+              <button type="submit" class="btn btn-primary rounded-pill px-5 py-2.5 fw-bold w-100 w-md-auto shadow-sm">
+                <i class="bi bi-check-circle-fill me-2"></i>Save Course Architecture
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  
+  const formFields = document.querySelectorAll('input:not([type="checkbox"]):not([type="file"]), select, textarea');
+  formFields.forEach(field => {
+    field.classList.add('form-control', 'rounded-3');
+  });
+  const select = document.getElementById('{{ form.is_free.id_for_label }}');
+  const priceWrap = document.getElementById('price-field-wrap');
+  const priceInput = priceWrap ? priceWrap.querySelector('input') : null;
+
+  function togglePrice() {
+    if (!select || !priceWrap) return;
+    const isFree = select.value === 'True';
+    priceWrap.style.transition = 'all 0.25s ease-in-out';
+    
+    if (isFree) {
+      priceWrap.style.opacity = '0.35';
+      priceWrap.style.pointerEvents = 'none';
+      if (priceInput) {
+        priceInput.value = '0';
+        priceInput.setAttribute('readonly', 'true');
+      }
+    } else {
+      priceWrap.style.opacity = '1';
+      priceWrap.style.pointerEvents = 'auto';
+      if (priceInput) {
+        priceInput.removeAttribute('readonly');
+        if (priceInput.value === '0') {
+          priceInput.value = '';
+        }
+      }
+    }
+  }
+
+  if (select) {
+    select.addEventListener('change', togglePrice);
+    togglePrice();
+  }
+
+  const imageInput = document.getElementById('courseImageInput');
+  const dropzoneBox = imageInput ? imageInput.closest('.border') : null;
+  const dropzoneTitle = document.getElementById('imageDropzoneTitle');
+  const dropzoneSubtitle = document.getElementById('imageDropzoneSubtitle');
+  const previewBadge = document.getElementById('imagePreviewBadge');
+  const imageNameTarget = document.getElementById('imageNameTarget');
+
+  if (imageInput) {
+    imageInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const file = this.files[0];
+        if (dropzoneBox) {
+          dropzoneBox.classList.remove('border-secondary', 'bg-light');
+          dropzoneBox.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+        }
+        if (dropzoneTitle) {
+          dropzoneTitle.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Cover asset cached!</span>';
+        }
+        if (dropzoneSubtitle) {
+          dropzoneSubtitle.textContent = "Click or drop alternative graphic asset to exchange.";
+        }
+        
+        if (imageNameTarget) imageNameTarget.textContent = file.name;
+        if (previewBadge) previewBadge.classList.remove('d-none');
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+{# templates/students/student_list.html #}
+{% extends "base.html" %}
+
+{% block title %}Students Management{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+  <!-- Header Section -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
+    <div>
+      <h1 class="fw-bold display-6 mb-1" style="font-weight: 800; letter-spacing: -0.02em; color: #1c1f26;">Students Directory</h1>
+      <p class="text-muted mb-0">Monitor, modify, and manage all registered students in the system</p>
+    </div>
+
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+      <a href="{% url 'student_create' %}" class="btn btn-primary btn-lg shadow-sm rounded-pill px-4 py-2 fw-bold btn-icon" style="font-size: 0.95rem;" title="Add New Student"><i class="bi bi-person-plus-fill"></i></a>
+    {% endif %}
+  </div>
+
+  <div class="row g-3 align-items-center mb-4">
+    <div class="col flex-grow-1">
+      <div class="ll-search mb-0 position-relative">
+        <i class="bi bi-search ll-search__icon"></i>
+        <input type="text" 
+               id="studentSearchInput"
+               name="search" 
+               class="ll-search__input" 
+               placeholder="Search by name, username or email..." 
+               value="{{ request.GET.search|default:'' }}">
+      </div>
+    </div>
+    
+    <!-- Status Filter Dropdown -->
+    <div class="col-sm-auto" style="min-width: 160px;">
+      <select id="studentStatusSelect" name="status" class="form-select ll-filter-select px-3 fw-semibold border" style="height: 52px; background-color: #fff; border-radius: 12px;">
+        <option value="all">All Status</option>
+        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Students Table & Mobile Card Framework -->
+  <div class="w-100 overflow-hidden">
+      <div class="table-responsive list-scroll">
+        <table class="table align-middle mb-0 custom-student-table">
+          <thead class="table-light text-uppercase fs-7 tracking-wider text-secondary">
+            <tr>
+              <th class="ps-4 py-3" style="width: 90px;"># ID</th>
+              <th class="py-3">Student Details</th>
+              <th class="py-3">Email Address</th>
+              <th class="py-3">Phone Number</th>
+              <th class="py-3">Registration Date</th>
+              <th class="text-end pe-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTableBody">
+            {% for student in students %}
+              <tr class="student-row" data-status="{% if student.user.is_active %}active{% else %}inactive{% endif %}">
+                <td class="ps-4" data-label="# ID">
+                  <span class="badge bg-light text-secondary border px-2.5 py-1.5 fw-bold font-monospace" style="font-size: 0.75rem;">#{{ student.id }}</span>
+                </td>
+
+                <td data-label="Student Details">
+                  <div class="d-flex align-items-center gap-3 student-profile-box">
+                    {% if student.user.avatar_url %}
+                      <img src="{{ student.user.avatar_url }}" alt="{{ student.user.username }}" class="rounded-circle object-fit-cover d-none d-lg-flex" style="width: 40px; height: 40px;">
+                    {% else %}
+                      <div class="avatar-placeholder bg-primary-subtle text-primary d-none d-lg-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(13, 110, 253, 0.08) !important;">
+                        {{ student.user.username|slice:":2"|upper }}
+                      </div>
+                    {% endif %}
+                    <div>
+                      <span class="fw-bold d-block text-dark text-dark-title">{{ student.user.get_full_name|default:student.user.username }}</span>
+                      <span class="fw-semibold font-monospace text-secondary text-username" style="font-size: 0.85rem;">@{{ student.user.username }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <td data-label="Email Address">
+                  {% if student.user.email %}
+                    <a href="mailto:{{ student.user.email }}" class="text-decoration-none text-break text-email">
+                      <i class="bi bi-envelope me-1 d-none d-lg-inline text-muted"></i>{{ student.user.email }}
+                    </a>
+                  {% else %}
+                    <span class="text-muted text-email">—</span>
+                  {% endif %}
+                </td>
+
+                <td data-label="Phone Number">
+                  {% if student.user.phone_number %}
+                    <span class="fw-medium text-phone">
+                      <i class="bi bi-telephone me-1 text-muted d-none d-lg-inline"></i>{{ student.user.phone_number }}
+                    </span>
+                  {% else %}
+                    <span class="text-muted small text-phone">Not provided</span>
+                  {% endif %}
+                </td>
+
+                <td data-label="Registration Date">
+                  <span class="small text-secondary">
+                    <i class="bi bi-calendar-check me-1 d-none d-lg-inline text-muted"></i>
+                    {{ student.enrolled_date|date:"d M Y" }}
+                  </span>
+                </td>
+
+                <!-- Desktop & Mobile Responsive Actions Controls Matrix -->
+                <td class="text-end pe-4" data-label="Actions" style="width: 120px;">
+                  <div class="d-flex justify-content-end align-items-center gap-2">
+                    
+                    <!-- Desktop Controls Layout Row -->
+                    <div class="d-none d-md-flex gap-1">
+                      <a href="{% url 'student_detail' student.id %}" class="btn btn-sm btn-outline-secondary rounded-circle p-2" style="width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;" title="View"><i class="bi bi-eye"></i></a>
+                      
+                      {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+                        <a href="{% url 'student_update' student.id %}" class="btn btn-sm btn-outline-primary rounded-circle p-2" style="width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;" title="Edit"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'student_delete' student.id %}" class="btn btn-sm btn-outline-danger rounded-circle p-2" style="width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;" title="Delete">
+                          <i class="bi bi-trash"></i>
+                        </a>
+                      {% endif %}
+                    </div>
+
+                    <!-- Mobile Dropdown Component Panel -->
+                    <div class="d-md-none dropdown">
+                      <button class="btn btn-sm btn-light border rounded-circle p-2 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end shadow border-0 position-absolute">
+                        <li>
+                          <a class="dropdown-item py-2" href="{% url 'student_detail' student.id %}">
+                            <i class="bi bi-eye me-2 text-secondary"></i> View Detail
+                          </a>
+                        </li>
+                        {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+                          <li><hr class="dropdown-divider"></li>
+                          <li>
+                            <a class="dropdown-item py-2 text-primary" href="{% url 'student_update' student.id %}">
+                              <i class="bi bi-pencil me-2"></i> Edit Account
+                            </a>
+                          </li>
+                                                    <li>
+                            <a href="{% url 'student_delete' student.id %}" class="dropdown-item py-2 text-danger">
+                              <i class="bi bi-trash me-2"></i> Delete Account
+                            </a>
+                          </li>
+                        {% endif %}
+                      </ul>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr id="djangoStudentEmptyState">
+                <td colspan="6" class="text-center py-5">
+                  <i class="bi bi-patch-exclamation display-1 text-muted mb-3 d-block opacity-50"></i>
+                  <h5 class="fw-bold">No Students Found</h5>
+                  <p class="text-muted">There are no students matching your current database filters.</p>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    {% include "includes/pagination.html" %}
+  {% endif %}
+</div>
+
+<!-- Scoped CSS Override to handle mobile stacked custom components during search filtering -->
+<style>
+  .custom-student-table .search-hidden {
+    display: none !important;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('studentSearchInput');
+    const statusSelect = document.getElementById('studentStatusSelect');
+    const tableBody = document.getElementById('studentsTableBody');
+    const djangoEmptyState = document.getElementById('djangoStudentEmptyState');
+    
+    // Programmatically construct JavaScript search-not-found element banner row
+    const jsEmptyState = document.createElement('tr');
+    jsEmptyState.id = 'jsStudentEmptyState';
+    jsEmptyState.className = 'search-hidden';
+    jsEmptyState.innerHTML = `
+      <td colspan="6" class="text-center py-5">
+        <i class="bi bi-search display-1 text-muted mb-3 d-block opacity-50" style="font-size: 3rem;"></i>
+        <h5 class="fw-bold">No Students Found</h5>
+        <p class="text-muted">Please try searching with different keywords or filters.</p>
+      </td>
+    `;
+    tableBody.appendChild(jsEmptyState);
+
+    // Capture explicit data row elements while separating out the fallback notification elements
+    const studentRows = Array.from(tableBody.querySelectorAll('tr.student-row'));
+
+    function processFilterEngine() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const statusFilter = statusSelect.value;
+      let hasResults = false;
+
+      // Handle backend django empty view visibility tracking 
+      if (djangoEmptyState) {
+        if (searchTerm || statusFilter !== 'all') {
+          djangoEmptyState.classList.add('search-hidden');
+        } else if (studentRows.length === 0) {
+          djangoEmptyState.classList.remove('search-hidden');
+        }
+      }
+
+      // Loop and check metrics across search and selector inputs simultaneously
+      studentRows.forEach(row => {
+        const nameText = row.querySelector('.text-dark-title')?.textContent.toLowerCase() || '';
+        const usernameText = row.querySelector('.text-username')?.textContent.toLowerCase() || '';
+        const emailText = row.querySelector('.text-email')?.textContent.toLowerCase() || '';
+        const phoneText = row.querySelector('.text-phone')?.textContent.toLowerCase() || '';
+        const rowStatus = row.getAttribute('data-status');
+
+        // Validation parsing passes
+        const matchesSearch = nameText.includes(searchTerm) || 
+                              usernameText.includes(searchTerm) || 
+                              usernameText.replace('@', '').includes(searchTerm) || 
+                              emailText.includes(searchTerm) ||
+                              phoneText.includes(searchTerm);
+
+        const matchesStatus = (statusFilter === 'all') || (rowStatus === statusFilter);
+
+        // Render matching visibility status states cleanly
+        if (matchesSearch && matchesStatus) {
+          row.classList.remove('search-hidden');
+          hasResults = true;
+        } else {
+          row.classList.add('search-hidden');
+        }
+      });
+
+      // Handle dynamic JavaScript empty alert banner display 
+      if (hasResults || (studentRows.length === 0 && !searchTerm && statusFilter === 'all')) {
+        jsEmptyState.classList.add('search-hidden');
+      } else {
+        jsEmptyState.classList.remove('search-hidden');
+      }
+    }
+
+    // Register active layout listeners
+    searchInput.addEventListener('input', processFilterEngine);
+    statusSelect.addEventListener('change', processFilterEngine);
+
+    // Initialize instant search calculations if value exists on mount
+    if (searchInput.value.trim() || statusSelect.value !== 'all') {
+      processFilterEngine();
+    }
+  });
+</script>
+{% endblock %}

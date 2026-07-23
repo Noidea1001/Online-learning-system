@@ -1,0 +1,13 @@
+{# templates/partials/_table.html #}
+<div class="table-responsive">
+<table class="table table-striped mt-4">
+  <thead>
+    <tr>
+      {% for heading in headings %}<th>{{ heading }}</th>{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% block rows %}{% endblock %}
+  </tbody>
+</table>
+</div>

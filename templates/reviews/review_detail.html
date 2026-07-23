@@ -1,0 +1,139 @@
+{# templates/reviews/review_detail.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Review #{{ review.id }} Detail — OLS{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="mb-4">
+    <a href="{% url 'review_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-1 small transition-smooth">
+      <i class="bi bi-arrow-left"></i> Back to Review List
+    </a>
+  </div>
+
+  <div class="detail-card">
+    <div class="detail-header">
+      <div class="review-header__orb"></div>
+      <div class="row align-items-center g-3 position-relative" style="z-index: 2;">
+        <div class="col-md-8 d-flex align-items-center gap-3 flex-wrap">
+          
+          <!-- 👤 Avatar Graphic Area -->
+          <div class="avatar-large bg-primary-light text-primary d-flex align-items-center justify-content-center fw-bold rounded-circle">
+            {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+              {{ review.student.user.username|slice:":2"|upper }}
+            {% else %}
+              AN
+            {% endif %}
+          </div>
+          
+          <div>
+            <span class="badge bg-white text-dark opacity-75 mb-2 fw-bold" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">Review ID: #{{ review.id }}</span>
+            
+            <h2 class="fw-bold mb-0 text-white" style="font-family: var(--font-display); letter-spacing: -0.02em;">
+              {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+                {{ review.student.user.get_full_name|default:review.student.user.username }}
+              {% else %}
+                <span class="opacity-90"><i class="bi bi-shield-lock-fill me-1"></i>Anonymous Student</span>
+              {% endif %}
+            </h2>
+            
+            <p class="mb-0 text-white-50 small">
+              {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+                @{{ review.student.user.username }}
+              {% else %}
+                @verified_student
+              {% endif %}
+            </p>
+          </div>
+        </div>
+        
+        <div class="col-md-4 text-md-end">
+          {% if review.is_approved %}
+            <span class="status-badge status-badge--approved">
+              <span class="status-dot status-dot--approved"></span> Live / Approved
+            </span>
+          {% else %}
+            <span class="status-badge status-badge--pending">
+              <span class="status-dot status-dot--pending"></span> Pending Audit
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="p-4 p-md-5">
+      <div class="row g-4">
+        <!-- Main Content (Left) -->
+        <div class="col-lg-8">
+          <div class="mb-3">
+            <h5 class="fw-bold text-muted small text-uppercase mb-2" style="letter-spacing: 0.05em;">Student Testimonial</h5>
+            <div class="rating-stars-lg mb-3" title="{{ review.rating }} out of 5 stars">
+              {% for i in "12345"|make_list %}
+                {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+              {% endfor %}
+            </div>
+            <div class="full-comment-box shadow-sm text-secondary">
+              "{{ review.comment }}"
+            </div>
+          </div>
+        </div>
+
+        <!-- Meta Info & Actions (Right) -->
+        <div class="col-lg-4">
+          <h5 class="fw-bold text-muted small text-uppercase mb-3" style="letter-spacing: 0.05em;">Context Details</h5>
+          
+          <div class="d-flex flex-column gap-3 mb-4">
+            <div class="meta-item">
+              <small class="text-muted d-block mb-1">Targeted Course</small>
+              <span class="fw-bold text-dark">{{ review.course.title }}</span>
+            </div>
+            {% if review.created_at %}
+              <div class="meta-item">
+                <small class="text-muted d-block mb-1">Submitted Date</small>
+                <span class="fw-bold text-dark">{{ review.created_at|date:"F d, Y @ H:i" }}</span>
+              </div>
+            {% else %}
+              <div class="meta-item">
+                <small class="text-muted d-block mb-1">Verification Status</small>
+                <span class="fw-bold text-success d-inline-flex align-items-center gap-1">
+                  <i class="bi bi-patch-check-fill"></i> Verified Purchase
+                </span>
+              </div>
+            {% endif %}
+          </div>
+
+          {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+            <h5 class="fw-bold text-muted small text-uppercase mb-3" style="letter-spacing: 0.05em;">Moderator Controls</h5>
+            <div class="d-flex flex-column gap-2">
+              {% if not review.is_approved %}
+                <form method="post" action="{% url 'review_approve' review.id %}" class="w-100 m-0">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success w-100 py-2.5 shadow-sm fw-bold d-inline-flex align-items-center justify-content-center gap-2" style="font-size: 0.85rem; border-radius: var(--radius-sm);">
+                    <i class="bi bi-patch-check-fill"></i> Approve This Review
+                  </button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'review_approve' review.id %}" class="w-100 m-0">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-warning w-100 py-2.5 fw-bold d-inline-flex align-items-center justify-content-center gap-2" style="font-size: 0.85rem; border-radius: var(--radius-sm);">
+                    <i class="bi bi-x-circle-fill"></i> Revoke Approval
+                  </button>
+                </form>
+              {% endif %}
+              
+              <a href="{% url 'review_delete' review.id %}" class="btn btn-outline-danger w-100 py-2.5 fw-bold text-center d-inline-flex align-items-center justify-content-center gap-2" style="font-size: 0.85rem; border-radius: var(--radius-sm);">
+                <i class="bi bi-trash-fill"></i> Wipe Out From System
+              </a>
+            </div>
+          {% endif %}
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

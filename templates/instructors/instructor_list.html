@@ -1,0 +1,256 @@
+{# templates/instructors/instructor_list.html #}
+{% extends "base.html" %}
+{% block title %}Instructors Management{% endblock %}
+
+{% block content %}
+<!-- FIX: Custom scoped override to make sure hidden states collapse properly over responsive CSS hacks -->
+<style>
+  .custom-instructor-table .search-hidden {
+    display: none !important;
+  }
+</style>
+
+<div class="container py-2">
+
+  <!-- Header Section -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
+    <div>
+      <h1 class="fw-bold display-6 mb-1">Instructors Directory</h1>
+      <p class="text-muted mb-0">Monitor, modify, and manage all registered expert mentors in the system</p>
+    </div>
+
+    {% if request.user.is_lms_admin %}
+      <a href="{% url 'instructor_create' %}" class="btn btn-primary btn-lg shadow-sm rounded-pill px-4 py-2 btn-icon" title="Add New Instructor"><i class="bi bi-person-plus-fill"></i></a>
+    {% endif %}
+  </div>
+
+  <div class="row g-3 align-items-center mb-4">
+    <div class="col flex-grow-1">
+      <div class="ll-search mb-0"> 
+        <i class="bi bi-search ll-search__icon"></i>
+        <input type="text" 
+               id="instructorSearch"
+               name="search" 
+               class="ll-search__input" 
+               placeholder="Search by name, username or email..."
+               value="{{ request.GET.search|default:'' }}">
+      </div>
+    </div>
+    <div class="col-auto">
+      <button type="button" id="instructorFilterBtn" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-primary d-flex align-items-center gap-2 btn-icon" style="height: 52px;" title="Filter"><i class="bi bi-funnel-fill"></i></button>
+    </div>
+  </div>
+
+  <!-- Instructors Table & Mobile Card Framework -->
+  <div class="w-100 overflow-hidden">
+    <div class="table-responsive-lg list-scroll">
+        <table class="table align-middle mb-0 custom-instructor-table">
+          <thead>
+            <tr>
+              <th class="ps-4">Instructor Details</th>
+              <th>Username</th>
+              <th>Email Address</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="instructorsTableBody">
+            {% for instructor in instructors %}
+            <tr>
+              <td class="ps-4" data-label="Instructor Details">
+                <div class="d-flex align-items-center gap-3 instructor-profile-box">
+                  {% if instructor.user.avatar_url %}
+                    <img src="{{ instructor.user.avatar_url }}" alt="{{ instructor.user.username }}" class="rounded-circle object-fit-cover d-none d-lg-flex" style="width: 40px; height: 40px;">
+                  {% else %}
+                    <div class="avatar-placeholder bg-info-subtle text-info d-none d-lg-flex">
+                      {{ instructor.user.username|slice:":2"|upper }}
+                    </div>
+                  {% endif %}
+                  <div>
+                    <span class="fw-bold d-block text-dark text-dark-title">{{ instructor.user.get_full_name|default:instructor.user.username }}</span>
+                    <span class="badge bg-light text-primary border rounded-pill px-2.5 py-1 small mt-1 d-inline-block opacity-85" style="font-size: 0.65rem;">
+                      <i class="bi bi-patch-check-fill me-1 text-info"></i>Expert Mentor
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <td data-label="Username">
+                <span class="fw-semibold font-monospace text-secondary text-username">@{{ instructor.user.username }}</span>
+              </td>
+
+              <td data-label="Email Address">
+                {% if instructor.user.email %}
+                  <a href="mailto:{{ instructor.user.email }}" class="text-decoration-none text-break text-email">
+                    <i class="bi bi-envelope me-1 d-none d-lg-inline text-muted"></i>{{ instructor.user.email }}
+                  </a>
+                {% else %}
+                  <span class="text-muted text-email">—</span>
+                {% endif %}
+              </td>
+
+               <td class="text-end pe-4" data-label="Actions" style="width: 120px;">
+                <div class="d-flex justify-content-end align-items-center gap-2">
+
+                  <div class="d-none d-md-flex gap-1">
+                    <a href="{% url 'instructor_detail' instructor.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1" title="View"><i class="bi bi-eye"></i></a>
+                    
+                    {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' %}
+                      <a href="{% url 'instructor_update' instructor.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <a href="{% url 'instructor_delete' instructor.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </a>
+                    {% endif %}
+
+                  </div>
+
+                  <div class="d-md-none">
+                    <button class="btn btn-sm btn-light border rounded-circle p-2 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                      <li>
+                        <a class="dropdown-item" href="{% url 'instructor_detail' instructor.id %}">
+                          <i class="bi bi-eye me-2 text-secondary"></i> View Detail
+                        </a>
+                      </li>
+                      {% if request.user.is_lms_admin %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                          <a class="dropdown-item text-primary" href="{% url 'instructor_update' instructor.id %}">
+                            <i class="bi bi-pencil me-2"></i> Edit Account
+                          </a>
+                        </li>
+                        <li>
+                          <form method="post" action="{% url 'instructor_delete' instructor.id %}" onsubmit="return confirm('Are you sure?')">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item text-danger">
+                              <i class="bi bi-trash me-2"></i> Delete Account
+                            </button>
+                          </form>
+                        </li>
+                      {% endif %}
+                    </ul>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <!-- FIX: Added our high-specificity target class alongside default structural state -->
+            <tr id="djangoEmptyState" class="django-empty-row">
+              <td colspan="4" class="text-center py-5">
+                <i class="bi bi-patch-exclamation display-1 text-muted mb-3 d-block opacity-50"></i>
+                <h5 class="fw-bold">No Instructors Found</h5>
+                <p class="text-muted">There are no instructors matching your current database filters.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    {% include "includes/pagination.html" %}
+  {% endif %}
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('instructorSearch');
+    const tableBody = document.getElementById('instructorsTableBody');
+    const djangoEmptyState = document.getElementById('djangoEmptyState');
+    
+    const jsEmptyState = document.createElement('tr');
+    jsEmptyState.id = 'jsEmptyState';
+    jsEmptyState.className = 'search-hidden'; // FIX: Hide cleanly by default with high priority class
+    jsEmptyState.innerHTML = `
+      <td colspan="4" class="text-center py-5">
+        <i class="bi bi-search display-1 text-muted mb-3 d-block opacity-50" style="font-size: 3rem;"></i>
+        <h5 class="fw-bold">No Instructors Found</h5>
+        <p class="text-muted">Please try searching with different keywords.</p>
+      </td>
+    `;
+    tableBody.appendChild(jsEmptyState);
+
+    const instructorRows = Array.from(tableBody.querySelectorAll('tr')).filter(row => {
+      return row.id !== 'jsEmptyState' && row.id !== 'djangoEmptyState';
+    });
+
+    function processSearch() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      let hasResults = false;
+
+      // Handle backend django empty view visibility states
+      if (djangoEmptyState) {
+        if (searchTerm) {
+          djangoEmptyState.classList.add('search-hidden');
+        } else if (instructorRows.length === 0) {
+          djangoEmptyState.classList.remove('search-hidden');
+        }
+      }
+
+      instructorRows.forEach(row => {
+        const nameText = row.querySelector('.text-dark-title')?.textContent.toLowerCase() || '';
+        const usernameText = row.querySelector('.text-username')?.textContent.toLowerCase() || '';
+        const emailText = row.querySelector('.text-email')?.textContent.toLowerCase() || '';
+
+        if (nameText.includes(searchTerm) || 
+            usernameText.includes(searchTerm) || 
+            usernameText.replace('@', '').includes(searchTerm) || 
+            emailText.includes(searchTerm)) {
+          
+          row.classList.remove('search-hidden'); // FIX: remove blocking class to restore responsive layout
+          hasResults = true;
+        } else {
+          row.classList.add('search-hidden'); // FIX: apply high-priority block class
+        }
+      });
+
+      // Handle dynamic JS search tracking empty card state
+      if (hasResults || (instructorRows.length === 0 && !searchTerm)) {
+        jsEmptyState.classList.add('search-hidden');
+      } else {
+        jsEmptyState.classList.remove('search-hidden');
+      }
+    }
+
+       // Bind real-time input tracking
+    searchInput.addEventListener('input', processSearch);
+
+    // FIX: Initialize immediately on load if backend pre-filled search parameter
+    if (searchInput.value.trim()) {
+      processSearch();
+    }
+
+    const filterBtn = document.getElementById('instructorFilterBtn');
+    if (filterBtn) {
+      filterBtn.addEventListener('click', function() {
+        const query = searchInput.value.trim();
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (query) {
+          urlParams.set('search', query);
+          if (urlParams.has('page')) {
+            urlParams.delete('page');
+          }
+        } else {
+          urlParams.delete('search');
+        }
+        
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+      });
+    }
+
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && filterBtn) {
+        e.preventDefault();
+        filterBtn.click();
+      }
+    });
+
+  });
+</script>
+{% endblock %}

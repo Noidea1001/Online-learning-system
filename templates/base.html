@@ -1,0 +1,249 @@
+{# templates/base.html #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B1E33" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="OLS" />
+    <title>{% block title %}Online Learning System{% endblock %}</title>
+    <link rel="icon" href="{% static 'image/online_13972623.png' %}" type="image/png">
+    <link rel="apple-touch-icon" href="{% static 'pwa/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <link rel="stylesheet" href="{% static 'css/ols-theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+    <link rel="stylesheet" href="{% static 'css/form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/quizzes.css' %}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Kantumruy+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* Automatically adjust typography hierarchy when translated to Khmer */
+        :lang(km), [lang="km"], .goog-te-combo {
+            font-family: 'Kantumruy Pro', 'Space Grotesk', sans-serif !important;
+            line-height: 1.7 !important;
+        }
+        /* Hides the ugly Google Translate top iframe bar if desired */
+        .goog-te-banner-frame { display: none !important; }
+        body { top: 0px !important; }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+
+</head>
+<body class="ols-page {% if not request.user.is_authenticated %}ols-no-sidebar{% endif %}">
+
+  {% block navbar %}
+  {% if request.user.is_authenticated %}
+  {# Drawer backdrop — sits behind the mobile drawer #}
+  <div id="drawer-backdrop" class="drawer-backdrop"
+       style="position:fixed;inset:0;z-index:1055;display:none;"
+       onclick="closeDrawer()"></div>
+  {% endif %}
+
+  {% include "partials/_navbar.html" %}
+  {% endblock %}
+  
+  <main class="ols-main {% block main_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  {% include "partials/_footer.html" %}
+  {% endblock %}
+  
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="toast custom-toast border-0 shadow-lg align-items-center mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+          <div class="d-flex">
+            
+            <div class="toast-icon-wrapper d-flex align-items-center justify-content-center px-3 
+              {% if message.tags == 'success' %}toast-icon--success
+              {% elif message.tags == 'error' or message.tags == 'danger' %}toast-icon--danger
+              {% elif message.tags == 'warning' %}toast-icon--warning
+              {% else %}toast-icon--info{% endif %}">
+              
+              {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill fs-5"></i>
+              {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-exclamation-triangle-fill fs-5"></i>
+              {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-circle-fill fs-5"></i>
+              {% else %}<i class="bi bi-info-circle-fill fs-5"></i>{% endif %}
+            </div>
+
+            <div class="toast-body py-3 px-3 flex-grow-1">
+              <strong class="d-block text-dark mb-0.5">
+                {% if message.tags == 'success' %}Success
+                {% elif message.tags == 'error' or message.tags == 'danger' %}Error
+                {% elif message.tags == 'warning' %}Warning
+                {% else %}Notification{% endif %}
+              </strong>
+              <span class="text-secondary small">{{ message }}</span>
+            </div>
+
+            <button type="button" class="btn-close me-2 m-auto text-secondary shadow-none" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-progress 
+            {% if message.tags == 'success' %}toast-progress--success
+            {% elif message.tags == 'error' or message.tags == 'danger' %}toast-progress--danger
+            {% elif message.tags == 'warning' %}toast-progress--warning
+            {% else %}toast-progress--info{% endif %}">
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'js/form.js' %}"></script>
+  
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,km', 
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <script>
+    //  Auto-Trigger Flash Toast Execution Flow
+    document.addEventListener('DOMContentLoaded', function () {
+      const toastElements = document.querySelectorAll('.toast');
+      toastElements.forEach(function (toastEl) {
+        const bootstrapToast = new bootstrap.Toast(toastEl, {
+          autohide: true,
+          delay: 3000
+        });
+        bootstrapToast.show();
+      });
+    });
+
+    // Reusable toast API for client-side / AJAX-driven feedback, so any
+    // script on the site can show a themed toast without a full page reload:
+    //   showToast('success', 'Saved successfully.')
+    //   showToast('error', 'Something went wrong.', 'Upload Failed')
+    const TOAST_META = {
+      success: { icon: 'bi-check-circle-fill', label: 'Success' },
+      error:   { icon: 'bi-exclamation-triangle-fill', label: 'Error' },
+      warning: { icon: 'bi-exclamation-circle-fill', label: 'Warning' },
+      info:    { icon: 'bi-info-circle-fill', label: 'Notification' },
+    };
+
+    function showToast(type, message, title) {
+      const meta = TOAST_META[type] || TOAST_META.info;
+      const container = document.querySelector('.toast-container');
+      if (!container) return;
+
+      const toastEl = document.createElement('div');
+      toastEl.className = 'toast custom-toast border-0 shadow-lg align-items-center mb-2';
+      toastEl.setAttribute('role', 'alert');
+      toastEl.setAttribute('aria-live', 'assertive');
+      toastEl.setAttribute('aria-atomic', 'true');
+      toastEl.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-icon-wrapper d-flex align-items-center justify-content-center px-3 toast-icon--${type in TOAST_META ? type : 'info'}">
+            <i class="bi ${meta.icon} fs-5"></i>
+          </div>
+          <div class="toast-body py-3 px-3 flex-grow-1">
+            <strong class="d-block text-dark mb-0.5">${title || meta.label}</strong>
+            <span class="text-secondary small"></span>
+          </div>
+          <button type="button" class="btn-close me-2 m-auto text-secondary shadow-none" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-progress toast-progress--${type in TOAST_META ? type : 'info'}"></div>
+      `;
+      // Set message via textContent to avoid any HTML injection from dynamic content.
+      toastEl.querySelector('.toast-body span').textContent = message;
+
+      container.appendChild(toastEl);
+      const bootstrapToast = new bootstrap.Toast(toastEl, { autohide: true, delay: 3000 });
+      toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+      bootstrapToast.show();
+    }
+    window.showToast = showToast;
+  </script>
+
+  <script>
+    // Active nav link highlighter (JS fallback — Django template sets ols-nav-link--active on server side)
+    document.querySelectorAll('.ols-nav-link').forEach(function(link) {
+      if (link.getAttribute('href') === window.location.pathname) {
+        link.classList.add('ols-nav-link--active');
+      }
+    });
+
+    // Mobile drawer open/close helpers (used by drawer-backdrop onclick)
+    function closeDrawer() {
+      var drawer   = document.getElementById('navbar-drawer');
+      var backdrop = document.getElementById('drawer-backdrop');
+      var btn      = document.getElementById('sidebar-toggle-btn');
+      if (!drawer) return;
+      drawer.classList.remove('ols-drawer--open');
+      drawer.setAttribute('aria-hidden', 'true');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+      if (backdrop) {
+        backdrop.classList.remove('drawer-backdrop--visible');
+        setTimeout(function() { backdrop.style.display = 'none'; }, 220);
+      }
+    }
+    window.closeDrawer = closeDrawer;
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeDrawer();
+    });
+  </script>
+
+  <script>
+    // PWA: register the service worker (root-scoped, see /sw.js view) so the
+    // app can be installed and keeps working (with a fallback page) offline.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function (err) {
+          console.warn('Service worker registration failed:', err);
+        });
+      });
+    }
+
+    // Capture the browser's install prompt (Chrome/Edge/Android) so we can
+    // trigger it from our own themed button instead of waiting on the
+    // browser's default mini-infobar.
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const btn = document.getElementById('pwa-install-btn');
+      if (btn) btn.classList.remove('d-none');
+    });
+
+    function installApp() {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(function () {
+        deferredInstallPrompt = null;
+        const btn = document.getElementById('pwa-install-btn');
+        if (btn) btn.classList.add('d-none');
+      });
+    }
+    window.installApp = installApp;
+
+    window.addEventListener('appinstalled', function () {
+      const btn = document.getElementById('pwa-install-btn');
+      if (btn) btn.classList.add('d-none');
+      if (window.showToast) showToast('success', 'Online Learning System is now installed.', 'Installed');
+    });
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,243 @@
+{# templates/assignments/assignment_detail.html #}
+{% extends "base.html" %}
+{% block title %}Assignment - {{ assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <!-- Control Center Action Buttons Line -->
+  <div class="d-flex flex-wrap justify-content-between gap-3 mb-4 align-items-center mobile-buttons-flex ">
+    <div>
+      <span class="badge bg-primary rounded-pill px-3 py-2 small fw-bold me-1 mb-2">
+        <!-- FIXED DATABASE ROUTE REFERENCE PATH: Handles lesson course titles and direct course titles -->
+        <i class="bi bi-tags-fill me-1"></i> Course: {{ assignment.lesson.course.title|default:assignment.course.title|default:"Global Course Framework" }}
+      </span>
+      {% if assignment.lesson %}
+        <span class="badge bg-info text-dark rounded-pill px-3 py-2 small fw-bold">
+          <i class="bi bi-book-half me-1"></i> Lesson: {{ assignment.lesson.title }}
+        </span>
+      {% else %}
+        <span class="badge bg-secondary rounded-pill px-3 py-2 small fw-bold">
+          <i class="bi bi-globe me-1"></i> (Course-Wide Task)
+        </span>
+      {% endif %}
+    </div>
+
+    <div class="d-flex gap-2">
+      {% if request.user.is_lms_admin or request.user.role == 'INSTRUCTOR' %}
+        <a href="{% url 'assignment_update' assignment.id %}" class="btn btn-outline-primary rounded-pill px-3.5 py-2 fw-semibold transition-smooth text-nowrap btn-icon" title="Edit Task"><i class="bi bi-pencil-square"></i></a>
+        <a href="{% url 'assignment_delete' assignment.id %}" class="btn btn-outline-danger rounded-pill px-3.5 py-2 fw-semibold transition-smooth text-nowrap btn-icon" title="Delete"><i class="bi bi-trash3-fill"></i></a>
+      {% endif %}
+      
+      {% if assignment.lesson %}
+        <a href="{% url 'lesson_detail' assignment.lesson.id %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-bold text-nowrap btn-icon" title="Back to Lesson"><i class="bi bi-arrow-left"></i></a>
+      {% else %}
+        <a href="{% url 'assignment_list' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-bold text-nowrap btn-icon" title="Back to Directory"><i class="bi bi-arrow-left"></i></a>
+      {% endif %}
+      <!-- if role student -->
+      {% if request.user.role == 'STUDENT' %}
+        <a href="{% url 'student_submissions_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-bold text-nowrap btn-icon" title="Back to Directory"><i class="bi bi-arrow-left"></i></a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4 g-lg-5">
+    
+    <!-- Left Column Panel: Assignment Details -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 border border-light-subtle">
+        
+        <div class="form-header-accent-assignment" style="height: 6px; background: linear-gradient(90deg, #164279 0%, #164279 100%);"></div>
+
+        <div class="bg-gradient-dark p-4 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #1c1f26 0%, #1c1f26 100%); border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div class="position-absolute rounded-circle bg-primary-subtle opacity-10" style="width: 150px; height: 150px; top: -50px; right: -25px; filter: blur(40px);"></div>
+          
+          <div class="d-flex align-items-center gap-3 position-relative" style="z-index: 2;">
+            <div class="bg-warning-subtle text-warning rounded-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink: 0; background-color: rgba(0, 178, 234, 0.15) !important;">
+              <i class="bi bi-clipboard-check fs-4"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-white" style="font-weight: 700; letter-spacing: -0.01em;">Assignment Details</h5>
+              <small class="d-block mt-0.5 opacity-50" style="font-size: 0.8rem;">Task Reference: #{{ assignment.id }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+          <div class="profile-info d-flex flex-column gap-4">
+            
+            <div class="profile-field">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Task Title</small>
+              <h5 class="fw-bold text-dark mb-0" style="font-weight: 700;">{{ assignment.title }}</h5>
+            </div>
+
+            <div class="profile-field">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Maximum Weight Score</small>
+              <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.85rem; color: #96591a !important; background-color: rgba(255, 193, 7, 0.12) !important;">
+                <i class="bi bi-award me-1"></i>{{ assignment.max_score }} Points Maximum
+              </span>
+            </div>
+
+            <div class="profile-field">
+              <small class="text-muted fw-bold text-uppercase d-block mb-1 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Official Due Date Deadline</small>
+              <span class="badge bg-light text-dark border px-2.5 py-2 fw-medium" style="font-size: 0.8rem;">
+                <i class="bi bi-calendar-event text-danger me-1"></i>{{ assignment.due_date|date:"d M Y • H:i" }}
+              </span>
+            </div>
+
+            {% if assignment.assignment_file %}
+              <div class="profile-field border-top pt-3">
+                <small class="text-muted fw-bold text-uppercase d-block mb-2 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Resource Attachment</small>
+                <a href="{{ assignment.assignment_file.url }}" class="btn btn-sm btn-light border text-primary fw-bold d-inline-flex align-items-center gap-2 rounded-3 px-3 py-2 w-100 justify-content-center" download>
+                  <i class="bi bi-cloud-arrow-down-fill fs-5"></i> Download Assignment File
+                </a>
+              </div>
+            {% endif %}
+
+            <div class="profile-field border-top pt-4">
+              <small class="text-muted fw-bold text-uppercase d-block mb-2 tracking-wider" style="font-size: 0.65rem; letter-spacing: 0.05em;">Task Instructions Requirements</small>
+              <div class="text-secondary" style="white-space: pre-line; line-height: 1.6; font-size: 0.925rem;">
+                {{ assignment.description|default:"No explicit procedural instructions provided for this project assignment instance." }}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Right Column Layout Panel: Dynamic Contextual Workbench -->
+    <div class="col-lg-7">
+      
+      
+      {% if request.user.role == 'INSTRUCTOR' or request.user.is_superuser or request.user.is_lms_admin %}
+      <div class="card border-0 shadow-sm rounded-4 border border-light-subtle overflow-hidden bg-white">
+        <div class="card-body p-4 p-md-5">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0 text-dark" style="font-weight: 700;">
+              <i class="bi bi-folder2-open text-primary me-2"></i>Received Submissions
+            </h5>
+            <!-- FIXED: change .submissions.count to  -->
+            <span class="badge bg-light text-primary border rounded-pill px-2.5 py-1.5 small fw-bold">
+              {{ assignment.submissions.count }} Loaded
+            </span>
+          </div>
+
+          <div class="d-flex flex-column gap-3">
+            <!-- FIXED: change .submissions.all to  -->
+            {% for submission in assignment.submissions.all %}
+              <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between p-3 border rounded-3 gap-3 bg-white border-light-subtle submission-item-row" style="transition: all 0.2s ease;">
+                <div class="d-flex align-items-center gap-3 w-100">
+                  <div class="bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; flex-shrink: 0; font-size: 0.85rem;">
+                    {{ submission.student.user.username|slice:":2"|upper }}
+                  </div>
+                  <div class="text-truncate-wrapper w-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <h6 class="mb-1 fw-bold text-dark text-break mb-0" style="font-size: 0.95rem;">
+                        {{ submission.student.user.get_full_name|default:submission.student.user.username }}
+                      </h6>
+                      {% if submission.score is not None %}
+                        <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1 small fw-bold">
+                          Graded: {{ submission.score }} / {{ assignment.max_score }}
+                        </span>
+                      {% else %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-medium">
+                          Ungraded
+                        </span>
+                      {% endif %}
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                      <i class="bi bi-clock-history me-1"></i>Submitted: {{ submission.submitted_at|date:"d M Y • H:i" }}
+                    </small>
+                  </div>
+                </div>
+                <div class="text-end mobile-w-100">
+                  <a href="{% url 'submission_detail' submission.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm mobile-w-100 text-center">
+                    Review Work
+                  </a>
+                </div>
+              </div>
+            {% empty %}
+              <div class="text-center py-5 text-muted bg-light rounded-3 border border-dashed">
+                <i class="bi bi-files display-6 opacity-20 d-block mb-2"></i>
+                <span class="small">No students have pushed submissions to this project task interface yet.</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if request.user.role == 'STUDENT' %}
+      <div class="card border-0 shadow-sm rounded-4 border border-light-subtle overflow-hidden bg-white mb-4">
+        <div class="card-body p-4 p-md-5">
+          <h5 class="fw-bold mb-4 text-dark" style="font-weight: 700;">
+            <i class="bi bi-person-workspace text-primary me-2"></i>Your Submission Status
+          </h5>
+          
+          {% if user_submission %}
+            <!--  -->
+            <div class="p-4 bg-light rounded-4 border text-center py-5">
+              <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 60px; height: 60px;">
+                <i class="bi bi-check-circle-fill fs-2"></i>
+              </div>
+              <h5 class="fw-bold text-success mb-1">Your Work is Submitted!</h5>
+              <p class="text-muted small mb-4">Turned in on {{ user_submission.submitted_at|date:"d M Y • H:i" }}</p>
+
+              <div class="row justify-content-center">
+                <div class="col-md-8">
+                  <div class="bg-white p-3 rounded-3 border text-start mb-4 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="small text-muted fw-bold text-uppercase">Grading Status</span>
+                      {% if user_submission.score is not None %}
+                        <span class="badge bg-success text-white rounded-pill px-3 py-1.5 fw-bold">Graded</span>
+                      {% else %}
+                        <span class="badge bg-secondary text-white rounded-pill px-3 py-1.5 fw-medium">Pending Review</span>
+                      {% endif %}
+                    </div>
+                    
+                    {% if user_submission.score is not None %}
+                      <div class="alert alert-success d-flex align-items-center gap-2 py-2.5 mb-2 rounded-3 border-0">
+                        <i class="bi bi-award-fill fs-4 text-success"></i>
+                        <div>
+                          <strong class="fs-5">{{ user_submission.score }}</strong> <span class="small text-muted">/ {{ assignment.max_score }} Points</span>
+                        </div>
+                      </div>
+                    {% else %}
+                      <div class="p-3 bg-light rounded-3 text-center text-muted small">
+                        <i class="bi bi-hourglass-split me-1"></i>Your instructor is currently reviewing this assignment.
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <a href="{% url 'submission_detail' user_submission.id %}" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold w-100 shadow-sm">
+                    <i class="bi bi-eye-fill me-2"></i>View Your Submitted Work
+                  </a>
+                </div>
+              </div>
+            </div>
+
+          {% else %}
+            <!--  -->
+            <div class="p-4 bg-light rounded-4 border text-center py-5">
+              <div class="bg-warning-subtle text-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: rgba(255, 193, 7, 0.12) !important;">
+                <i class="bi bi-exclamation-circle-fill fs-2" style="color: #96591a;"></i>
+              </div>
+              <h5 class="fw-bold text-dark mb-2" style="color: #1c1f26 !important;">You haven't submitted your work yet</h5>
+              <p class="text-muted small mx-auto mb-4" style="max-width: 400px;">
+                Make sure to review all instructions and resources provided on the left before locking in your answers.
+              </p>
+              
+              <a href="{% url 'submission_create' assignment.id %}" class="btn btn-primary btn-lg rounded-pill px-5 py-2.5 fw-bold shadow-sm" style="font-size: 1rem;">
+                <i class="bi bi-cloud-arrow-up-fill me-2"></i>Submit Your Homework Now
+              </a>
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+      {% endif %}
+
+    </div> 
+  </div>
+</div> 
+{% endblock %}

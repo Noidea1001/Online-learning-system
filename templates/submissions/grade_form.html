@@ -1,0 +1,108 @@
+{# templates/submissions/grade_form.html #}
+{% extends "base.html" %}
+{% block title %}Evaluate Submission - #{{ submission.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-1 py-md-10">
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+
+      <!-- Back Button Navigation -->
+      <div class="mb-4">
+        <a href="{% url 'submission_detail' submission.id %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold">
+          <i class="bi bi-arrow-left"></i> Back to Submission Detail
+        </a>
+      </div>
+
+      <!-- Form Card Component -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white border border-light-subtle">
+        
+        <div class="bg-success" style="height: 6px; width: 100%;"></div>
+
+        <div class="card-body p-4 p-md-5">
+          
+          <h2 class="fw-bold text-dark mb-1 fs-3 fs-md-2">
+            Evaluate Assignment Task
+          </h2>
+          <p class="text-muted mb-4 small">
+            Provide scores and professional feedback comments for student <strong class="text-dark">@{{ submission.student.user.username }}</strong>.
+          </p>
+
+          {% if form.errors %}
+            <div class="alert alert-danger rounded-3 mb-4 border-0 shadow-sm">
+              <h6 class="fw-bold small text-uppercase mb-2">Evaluation Failed:</h6>
+              <ul class="mb-0 small ps-3">
+                {% for field, errors in form.errors.items %}
+                  <li><strong>{{ field|capfirst }}:</strong> {{ errors|striptags }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <form method="post" action="" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <div class="p-3 border border-light-subtle rounded-3 mb-4 bg-light-subtle">
+              <div class="d-flex flex-column gap-2 small">
+                <div class="d-flex justify-content-between align-items-start border-bottom pb-2">
+                  <span class="text-secondary fw-semibold text-uppercase" style="font-size: 0.75rem;">Assignment Target</span>
+                  <span class="fw-bold text-dark text-end ms-2">{{ submission.assignment.title }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-secondary fw-semibold text-uppercase" style="font-size: 0.75rem;">Allowed Range Scale</span>
+                  <span class="fw-semibold text-muted">0.00 Pts to <strong class="text-danger">{{ submission.assignment.max_score }} Pts</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-4">
+              
+              <!-- Section Head -->
+              <div class="col-12">
+                <h5 class="fw-bold text-secondary border-bottom pb-2 mb-2 small text-uppercase" style="letter-spacing: 0.03em;">
+                  Assessment Score Card
+                </h5>
+              </div>
+
+              {% for field in form %}
+                <div class="col-12 {% if field.name == 'score' %}col-md-6{% endif %}">
+                  <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase mb-2" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                    {{ field.label }} {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                  </label>
+                  
+                  <div>
+                    {{ field }}
+                  </div>
+
+                  {% if field.help_text %}
+                    <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">{{ field.help_text|safe }}</div>
+                  {% endif %}
+                  
+                  {% if field.errors %}
+                    <div class="text-danger small mt-1 fw-semibold" style="font-size: 0.8rem;">
+                      {{ field.errors|striptags }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+
+            </div>
+
+            <!-- Operational Core Actions Buttons -->
+            <div class="d-flex flex-column-reverse flex-md-row justify-content-md-end gap-2 gap-md-3 mt-5 pt-4 border-top">
+              <a href="{% url 'submission_detail' submission.id %}" class="btn btn-light border-secondary-subtle rounded-pill px-4 py-2 fw-semibold text-secondary w-100 w-md-auto">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-bold w-100 w-md-auto shadow-sm">
+                Submit Evaluation
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

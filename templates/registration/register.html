@@ -1,0 +1,156 @@
+{# templates/registration/register.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Create account{% endblock %}
+
+{% block content %}
+<div class="container py-1 d-flex align-items-center justify-content-center" style="min-height: 85vh;">
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden w-100" style="max-width: 520px;">
+    <div class="card-body p-4 p-md-5 text-center">
+      
+      <div class="bg-primary bg-opacity-10 text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 28px; height: 28px;">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/>
+          <line x1="22" y1="11" x2="16" y2="11"/>
+        </svg>
+      </div>
+
+      <h2 class="fw-bold text-dark mb-1 h3">Create your account</h2>
+      <p class="text-muted small mb-4">Get started — it only takes a minute.</p>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger rounded-3 p-2.5 small mb-4 text-start border-0 shadow-sm">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate class="text-start">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-12 col-sm-6">
+            <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">First name</label>
+            <input type="text"
+                   id="{{ form.first_name.id_for_label }}"
+                   name="{{ form.first_name.html_name }}"
+                   value="{{ form.first_name.value|default:'' }}"
+                   class="form-control rounded-3 {% if form.first_name.errors %}is-invalid{% endif %}"
+                   placeholder="First name"
+                   autocomplete="given-name" />
+            {% if form.first_name.errors %}
+              <div class="invalid-feedback small">{% for e in form.first_name.errors %}{{ e }}{% endfor %}</div>
+            {% endif %}
+          </div>
+          
+          <div class="col-12 col-sm-6">
+            <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Last name</label>
+            <input type="text"
+                   id="{{ form.last_name.id_for_label }}"
+                   name="{{ form.last_name.html_name }}"
+                   value="{{ form.last_name.value|default:'' }}"
+                   class="form-control rounded-3 {% if form.last_name.errors %}is-invalid{% endif %}"
+                   placeholder="Last name"
+                   autocomplete="family-name" />
+            {% if form.last_name.errors %}
+              <div class="invalid-feedback small">{% for e in form.last_name.errors %}{{ e }}{% endfor %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Username Field -->
+        <div class="mb-3">
+          <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Username</label>
+          <input type="text"
+                 id="{{ form.username.id_for_label }}"
+                 name="{{ form.username.html_name }}"
+                 value="{{ form.username.value|default:'' }}"
+                 class="form-control rounded-3 {% if form.username.errors %}is-invalid{% endif %}"
+                 placeholder="Username"
+                 autocomplete="username" />
+          <div class="form-text text-muted" style="font-size: 0.75rem;">Letters, digits, and @/./+/-/_ only.</div>
+          {% if form.username.errors %}
+            <div class="invalid-feedback small">{% for e in form.username.errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <!-- Email Field -->
+        <div class="mb-3">
+          <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Email address</label>
+          <input type="email"
+                 id="{{ form.email.id_for_label }}"
+                 name="{{ form.email.html_name }}"
+                 value="{{ form.email.value|default:'' }}"
+                 class="form-control rounded-3 {% if form.email.errors %}is-invalid{% endif %}"
+                 placeholder="name@example.com"
+                 autocomplete="email" />
+          {% if form.email.errors %}
+            <div class="invalid-feedback small">{% for e in form.email.errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <!-- Phone Number Field -->
+        <div class="mb-3">
+          <label for="{{ form.phone_number.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Phone number</label>
+          <input type="text"
+                 id="{{ form.phone_number.id_for_label }}"
+                 name="{{ form.phone_number.html_name }}"
+                 value="{{ form.phone_number.value|default:'' }}"
+                 class="form-control rounded-3 {% if form.phone_number.errors %}is-invalid{% endif %}"
+                 placeholder="Your phone number" />
+          {% if form.phone_number.errors %}
+            <div class="invalid-feedback small">{% for e in form.phone_number.errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <!-- Password Field -->
+        <div class="mb-3">
+          <label for="{{ form.password1.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Password</label>
+          <input type="password"
+                 id="{{ form.password1.id_for_label }}"
+                 name="{{ form.password1.html_name }}"
+                 class="form-control rounded-3 {% if form.password1.errors %}is-invalid{% endif %}"
+                 placeholder="Password"
+                 autocomplete="new-password" />
+          {% if form.password1.errors %}
+            <div class="invalid-feedback small">{% for e in form.password1.errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <!-- Confirm Password Field -->
+        <div class="mb-4">
+          <label for="{{ form.password2.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Confirm password</label>
+          <input type="password"
+                 id="{{ form.password2.id_for_label }}"
+                 name="{{ form.password2.html_name }}"
+                 class="form-control rounded-3 {% if form.password2.errors %}is-invalid{% endif %}"
+                 placeholder="Confirm password"
+                 autocomplete="new-password" />
+          {% if form.password2.errors %}
+            <div class="invalid-feedback small">{% for e in form.password2.errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold shadow-sm mb-3">Create account</button>
+
+        <p class="text-muted text-center small mb-0 px-2" style="font-size: 0.75rem; line-height: 1.4;">
+          By signing up you agree to our <a href="#" class="text-decoration-none fw-medium">Terms of Service</a> and <a href="#" class="text-decoration-none fw-medium">Privacy Policy</a>.
+        </p>
+      </form>
+
+      <!-- Divider Section -->
+      <div class="d-flex align-items-center my-4">
+        <hr class="flex-grow-1 text-muted opacity-25">
+        <span class="mx-3 text-secondary small text-uppercase tracking-wider fw-semibold" style="font-size: 0.7rem; letter-spacing: 0.05em;">Already have an account?</span>
+        <hr class="flex-grow-1 text-muted opacity-25">
+      </div>
+      
+      <p class="mb-0 small fw-semibold"><a href="{% url 'login' %}" class="text-decoration-none">Sign in instead →</a></p>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

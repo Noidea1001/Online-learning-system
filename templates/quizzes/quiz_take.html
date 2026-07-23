@@ -1,0 +1,688 @@
+{# templates/quizzes/quiz_take.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ quiz.title }} — Test{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/quizzes.css' %}">
+{% endblock %}
+
+{# ── Override navbar: show custom exam top bar instead ── #}
+{% block navbar %}
+<header class="exam-topbar" role="banner">
+
+  <!-- Brand / Logo -->
+  <a href="{% url 'dashboard_home' %}" class="exam-topbar__brand" title="OLS Home">
+    <div class="exam-topbar__logo-mark" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 7.5 C3 7.5 7 6 11 7 C15 6 19 7.5 19 7.5 L19 16.5 C19 16.5 15 15 11 16 C7 15 3 16.5 3 16.5 Z"
+              fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" stroke-width="1.1" stroke-linejoin="round"/>
+        <line x1="11" y1="7" x2="11" y2="16" stroke="rgba(255,255,255,0.6)" stroke-width="0.9"/>
+        <polygon points="11,2 19.5,5.5 11,9 2.5,5.5" fill="rgba(255,255,255,0.9)"/>
+        <line x1="19.5" y1="5.5" x2="19.5" y2="10" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" stroke-linecap="round"/>
+        <circle cx="19.5" cy="10.5" r="1" fill="rgba(255,255,255,0.7)"/>
+      </svg>
+    </div>
+    <div class="exam-topbar__brand-text">
+      <span class="exam-topbar__brand-name">Online Learning</span>
+      <span class="exam-topbar__brand-sub">Portal</span>
+    </div>
+  </a>
+
+  <!-- Breadcrumb + Quiz title -->
+  <div class="exam-topbar__crumb">
+    {% if quiz.course %}
+      <span class="exam-topbar__course-tag">{{ quiz.course.title|truncatechars:22 }}</span>
+      <span class="exam-topbar__sep">›</span>
+    {% endif %}
+    <h1 class="exam-topbar__title" title="{{ quiz.title }}">{{ quiz.title }}</h1>
+  </div>
+
+  <!-- Progress indicator (desktop) -->
+  <div class="exam-topbar__progress d-none d-md-flex" id="topbarProgressWrap">
+    <div class="exam-topbar__progress-bar">
+      <div class="exam-topbar__progress-fill" id="topbarProgressFill"></div>
+    </div>
+    <span class="exam-topbar__progress-label" id="topbarProgressLabel">0&thinsp;/&thinsp;{{ questions|length }}</span>
+  </div>
+
+  <!-- Auto-save status (desktop) -->
+  <span id="saveStatus" class="exam-topbar__save d-none d-lg-flex">
+    <i class="bi bi-cloud-check" id="saveStatusIcon"></i>
+    <span id="saveStatusText">All saved</span>
+  </span>
+
+  <!-- Countdown timer -->
+  {% if attempt.deadline %}
+    <div id="timerBadge" class="exam-topbar__timer">
+      <i class="bi bi-stopwatch"></i>
+      <span id="timerText">--:--</span>
+    </div>
+  {% endif %}
+
+  <!-- Exit button -->
+  <button type="button" class="exam-topbar__exit" id="exitExamBtn" aria-label="Exit test">
+    <i class="bi bi-box-arrow-left"></i>
+    <span class="d-none d-sm-inline">Exit</span>
+  </button>
+
+</header>
+{% endblock %}
+
+{% block main_class %}flex-grow-1{% endblock %}
+
+{% block content %}
+<div class="container exam-body-offset">
+
+  <!-- ── Premium Quiz Title Header Card ── -->
+  <div class="quiz-header-card">
+    <div class="quiz-header-card__accent"></div>
+    <div class="quiz-header-card__body">
+      <div style="flex:1; min-width:0;">
+        {% if quiz.course %}
+          <div class="quiz-header-course-tag">
+            <i class="bi bi-journal-bookmark"></i>
+            {{ quiz.course.title }}
+          </div>
+        {% endif %}
+        <h1 class="quiz-header-title">{{ quiz.title }}</h1>
+        <div class="quiz-header-meta">
+          <span class="meta-chip"><i class="bi bi-question-circle"></i> {{ questions|length }} Question{{ questions|length|pluralize }}</span>
+          <span class="meta-chip"><i class="bi bi-star"></i> {{ quiz.total_points }} Total Pts</span>
+          {% if attempt.deadline %}
+            <span class="meta-chip"><i class="bi bi-stopwatch"></i> Timed</span>
+          {% endif %}
+          {% if quiz.max_attempts > 1 %}
+            <span class="meta-chip"><i class="bi bi-arrow-repeat"></i> Max {{ quiz.max_attempts }} Attempt{{ quiz.max_attempts|pluralize }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% if quiz.description %}
+      <p class="quiz-header-desc">
+        <i class="bi bi-info-circle-fill"></i>
+        <span>{{ quiz.description }}</span>
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Main Grid Layout -->
+  <form method="post" id="quizTakeForm">
+    {% csrf_token %}
+    <input type="hidden" name="auto_submit" id="autoSubmitField" value="0">
+
+    <div class="quiz-layout">
+      <!-- Left Column: Questions -->
+      <div class="questions-list">
+        {% for question in questions %}
+          <div class="question-card quiz-question" 
+               id="question-{{ forloop.counter }}"
+               data-question-id="{{ question.id }}"
+               data-index="{{ forloop.counter0 }}">
+
+            <div class="question-card__head">
+              <div class="d-flex align-items-start gap-2 flex-1" style="min-width:0;">
+                <span class="q-badge">Q{{ forloop.counter }}</span>
+                <p class="q-text mb-0">{{ question.text }}</p>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <!-- Flag button -->
+                <button type="button" class="flag-btn" data-index="{{ forloop.counter }}" title="Flag for Review">
+                  <i class="bi bi-flag-fill"></i>
+                </button>
+                <span class="points-badge">
+                  {{ question.points }} pt{{ question.points|pluralize }}
+                </span>
+              </div>
+            </div>
+
+            <div class="question-card__body">
+              {% if question.question_type == 'SHORT_ANSWER' %}
+                <textarea name="question_{{ question.id }}"
+                          class="short-answer-input"
+                          rows="4"
+                          placeholder="Type your answer here…">{{ question.saved_text }}</textarea>
+                <div class="manual-badge">
+                  <i class="bi bi-person-check-fill"></i> Graded manually by instructor
+                </div>
+
+              {% else %}
+                {% for choice in question.display_choices %}
+                  <label class="quiz-option">
+                    {% if question.question_type == 'MULTIPLE' %}
+                      <input type="checkbox"
+                             name="question_{{ question.id }}"
+                             value="{{ choice.id }}"
+                             {% if choice.id in question.selected_choice_ids %}checked{% endif %}>
+                      <span class="option-indicator checkbox-style"></span>
+                    {% else %}
+                      <input type="radio"
+                             name="question_{{ question.id }}"
+                             value="{{ choice.id }}"
+                             {% if choice.id in question.selected_choice_ids %}checked{% endif %}>
+                      <span class="option-indicator"></span>
+                    {% endif %}
+                    <span class="option-letter"></span>
+                    <span class="option-text">{{ choice.text }}</span>
+                  </label>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Right Column: Stick-fixed navigation & metrics bar -->
+      <div class="quiz-sidebar">
+
+        <!-- Navigation & Completion Panel -->
+        <div class="sidebar-panel">
+          <div class="sidebar-panel__title">
+            <span>Exam Navigator</span>
+            <i class="bi bi-compass"></i>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="progress-container">
+            <div class="progress-label">
+              <span>Progress</span>
+              <span id="answeredProgressText">0 / {{ questions|length }}</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressBarFill"></div>
+            </div>
+          </div>
+
+          <!-- Numbered Grid Navigator -->
+          <div class="nav-grid mt-3 mb-4">
+            {% for question in questions %}
+              <button type="button" 
+                      id="nav-btn-{{ forloop.counter }}"
+                      class="nav-grid-btn {% if question.selected_choice_ids or question.saved_text %}answered{% endif %}"
+                      data-scroll-index="{{ forloop.counter }}">
+                {{ forloop.counter }}
+              </button>
+            {% endfor %}
+          </div>
+
+          <button type="button" id="submitQuizBtn" class="btn-submit-exam">
+            <i class="bi bi-send-check"></i> Submit Test
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </form>
+
+</div>
+
+<!-- ══ Mobile Question Navigator Drawer ══════════════════════ -->
+<div class="modal fade" id="mobileNavDrawer" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable" style="margin: auto 0 0; max-width:100%;">
+    <div class="modal-content rounded-top-4 border-0 shadow-lg" style="border-radius:20px 20px 0 0!important;">
+      <div class="modal-header border-0 pb-0 pt-3 px-4">
+        <div style="width:40px;height:4px;background:var(--border,#e5e7eb);border-radius:99px;margin:0 auto;"></div>
+      </div>
+      <div class="modal-body px-4 pb-4 pt-2">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <span style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted,#64748b);">Questions</span>
+          <span id="mobileProgressText" style="font-size:0.75rem;font-weight:700;color:var(--primary,#1e5aa8);">0 / {{ questions|length }}</span>
+        </div>
+        <div class="progress-track mb-3">
+          <div class="progress-fill" id="mobileProgressFill" style="width:0%"></div>
+        </div>
+        <!-- Compact scrollable grid -->
+        <div class="nav-grid-scroll">
+          <div class="nav-grid nav-grid--mobile">
+            {% for question in questions %}
+              <button type="button"
+                      id="mob-nav-btn-{{ forloop.counter }}"
+                      class="nav-grid-btn {% if question.selected_choice_ids or question.saved_text %}answered{% endif %}"
+                      data-scroll-index="{{ forloop.counter }}"
+                      data-close-mobile="true">
+                {{ forloop.counter }}
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 mt-3" style="font-size:0.72rem;color:var(--text-muted,#64748b);">
+          <span style="width:12px;height:12px;background:var(--primary,#1e5aa8);border-radius:3px;display:inline-block;"></span> Answered &nbsp;
+          <span style="width:12px;height:12px;border:1.5px solid var(--border,#e5e7eb);border-radius:3px;display:inline-block;"></span> Unanswered &nbsp;
+          <span style="width:12px;height:12px;background:var(--warning,#b7791f);border-radius:3px;display:inline-block;"></span> Flagged
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Submit Confirmation Modal -->
+<div class="modal fade" id="submitConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg" style="overflow:hidden;">
+      <div class="modal-body p-4 p-md-5 text-center">
+        <div class="confirm-icon">
+          <i class="bi bi-check2-circle"></i>
+        </div>
+
+        <h5 class="fw-bold mb-1">Finish &amp; Submit?</h5>
+        <p class="text-muted small mb-4">You cannot change your answers after submitting this test.</p>
+
+        <div class="d-flex justify-content-center gap-3 mb-3">
+          <div class="stat-tile">
+            <div class="stat-tile__val text-success" id="answeredCount">0</div>
+            <div class="stat-tile__lbl">Answered</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-tile__val text-warning" id="unansweredCount">0</div>
+            <div class="stat-tile__lbl">Unanswered</div>
+          </div>
+        </div>
+
+        <p class="small mb-4" id="unansweredWarning" style="color:var(--warning,#b7791f); display:none; background:rgba(183,121,31,0.08); padding:0.6rem 1rem; border-radius:8px; border:1px solid rgba(183,121,31,0.2);">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Question<span id="unansweredPlural"></span> <span id="unansweredList"></span> left unanswered.
+        </p>
+
+        <div class="d-flex justify-content-center gap-2">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="button" id="confirmSubmitBtn" class="btn-submit-exam" style="width:auto; padding:0.65rem 2rem;">
+            Yes, Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Exit Confirmation Modal -->
+<div class="modal fade" id="exitConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg">
+      <div class="modal-body p-4 p-md-5 text-center">
+        <div class="confirm-icon" style="background: rgba(197,48,48,0.1); color: var(--danger, #c53030);">
+          <i class="bi bi-box-arrow-left"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Exit Test?</h5>
+        <p class="text-muted small mb-4">Your current answers are auto-saved. You can resume this test later from your dashboard as long as the due date has not passed.</p>
+        <div class="d-flex justify-content-center gap-2">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <a href="{% url 'student_quiz_list' %}" class="btn btn-danger rounded-pill px-4 fw-semibold" style="box-shadow: 0 4px 12px rgba(197,48,48,0.2);">
+            Yes, Exit
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Mobile Sticky Bottom Action Bar (shown ≤992px) ═══════ -->
+<div class="mobile-bottom-bar d-lg-none position-fixed bottom-0 start-0 end-0" style="z-index:1030;">
+  <div class="d-flex align-items-center gap-2">
+    <!-- Questions navigator trigger -->
+    <button type="button" id="mobileNavBtn"
+            style="flex-shrink:0; width:44px; height:44px; border-radius:10px; border:1.5px solid var(--border,#e5e7eb); background:var(--surface,#fff); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; color:var(--text,#0f172a); transition:all .15s;">
+      <i class="bi bi-list-ol"></i>
+    </button>
+    <!-- Mini progress bar -->
+    <div style="flex:1;">
+      <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted,#64748b); margin-bottom:3px;">Progress <span id="mobileAnsweredLabel">0 / {{ questions|length }}</span></div>
+      <div class="progress-track">
+        <div class="progress-fill" id="mobileProgressBar" style="width:0%"></div>
+      </div>
+    </div>
+    <!-- Submit button -->
+    <button type="button" id="mobileSubmitBtn"
+            style="flex-shrink:0; height:44px; padding:0 1.25rem; border-radius:99px; border:none; background:linear-gradient(135deg,#1e5aa8,#2b6cb0); color:#fff; font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:0.35rem; box-shadow:0 4px 12px rgba(30,90,168,0.25); cursor:pointer; white-space:nowrap;">
+      <i class="bi bi-send-check"></i> Submit
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  const form = document.getElementById('quizTakeForm');
+  const submitBtn = document.getElementById('submitQuizBtn');
+  const totalQuestions = parseInt("{{ questions|length }}", 10);
+
+  // Smooth scroll to questions
+  window.scrollToQuestion = function (index) {
+    const el = document.getElementById('question-' + index);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Flag/bookmark question logic
+  window.toggleFlag = function (index) {
+    const card = document.getElementById('question-' + index);
+    const navBtn = document.getElementById('nav-btn-' + index);
+    if (!card || !navBtn) return;
+    const flagBtn = card.querySelector('.flag-btn');
+
+    const isFlagged = card.classList.toggle('flagged');
+    navBtn.classList.toggle('flagged', isFlagged);
+    if (flagBtn) {
+      flagBtn.classList.toggle('active', isFlagged);
+    }
+  };
+
+  // Handle clicks on flag buttons and navigation buttons dynamically to avoid inline JS syntax errors
+  document.addEventListener('click', function (e) {
+    const flagBtn = e.target.closest('.flag-btn');
+    if (flagBtn) {
+      const index = flagBtn.getAttribute('data-index');
+      if (index) {
+        window.toggleFlag(index);
+      }
+    }
+
+    const scrollBtn = e.target.closest('[data-scroll-index]');
+    if (scrollBtn) {
+      const index = scrollBtn.getAttribute('data-scroll-index');
+      if (index) {
+        window.scrollToQuestion(index);
+        if (scrollBtn.hasAttribute('data-close-mobile') && typeof window.closeMobileNav === 'function') {
+          window.closeMobileNav();
+        }
+      }
+    }
+  });
+
+  // Highlight choices instantly on click
+  function applyHighlight(label) {
+    const input = label.querySelector('input');
+    if (!input) return;
+
+    const card = label.closest('.quiz-question');
+    if (input.type === 'radio') {
+      if (card) {
+        card.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('is-selected'));
+      }
+      label.classList.add('is-selected');
+    } else {
+      label.classList.toggle('is-selected', !input.checked);
+    }
+    updateProgress();
+  }
+
+  document.querySelectorAll('.quiz-option').forEach(label => {
+    label.addEventListener('mousedown', function () {
+      applyHighlight(this);
+    });
+    label.addEventListener('keydown', function (e) {
+      if (e.key === ' ' || e.key === 'Enter') applyHighlight(this);
+    });
+  });
+
+  // Reflect initial loads
+  document.querySelectorAll('.quiz-option').forEach(label => {
+    const input = label.querySelector('input');
+    if (input && input.checked) label.classList.add('is-selected');
+  });
+
+  // Progress monitoring
+  function questionIsAnswered(card) {
+    const textInput = card.querySelector('.short-answer-input');
+    if (textInput) return textInput.value.trim().length > 0;
+    return card.querySelectorAll('input:checked').length > 0;
+  }
+
+  function updateProgress() {
+    const cards = Array.from(document.querySelectorAll('.quiz-question'));
+    let answered = 0;
+    cards.forEach(card => {
+      const qIndex = parseInt(card.dataset.index) + 1;
+      const navBtn = document.getElementById('nav-btn-' + qIndex);
+      if (questionIsAnswered(card)) {
+        answered++;
+        if (navBtn) navBtn.classList.add('answered');
+      } else {
+        if (navBtn) navBtn.classList.remove('answered');
+      }
+    });
+
+    const pct = totalQuestions > 0 ? (answered / totalQuestions) * 100 : 0;
+    document.getElementById('progressBarFill').style.width = pct + '%';
+    document.getElementById('answeredProgressText').textContent = answered + ' / ' + totalQuestions;
+  }
+
+  form.addEventListener('input', function (e) {
+    if (e.target.matches('.short-answer-input')) updateProgress();
+  });
+  form.addEventListener('change', function (e) {
+    if (e.target.matches('input')) updateProgress();
+  });
+
+  updateProgress();
+
+  // Submit flow
+  const submitConfirmModal = new bootstrap.Modal(document.getElementById('submitConfirmModal'));
+  submitBtn.addEventListener('click', function () {
+    const cards = Array.from(document.querySelectorAll('.quiz-question'));
+    const unanswered = [];
+    cards.forEach((card, index) => {
+      if (!questionIsAnswered(card)) {
+        unanswered.push(index + 1);
+      }
+    });
+
+    const answered = totalQuestions - unanswered.length;
+    document.getElementById('answeredCount').textContent = answered;
+    document.getElementById('unansweredCount').textContent = unanswered.length;
+
+    const warning = document.getElementById('unansweredWarning');
+    if (unanswered.length > 0) {
+      document.getElementById('unansweredPlural').textContent = unanswered.length > 1 ? 's' : '';
+      document.getElementById('unansweredList').textContent = 'Q' + unanswered.join(', Q');
+      warning.style.display = 'block';
+    } else {
+      warning.style.display = 'none';
+    }
+
+    submitConfirmModal.show();
+  });
+
+  document.getElementById('confirmSubmitBtn').addEventListener('click', function () {
+    isSubmitting = true;
+    form.submit();
+  });
+
+  // Timer tick
+  const deadlineStr = "{{ attempt.deadline|date:'c'|default:'' }}";
+  if (deadlineStr) {
+    const deadline = new Date(deadlineStr).getTime();
+    const timerText = document.getElementById('timerText');
+    const timerBadge = document.getElementById('timerBadge');
+    const autoSubmitField = document.getElementById('autoSubmitField');
+    let autoSubmitted = false;
+
+    const tick = function () {
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0) {
+        timerText.textContent = '00:00';
+        if (!autoSubmitted) {
+          autoSubmitted = true;
+          isSubmitting = true;
+          if (autoSubmitField) autoSubmitField.value = '1';
+          form.submit();
+        }
+        return;
+      }
+      const totalSec = Math.floor(remainingMs / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      timerText.textContent = String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+
+      if (remainingMs < 60000) {
+        timerBadge.classList.add('warning');
+      }
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  // Autosave setup
+  const autosaveUrl = "{% url 'quiz_autosave' attempt.id %}";
+  const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+  const statusText = document.getElementById('saveStatusText');
+  const statusIcon = document.getElementById('saveStatusIcon');
+  let saveTimer = null;
+  let dirty = false;
+  let saving = false;
+  let isSubmitting = false;
+
+  function collectAnswers() {
+    const answers = {};
+    document.querySelectorAll('.quiz-question').forEach(card => {
+      const qId = card.dataset.questionId;
+      const textInput = card.querySelector('.short-answer-input');
+      if (textInput) {
+        answers[qId] = textInput.value;
+      } else {
+        const checked = card.querySelectorAll('input:checked');
+        answers[qId] = Array.from(checked).map(el => parseInt(el.value, 10));
+      }
+    });
+    return answers;
+  }
+
+  function setStatus(state) {
+    if (state === 'saving') {
+      statusText.textContent = 'Saving changes…';
+      statusIcon.className = 'bi bi-cloud-arrow-up-fill spinner-border spinner-border-sm border-0';
+    } else if (state === 'saved') {
+      statusText.textContent = 'All saved';
+      statusIcon.className = 'bi bi-cloud-check-fill';
+    } else if (state === 'error') {
+      statusText.textContent = 'Offline — save failed';
+      statusIcon.className = 'bi bi-cloud-slash-fill text-danger';
+    }
+  }
+
+  function doSave(useKeepalive) {
+    if (saving && !useKeepalive) return;
+    saving = true;
+    dirty = false;
+    setStatus('saving');
+    fetch(autosaveUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({ answers: collectAnswers() }),
+      keepalive: !!useKeepalive,
+    })
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(() => { setStatus('saved'); saving = false; })
+      .catch(() => { setStatus('error'); saving = false; });
+  }
+
+  function scheduleSave() {
+    dirty = true;
+    setStatus('saving');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => doSave(false), 1200);
+  }
+
+  form.addEventListener('change', function (e) {
+    if (e.target.matches('input')) scheduleSave();
+  });
+  form.addEventListener('input', function (e) {
+    if (e.target.matches('.short-answer-input')) scheduleSave();
+  });
+
+  setInterval(() => { if (dirty && !saving) doSave(false); }, 15000);
+
+  // Flush any unsaved answers with a keepalive request when the tab is
+  // closed, backgrounded, or navigated away from — pagehide fires
+  // reliably in these cases (unlike beforeunload on mobile Safari).
+  window.addEventListener('pagehide', function () {
+    if (dirty && !isSubmitting) doSave(true);
+  });
+
+  // Warn on an actual page unload (closing the tab, typing a new URL)
+  // if there's a change that hasn't reached the server yet. Skipped
+  // during a real submit so the confirm-submit flow isn't interrupted.
+  window.addEventListener('beforeunload', function (e) {
+    if (dirty && !isSubmitting) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // ── Mobile bottom bar wiring ─────────────────────────
+  const mobileNavModal = new bootstrap.Modal(document.getElementById('mobileNavDrawer'), { backdrop: true });
+  window.closeMobileNav = function () { mobileNavModal.hide(); };
+
+  document.getElementById('mobileNavBtn').addEventListener('click', function () {
+    mobileNavModal.show();
+  });
+
+  // Mobile submit btn triggers the confirm modal directly (sidebar is hidden on mobile)
+  document.getElementById('mobileSubmitBtn').addEventListener('click', function () {
+    submitBtn.click();
+  });
+
+  // Keep mobile nav grid in sync with answered state
+  const _origUpdateProgress = updateProgress;
+  function updateProgress() {
+    const cards = Array.from(document.querySelectorAll('.quiz-question'));
+    let answered = 0;
+    cards.forEach(card => {
+      const qIndex = parseInt(card.dataset.index) + 1;
+      const navBtn    = document.getElementById('nav-btn-' + qIndex);
+      const mobNavBtn = document.getElementById('mob-nav-btn-' + qIndex);
+      if (questionIsAnswered(card)) {
+        answered++;
+        if (navBtn)    navBtn.classList.add('answered');
+        if (mobNavBtn) mobNavBtn.classList.add('answered');
+      } else {
+        if (navBtn)    navBtn.classList.remove('answered');
+        if (mobNavBtn) mobNavBtn.classList.remove('answered');
+      }
+    });
+
+    const pct = totalQuestions > 0 ? (answered / totalQuestions) * 100 : 0;
+    // Desktop sidebar
+    const desktopFill = document.getElementById('progressBarFill');
+    const desktopLabel = document.getElementById('answeredProgressText');
+    if (desktopFill)  desktopFill.style.width = pct + '%';
+    if (desktopLabel) desktopLabel.textContent = answered + ' / ' + totalQuestions;
+    // Mobile bottom bar
+    const mobFill    = document.getElementById('mobileProgressBar');
+    const mobLabel   = document.getElementById('mobileAnsweredLabel');
+    const mobFill2   = document.getElementById('mobileProgressFill');
+    const mobLabel2  = document.getElementById('mobileProgressText');
+    if (mobFill)   mobFill.style.width   = pct + '%';
+    if (mobLabel)  mobLabel.textContent  = answered + ' / ' + totalQuestions;
+    if (mobFill2)  mobFill2.style.width  = pct + '%';
+    if (mobLabel2) mobLabel2.textContent = answered + ' / ' + totalQuestions;
+    // Topbar progress bar
+    const topbarFill  = document.getElementById('topbarProgressFill');
+    const topbarLabel = document.getElementById('topbarProgressLabel');
+    if (topbarFill)  topbarFill.style.width = pct + '%';
+    if (topbarLabel) topbarLabel.textContent = answered + '\u202f/\u202f' + totalQuestions;
+  }
+
+  // ── Exit Button Modal Trigger ─────────────────────────
+  const exitConfirmModal = new bootstrap.Modal(document.getElementById('exitConfirmModal'));
+  const exitBtn = document.getElementById('exitExamBtn');
+  if (exitBtn) {
+    exitBtn.addEventListener('click', function () {
+      exitConfirmModal.show();
+    });
+  }
+
+  updateProgress(); // initial call with mobile-aware version
+})();
+
+</script>
+{% endblock %}
+
+{% block footer %}{% endblock %}

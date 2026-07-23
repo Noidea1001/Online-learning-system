@@ -1,0 +1,240 @@
+{# adminpanel/templates/adminpanel/control_center.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Admin Control Panel — Online Learning System{% endblock %}
+{% block main_class %}flex-grow-1 p-0{% endblock %}
+
+{% block content %}
+<div class="db-shell">
+  <main class="db-main">
+
+    <!-- Topbar -->
+    <div class="db-topbar">
+      <div class="db-topbar__left">
+        <h1>Admin Control Panel</h1>
+        <div class="db-topbar__meta">
+          <span class="db-topbar__pill">
+            <i class="bi bi-shield-lock-fill"></i> Superuser Access
+          </span>
+        </div>
+      </div>
+      <div class="db-topbar__actions">
+        <a href="{% url 'dashboard_home' %}" class="db-btn db-btn--ghost">
+          <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="db-hero mb-4">
+      <div class="db-hero__glow-1"></div>
+      <div class="db-hero__glow-2"></div>
+      <div class="db-hero__glow-3"></div>
+      <div class="db-hero__inner">
+        <div>
+          <div class="db-hero__badge"><i class="bi bi-shield-fill-check"></i> Full Control Center</div>
+          <div class="db-hero__title">Users, Roles &amp; <span class="username-gradient username-gradient--admin">Permissions</span></div>
+          <p class="db-hero__sub">Manage every account, role, and access permission on the platform from one place — no need for the raw Django admin.</p>
+        </div>
+        <div class="db-hero__stats">
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ total_users }}</div>
+            <div class="db-hero__stat-lbl">Total Users</div>
+          </div>
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ total_groups }}</div>
+            <div class="db-hero__stat-lbl">Permission Groups</div>
+          </div>
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ superuser_count }}</div>
+            <div class="db-hero__stat-lbl">Superusers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="db-stats mb-4">
+      <div class="db-stat db-stat--blue">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--blue"><i class="bi bi-people-fill"></i></div>
+          <span class="db-stat__tag db-stat__tag--info">Accounts</span>
+        </div>
+        <div class="db-stat__val">{{ total_users }}</div>
+        <div class="db-stat__label">Total Users</div>
+        <div class="db-stat__sub">{{ active_count }} active · {{ inactive_count }} inactive</div>
+      </div>
+
+      <div class="db-stat db-stat--green">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--green"><i class="bi bi-person-badge-fill"></i></div>
+          <span class="db-stat__tag db-stat__tag--up">Staff</span>
+        </div>
+        <div class="db-stat__val">{{ staff_count }}</div>
+        <div class="db-stat__label">Staff Members</div>
+        <div class="db-stat__sub">Can sign in to Django admin tools</div>
+      </div>
+
+      <div class="db-stat db-stat--rose">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--rose"><i class="bi bi-shield-lock-fill"></i></div>
+          <span class="db-stat__tag db-stat__tag--info">Top Tier</span>
+        </div>
+        <div class="db-stat__val">{{ superuser_count }}</div>
+        <div class="db-stat__label">Superusers</div>
+        <div class="db-stat__sub">Full unrestricted access</div>
+      </div>
+
+      <div class="db-stat db-stat--indigo">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--indigo"><i class="bi bi-diagram-3-fill"></i></div>
+          <span class="db-stat__tag db-stat__tag--info">Groups</span>
+        </div>
+        <div class="db-stat__val">{{ total_groups }}</div>
+        <div class="db-stat__label">Permission Groups</div>
+        <div class="db-stat__sub">{{ total_permissions }} permissions available</div>
+      </div>
+    </div>
+
+    <!-- Two column layout -->
+    <div class="row g-4">
+
+      <!-- Left: Quick links + roles breakdown -->
+      <div class="col-lg-7">
+
+        <div class="db-panel mb-4">
+          <div class="db-panel__hd">
+            <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--blue"><i class="bi bi-lightning-charge-fill"></i></span>Manage</div>
+          </div>
+          <div class="db-actions">
+            <a href="{% url 'adminpanel_user_list' %}" class="db-action">
+              <div class="db-action__ic" style="background:rgba(30, 90, 168,0.1);color:var(--primary);"><i class="bi bi-people-fill"></i></div>
+              <span class="db-action__label">All Users</span>
+            </a>
+            <a href="{% url 'adminpanel_group_list' %}" class="db-action">
+              <div class="db-action__ic" style="background:rgba(30, 90, 168,0.1);color:#1e5aa8;"><i class="bi bi-diagram-3-fill"></i></div>
+              <span class="db-action__label">Groups</span>
+            </a>
+            <a href="{% url 'adminpanel_group_create' %}" class="db-action">
+              <div class="db-action__ic" style="background:rgba(47, 133, 90,0.1);color:var(--success);"><i class="bi bi-plus-circle-fill"></i></div>
+              <span class="db-action__label">New Group</span>
+            </a>
+            <a href="{% url 'employee_list' %}" class="db-action">
+              <div class="db-action__ic" style="background:rgba(43, 108, 176,0.1);color:var(--info);"><i class="bi bi-person-workspace"></i></div>
+              <span class="db-action__label">Employees</span>
+            </a>
+            <a href="{% url 'adminpanel_audit_log' %}" class="db-action">
+              <div class="db-action__ic" style="background:rgba(28, 31, 38,0.08);color:var(--text-secondary);"><i class="bi bi-clock-history"></i></div>
+              <span class="db-action__label">Audit Log</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="db-panel">
+          <div class="db-panel__hd">
+            <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--green"><i class="bi bi-graph-up-arrow"></i></span>Roles Breakdown</div>
+          </div>
+          <div class="db-mini-grid">
+            <div class="db-mini">
+              <div class="db-mini__val" style="color:var(--success);">{{ role_counts.STUDENT }}</div>
+              <div class="db-mini__lbl">Students</div>
+            </div>
+            <div class="db-mini">
+              <div class="db-mini__val" style="color:var(--primary);">{{ role_counts.INSTRUCTOR }}</div>
+              <div class="db-mini__lbl">Instructors</div>
+            </div>
+            <div class="db-mini">
+              <div class="db-mini__val" style="color:var(--info);">{{ role_counts.EMPLOYEE }}</div>
+              <div class="db-mini__lbl">Employees</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Groups summary + recent users -->
+      <div class="col-lg-5">
+
+        <div class="db-panel mb-4">
+          <div class="db-panel__hd">
+            <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--indigo"><i class="bi bi-diagram-3-fill"></i></span>Permission Groups</div>
+            <a href="{% url 'adminpanel_group_create' %}" class="small fw-semibold text-decoration-none">+ New</a>
+          </div>
+          <div class="p-3">
+            {% for group in groups %}
+              <a href="{% url 'adminpanel_group_detail' group.pk %}" class="d-flex justify-content-between align-items-center text-decoration-none py-2 px-2 rounded-3 mb-1" style="transition:background .15s;" onmouseover="this.style.background='rgba(30, 90, 168,0.06)'" onmouseout="this.style.background='transparent'">
+                <span class="fw-semibold text-dark"><i class="bi bi-folder2-open me-2 text-muted"></i>{{ group.name }}</span>
+                <span class="d-flex gap-2">
+                  <span class="badge bg-primary-subtle text-primary border px-2 py-1">{{ group.member_count }} member{{ group.member_count|pluralize }}</span>
+                  <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">{{ group.perm_count }} perms</span>
+                </span>
+              </a>
+            {% empty %}
+              <div class="text-center text-muted py-4">
+                <i class="bi bi-diagram-3 display-6 opacity-50 d-block mb-2"></i>
+                No groups yet. <a href="{% url 'adminpanel_group_create' %}">Create one</a>.
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="db-panel">
+          <div class="db-panel__hd">
+            <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--amber"><i class="bi bi-person-plus-fill"></i></span>Recently Joined</div>
+          </div>
+          <div class="p-3">
+            {% for u in recent_users %}
+              <a href="{% url 'adminpanel_user_detail' u.pk %}" class="d-flex justify-content-between align-items-center text-decoration-none py-2 px-2 rounded-3 mb-1" style="transition:background .15s;" onmouseover="this.style.background='rgba(30, 90, 168,0.06)'" onmouseout="this.style.background='transparent'">
+                <span class="d-flex align-items-center gap-2">
+                  <span class="avatar-placeholder bg-primary-subtle text-primary" style="width:32px;height:32px;font-size:0.8rem;">{{ u.username|slice:":2"|upper }}</span>
+                  <span class="fw-semibold text-dark small">{{ u.get_full_name|default:u.username }}</span>
+                </span>
+                <span class="badge bg-light text-secondary border">{{ u.get_role_display }}</span>
+              </a>
+            {% empty %}
+              <div class="text-center text-muted py-4 small">No users yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="db-panel mt-4">
+      <div class="db-panel__hd">
+        <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--blue"><i class="bi bi-clock-history"></i></span>Recent Activity</div>
+        <a href="{% url 'adminpanel_audit_log' %}" class="small fw-semibold text-decoration-none">View Full Log →</a>
+      </div>
+      <div class="p-3">
+        {% for log in recent_logs %}
+          <div class="d-flex justify-content-between align-items-center py-2 px-2 rounded-3 mb-1">
+            <span class="d-flex align-items-center gap-2">
+              {% if log.action == 'CREATE' %}
+                <span class="avatar-placeholder bg-success-subtle text-success" style="width:32px;height:32px;font-size:0.8rem;"><i class="bi bi-plus-lg"></i></span>
+              {% elif log.action == 'UPDATE' %}
+                <span class="avatar-placeholder bg-primary-subtle text-primary" style="width:32px;height:32px;font-size:0.8rem;"><i class="bi bi-pencil"></i></span>
+              {% elif log.action == 'DELETE' %}
+                <span class="avatar-placeholder bg-danger-subtle text-danger" style="width:32px;height:32px;font-size:0.8rem;"><i class="bi bi-trash"></i></span>
+              {% else %}
+                <span class="avatar-placeholder bg-secondary-subtle text-secondary" style="width:32px;height:32px;font-size:0.8rem;"><i class="bi bi-box-arrow-in-right"></i></span>
+              {% endif %}
+              <span>
+                <span class="fw-semibold text-dark small d-block">
+                  {{ log.actor.username|default:"System" }}
+                  <span class="text-muted fw-normal">{{ log.get_action_display|lower }}</span>
+                  {% if log.object_repr %}{{ log.object_repr }}{% endif %}
+                </span>
+                <span class="text-muted" style="font-size:0.75rem;">{{ log.created_at|timesince }} ago</span>
+              </span>
+            </span>
+          </div>
+        {% empty %}
+          <div class="text-center text-muted py-4 small">No activity recorded yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}

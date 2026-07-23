@@ -1,0 +1,208 @@
+{# templates/lessons/lesson_list.html #}
+{% extends "base.html" %}
+{% block title %}Lessons Library — Curriculum Management{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <div class="ll-hero fade-in-up">
+    <div class="ll-hero__orb ll-hero__orb--1"></div>
+    <div class="ll-hero__orb ll-hero__orb--2"></div>
+
+    <div class="ll-hero__content">
+      <div class="ll-hero__text mb-3">
+        <span class="ll-hero__badge">
+          <i class="bi bi-journal-bookmark-fill me-1"></i> Curriculum Hub
+        </span>
+        <h1 class="ll-hero__title">Lessons Library</h1>
+        <p class="ll-hero__subtitle">
+          Browse, manage, and organize all lesson modules across every course.
+        </p>
+      </div>
+
+      {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+        <a href="{% url 'lesson_create' %}" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold ll-hero__action">
+          <i class="bi bi-plus-lg me-1"></i> Create Lesson
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="ll-stats fade-in-up" style="animation-delay: 0.08s;">
+    <div class="ll-stat">
+      <div class="ll-stat__icon ll-stat__icon--primary"><i class="bi bi-journal-text"></i></div>
+      <div class="ll-stat__body">
+        <span class="ll-stat__value">{{ lessons|length }}</span>
+        <span class="ll-stat__label">Total Lessons</span>
+      </div>
+    </div>
+    <div class="ll-stat">
+      <div class="ll-stat__icon ll-stat__icon--success"><i class="bi bi-play-circle-fill"></i></div>
+      <div class="ll-stat__body">
+        <span class="ll-stat__value ll-stat__value--live">
+          <span class="ll-pulse"></span> Active
+        </span>
+        <span class="ll-stat__label">Media Status</span>
+      </div>
+    </div>
+    <div class="ll-stat">
+      <div class="ll-stat__icon ll-stat__icon--warning"><i class="bi bi-file-earmark-arrow-down"></i></div>
+      <div class="ll-stat__body">
+        <span class="ll-stat__value">Linked</span>
+        <span class="ll-stat__label">PDF Resources</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ll-search fade-in-up" style="animation-delay: 0.12s;">
+    <i class="bi bi-search ll-search__icon"></i>
+    <input type="text" class="ll-search__input" id="lessonSearch"
+           placeholder="Search lessons by title or course name...">
+  </div>
+
+  <div class="ll-grid stagger-children list-scroll" id="lessonsContainer">
+    {% for lesson in lessons %}
+      <div class="ll-card fade-in-up lesson-card">
+        <div class="ll-card__accent"></div>
+
+        <div class="ll-card__body">
+          <div class="ll-card__header">
+            <span class="ll-card__order">#{{ lesson.order }}</span>
+            <span class="ll-card__id">ID: {{ lesson.id }}</span>
+          </div>
+
+          <h4 class="ll-card__title">{{ lesson.title }}</h4>
+
+          <div class="ll-card__course">
+            <i class="bi bi-folder2-open"></i>
+            <span>{{ lesson.course.title }}</span>
+          </div>
+
+          <div class="ll-card__resources">
+            <div class="ll-card__resource">
+              <span class="ll-card__resource-label">Video</span>
+              {% if lesson.video_file %}
+                <span class="ll-tag ll-tag--green"><i class="bi bi-play-fill me-1"></i>Local File</span>
+              {% elif lesson.video_url or lesson.youtube_embed_url %}
+                <span class="ll-tag ll-tag--red"><i class="bi bi-youtube me-1"></i>YouTube</span>
+              {% else %}
+                <span class="ll-tag ll-tag--gray">None</span>
+              {% endif %}
+            </div>
+            <div class="ll-card__resource">
+              <span class="ll-card__resource-label">Attachment</span>
+              {% if lesson.pdf_resource %}
+                <span class="ll-tag ll-tag--amber"><i class="bi bi-file-pdf me-1"></i>PDF</span>
+              {% else %}
+                <span class="ll-tag ll-tag--gray">None</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="ll-card__footer d-flex justify-content-between align-items-center w-100" style="padding: 1rem 1.25rem; border-top: 1px solid rgba(0,0,0,0.06); background: #f6f7f9;">
+          
+          <a href="{% url 'lesson_detail' lesson.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-medium btn-icon" style="font-size: 0.8rem;" title="Open"><i class="bi bi-box-arrow-in-right"></i></a>
+
+          <!-- Actions Desktop View -->
+          <div class="d-none d-md-flex gap-1">
+            {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+              <a href="{% url 'lesson_update' lesson.id %}" 
+                 class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1"
+                 title="Edit Lesson">
+                <i class="bi bi-pencil"></i>
+              </a>
+             <a href="{% url 'lesson_delete' lesson.id %}" 
+              class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1"
+              title="Delete Lesson">
+              <i class="bi bi-trash"></i>
+            </a>
+            {% endif %}
+          </div>
+
+          <!-- Actions Mobile Dropdown View -->
+          <div class="d-md-none dropdown">
+            {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+              <button class="btn btn-sm btn-light border rounded-circle p-1.5 shadow-sm d-flex align-items-center justify-content-center"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      title="More Actions"
+                      style="width: 32px; height: 32px;">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow border-0 position-absolute">
+                <li>
+                  <a class="dropdown-item text-primary" href="{% url 'lesson_update' lesson.id %}">
+                    <i class="bi bi-pencil me-2"></i> Edit Lesson
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item text-danger" href="{% url 'lesson_delete' lesson.id %}" onclick="return confirm('Delete this lesson permanently?');">
+                    <i class="bi bi-trash me-2"></i> Delete Lesson
+                  </a>
+                </li>
+              </ul>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    {% empty %}
+      <div class="ll-empty" id="emptyStateBlock">
+        <div class="ll-empty__icon"><i class="bi bi-journal-x"></i></div>
+        <h4>No Lessons Found</h4>
+        <p>Your lesson library is empty. Start building your curriculum now.</p>
+        {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+          <a href="{% url 'lesson_create' %}" class="btn btn-primary rounded-pill px-4 fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i> Create First Lesson
+          </a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('lessonSearch');
+    const lessonCards = document.querySelectorAll('.lesson-card');
+    const container = document.getElementById('lessonsContainer');
+    
+    // (No Search Results State)
+    const emptyState = document.createElement('div');
+    emptyState.className = 'll-empty w-100 text-center py-5 d-none';
+    emptyState.innerHTML = `
+      <div class="ll-empty__icon mb-3"><i class="bi bi-search text-muted" style="font-size: 3rem;"></i></div>
+      <h4>No Lessons Found</h4>
+      <p class="text-muted">Please try searching with different keywords.</p>
+    `;
+    container.appendChild(emptyState);
+
+    searchInput.addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      let hasResults = false;
+
+      lessonCards.forEach(card => {
+        const title = card.querySelector('.ll-card__title').textContent.toLowerCase();
+        const course = card.querySelector('.ll-card__course span').textContent.toLowerCase();
+
+        if (title.includes(searchTerm) || course.includes(searchTerm)) {
+          card.classList.remove('d-none');
+          hasResults = true;
+        } else {
+          card.classList.add('d-none');
+        }
+      });
+
+      if (hasResults) {
+        emptyState.classList.add('d-none');
+      } else {
+        emptyState.classList.remove('d-none');
+      }
+    });
+  });
+</script>
+{% endblock %}

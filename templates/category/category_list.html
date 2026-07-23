@@ -1,0 +1,134 @@
+{# templates/category/category_list.html #}
+{% extends "base.html" %}
+{% block title %}Course Categories Management{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <!-- Header Section -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
+    <div>
+      <h1 class="fw-bold display-6 mb-1">Course Categories</h1>
+      <p class="text-muted mb-0">Organize, modify, and manage subject categories for classification of courses</p>
+    </div>
+
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+      <a href="{% url 'category_create' %}" class="btn btn-primary btn-lg shadow-sm rounded-pill px-4 py-2 btn-icon" title="Add New Category"><i class="bi bi-plus-circle-fill"></i></a>
+    {% endif %}
+  </div>
+
+  <!-- Categories Table / Card -->
+  <div class="w-100 overflow-hidden">
+    <div class="table-responsive list-scroll">
+        <table class="table align-middle mb-0 custom-category-table">
+          <thead>
+            <tr>
+              <th class="ps-4" style="width: 100px;">ID</th>
+              <th>Category Details</th>
+              <th>Total Courses Attached</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for category in categories %}
+            <tr>
+              <!-- ID -->
+              <td class="ps-4" data-label="ID">
+                <span class="badge bg-light text-secondary border px-3 py-2 fw-bold font-monospace">#{{ category.id }}</span>
+              </td>
+
+              <!-- Category Details -->
+              <td data-label="Category Details">
+                <div class="d-flex align-items-center gap-3 category-box">
+                  <div class="avatar-placeholder bg-primary-subtle text-primary d-none d-lg-flex" style="background-color: rgba(30, 90, 168, 0.08) !important; width: 38px; height: 38px; border-radius: 8px; align-items: center; justify-content: center;">
+                    <i class="bi bi-tag-fill"></i>
+                  </div>
+                  <div>
+                    <span class="fw-bold d-block text-dark fs-6">{{ category.name }}</span>
+                    <small class="text-muted d-block">Official Subject Classification</small>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Total Courses Attached -->
+              <td data-label="Total Courses Attached">
+                <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fw-semibold">
+                  <i class="bi bi-journal-bookmark me-1.5 text-primary"></i>{{ category.courses.count }} Course{{ category.courses.count|pluralize }}
+                </span>
+              </td>
+
+              <!-- Action Control Panel Block -->
+              <td class="text-end pe-4" data-label="Actions" style="width: 120px; border: none;">
+                <div class="d-flex justify-content-end align-items-center gap-2">
+
+                  <!-- Desktop UI: Row Button Group Icon Array -->
+                  <div class="d-none d-md-flex gap-1">
+                    <a href="{% url 'category_detail' category.id %}" 
+                       class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1"
+                       title="View Detail">
+                      <i class="bi bi-eye"></i>
+                    </a>
+
+                    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+                      <a href="{% url 'category_update' category.id %}" 
+                         class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1"
+                         title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <a href="{% url 'category_delete' category.id %}" 
+                         class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1"
+                         title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </a>
+                    {% endif %}
+                  </div>
+
+                  <!-- Mobile UI: Clean 3-dots Dropdown Context Menu List -->
+                  <div class="d-md-none">
+                    <button class="btn btn-sm btn-light border rounded-circle p-2 shadow-sm"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            title="Actions">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                      <li>
+                        <a class="dropdown-item" href="{% url 'category_detail' category.id %}">
+                          <i class="bi bi-eye me-2 text-secondary"></i> View Detail
+                        </a>
+                      </li>
+                      {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                          <a class="dropdown-item text-primary" href="{% url 'category_update' category.id %}">
+                            <i class="bi bi-pencil me-2"></i> Edit Category
+                          </a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item text-danger" href="{% url 'category_delete' category.id %}">
+                            <i class="bi bi-trash me-2"></i> Delete Category
+                          </a>
+                        </li>
+                      {% endif %}
+                    </ul>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <!-- Empty Datasets Presentation Fallback Container Box -->
+            <tr>
+              <td colspan="4" class="text-center py-5">
+                <i class="bi bi-tags-fill display-1 text-muted mb-3 d-block opacity-40"></i>
+                <h5 class="fw-bold text-dark">No Categories Found</h5>
+                <p class="text-muted">There are no subject categories registered in the learning system database.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

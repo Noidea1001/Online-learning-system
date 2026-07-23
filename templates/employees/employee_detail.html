@@ -1,0 +1,214 @@
+{# templates/employees/employee_detail.html #}
+{% extends "base.html" %}
+{% block title %}Employee Details — {{ employee.user.get_full_name|default:employee.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+
+  <div class="mb-3 mb-md-4">
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+      <a href="{% url 'employee_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+        <i class="bi bi-arrow-left"></i> Back to Employees Directory
+      </a>
+    {% else %}
+      <a href="{% url 'dashboard_home' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-2 small fw-semibold custom-back-link">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- 1. ENTERPRISE PROFILE HEADER BANNER -->
+  <div class="card border border-light-subtle shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
+    <div class="card-body p-4">
+      <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-4">
+        
+        <div class="flex-shrink-0">
+          {% if employee.image %}
+            <img src="{{ employee.image.url }}" alt="{{ employee.user.username }}" class="shadow-sm border border-3 border-white rounded-circle object-fit-cover" style="width: 110px; height: 110px;">
+          {% elif employee.user.avatar_url %}
+            <img src="{{ employee.user.avatar_url }}" alt="{{ employee.user.username }}" class="shadow-sm border border-3 border-white rounded-circle object-fit-cover" style="width: 110px; height: 110px;">
+          {% else %}
+            <div class="bg-primary bg-opacity-10 text-primary shadow-sm d-flex align-items-center justify-content-center fw-bold rounded-circle border border-3 border-white" style="width: 110px; height: 110px; font-size: 2.5rem;">
+              {% if employee.user.first_name and employee.user.last_name %}
+                {{ employee.user.first_name|slice:":1"|upper }}{{ employee.user.last_name|slice:":1"|upper }}
+              {% else %}
+                {{ employee.user.username|slice:":2"|upper }}
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Employee High-Level Overview -->
+        <div class="flex-grow-1 text-center text-md-start mb-2 mb-md-0">
+          <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-3 mb-2">
+            <h3 class="fw-bold text-dark mb-0" style="font-weight: 800; letter-spacing: -0.01em;">{{ employee.user.get_full_name|default:employee.user.username }}</h3>
+            <span class="badge {% if employee.user.is_active %}bg-success bg-opacity-10 text-success{% else %}bg-danger bg-opacity-10 text-danger{% endif %} px-3 py-1.5 rounded-pill fw-bold small" style="font-size: 0.75rem;">
+              <span class="d-inline-block rounded-circle me-1 {% if employee.user.is_active %}bg-success{% else %}bg-danger{% endif %}" style="width: 6px; height: 6px;"></span>
+              {% if employee.user.is_active %}Active Member{% else %}Inactive{% endif %}
+            </span>
+          </div>
+          
+          <p class="text-secondary mb-3 small fw-semibold">
+            {{ employee.job_title|default:"Corporate Employee" }} <span class="text-muted mx-2">•</span> <span class="text-dark">{{ employee.department|default:"Unassigned Department" }}</span>
+          </p>
+
+          <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-3 text-muted small">
+            <span><i class="bi bi-envelope me-1.5"></i>{{ employee.user.email|default:"—" }}</span>
+            <span><i class="bi bi-telephone me-1.5"></i>{{ employee.user.phone_number|default:"—" }}</span>
+            <span><i class="bi bi-geo-alt me-1.5"></i>Phnom Penh, KH</span>
+          </div>
+        </div>
+
+        {% if request.user.is_superuser or employee.user == request.user %}
+        <div class="d-flex gap-2 align-self-center align-self-md-start mt-2 mt-md-0">
+          <a href="{% url 'employee_update' employee.id %}" class="btn btn-sm btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm text-nowrap btn-icon" title="Edit Profile"><i class="bi bi-pencil-square"></i></a>
+          {% if request.user.is_superuser %}
+            <a href="{% url 'employee_delete' employee.id %}" class="btn btn-sm btn-outline-danger rounded-pill d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;" title="Delete Record">
+              <i class="bi bi-trash-fill"></i>
+            </a>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. BALANCED TWO-COLUMN LAYOUT -->
+  <div class="row g-3 g-md-4">
+    
+    <!-- LEFT SIDE: Profile Details -->
+    <div class="col-lg-8">
+      <div class="card border border-light-subtle shadow-sm rounded-4 bg-white mb-2">
+        <div class="card-header bg-white border-bottom p-4">
+          <h5 class="fw-bold text-dark mb-0">
+            <i class="bi bi-file-earmark-person-fill text-primary me-2"></i>Primary Details
+          </h5>
+        </div>
+        
+        <div class="card-body p-4">
+          
+          <!-- 💻 2.1 DESKTOP VIEW: GRID LAYOUT (លាក់លើ Mobile) -->
+          <div class="d-none d-md-block">
+            <div class="row g-4">
+              <div class="col-md-6 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="font-size: 0.7rem; letter-spacing: .05em;">Legal Full Name</label>
+                <p class="fs-6 text-dark fw-bold mb-0">{{ employee.user.get_full_name|default:employee.user.username }}</p>
+              </div>
+              <div class="col-md-6 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="font-size: 0.7rem; letter-spacing: .05em;">System Directory Alias</label>
+                <p class="fs-6 text-secondary mb-0">@{{ employee.user.username }}</p>
+              </div>
+              <div class="col-md-6 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="font-size: 0.7rem; letter-spacing: .05em;">Assigned Department</label>
+                <p class="fs-6 text-dark fw-medium mb-0"><i class="bi bi-building me-2 text-muted"></i>{{ employee.department|default:"—" }}</p>
+              </div>
+              <div class="col-md-6 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="font-size: 0.7rem; letter-spacing: .05em;">Corporate Job Designation</label>
+                <p class="fs-6 text-dark fw-medium mb-0"><i class="bi bi-briefcase me-2 text-muted"></i>{{ employee.job_title|default:"—" }}</p>
+              </div>
+              <div class="col-md-6 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="font-size: 0.7rem; letter-spacing: .05em;">Official Hire Anniversary</label>
+                <p class="fs-6 text-dark mb-0"><i class="bi bi-calendar-check me-2 text-muted"></i>{{ employee.hire_date|date:"d F Y"|default:"—" }}</p>
+              </div>
+              <div class="col-md-6 border-bottom border-light-subtle pb-3">
+                <label class="form-label text-muted fw-bold text-uppercase small mb-1" style="font-size: 0.7rem; letter-spacing: .05em;">Database Registered Timestamp</label>
+                <p class="fs-6 text-dark mb-0"><i class="bi bi-clock-history me-2 text-muted"></i>{{ employee.created_at|date:"d M Y • H:i"|default:"—" }}</p>
+              </div>
+            </div>
+          </div>
+
+  
+          <div class="d-block d-md-none">
+            <div class="d-flex flex-column gap-3">
+              
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Full Name</span>
+                <span class="fw-bold text-dark text-end" style="font-size: 0.88rem;">{{ employee.user.get_full_name|default:employee.user.username }}</span>
+              </div>
+
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Username</span>
+                <span class="fw-semibold text-secondary text-end" style="font-size: 0.85rem;">@{{ employee.user.username }}</span>
+              </div>
+
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Department</span>
+                <span class="fw-bold text-dark text-end" style="font-size: 0.85rem;"><i class="bi bi-building me-1 text-muted"></i>{{ employee.department|default:"—" }}</span>
+              </div>
+
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Job Title</span>
+                <span class="fw-bold text-dark text-end" style="font-size: 0.85rem;"><i class="bi bi-briefcase me-1 text-muted"></i>{{ employee.job_title|default:"—" }}</span>
+              </div>
+                  
+              
+              <!-- Hire Date Field Row -->
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Hire Date</span>
+                <span class="text-dark fw-semibold text-end" style="font-size: 0.85rem;">{{ employee.hire_date|date:"d M Y"|default:"—" }}</span>
+              </div>
+
+              <!-- Created At Field Row -->
+              <div class="p-3 bg-light bg-opacity-50 border rounded-3 d-flex justify-content-between align-items-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">Created At</span>
+                <span class="text-dark fw-semibold text-end" style="font-size: 0.85rem;">{{ employee.created_at|date:"d M Y" }}</span>
+              </div>
+
+            </div>
+          </div> <!-- Close Mobile View Div -->
+
+        </div> <!-- Close Card Body Left -->
+      </div> <!-- Close Main Card Left -->
+    </div> <!-- Close col-lg-8 -->
+
+
+    <div class="col-lg-4">
+      
+      <!-- Salary Metadata Section -->
+      {% if employee.salary %}
+      <div class="card border border-light-subtle shadow-sm rounded-4 bg-white mb-3 overflow-hidden">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted fw-bold text-uppercase small" style="font-size: 0.7rem; letter-spacing: .05em;">Annual Compensation</span>
+            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2.5 py-1 fw-bold small" style="font-size: 0.72rem;">USD Matrix</span>
+          </div>
+          <h3 class="fw-bold text-success mb-0" style="font-weight: 800;">${{ employee.salary|floatformat:2 }}</h3>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- System Privilege Matrix Security Section -->
+      <div class="card border border-light-subtle shadow-sm rounded-4 bg-white">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-dark border-bottom pb-3 mb-3">
+            <i class="bi bi-shield-check-fill me-2 text-primary"></i>Security Permissions
+          </h6>
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex justify-content-between align-items-center small">
+              <span class="text-secondary fw-medium">Staff Status:</span>
+              {% if employee.user.is_staff %}
+                <span class="badge bg-success bg-opacity-10 text-success rounded px-2.5 py-1 fw-bold">Authorized</span>
+              {% else %}
+                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded px-2.5 py-1 fw-medium">No Access</span>
+              {% endif %}
+            </div>
+            <div class="d-flex justify-content-between align-items-center small">
+              <span class="text-secondary fw-medium">Superuser Role:</span>
+              {% if employee.user.is_superuser %}
+                <span class="badge bg-danger bg-opacity-10 text-danger rounded px-2.5 py-1 fw-bold">Root Administrator</span>
+              {% else %}
+                <span class="badge bg-light text-secondary border rounded px-2.5 py-1 fw-medium">Standard User</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div> 
+</div> 
+{% endblock %}
+
+

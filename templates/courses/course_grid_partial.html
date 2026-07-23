@@ -1,0 +1,97 @@
+{% for course in courses %}
+  <div class="cl-card fade-in-up" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+    <div class="form-header-accent-course"></div>
+
+    <div class="cl-card__thumb position-relative overflow-hidden" style="height: 200px; min-height: 200px;">
+      {% if course.image and course.image.url %}
+        <img src="{{ course.image.url }}" alt="{{ course.title }}" class="cl-card__img w-100 h-100" style="object-fit: cover;">
+      {% else %}
+        <div class="cl-card__placeholder w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light text-muted">
+          <i class="bi bi-camera-video fs-3 mb-1"></i>
+          <span>No Preview</span>
+        </div>
+      {% endif %}
+
+      <div class="cl-card__overlay">
+        <a href="{% url 'course_detail' course.id %}" class="cl-card__play-btn" aria-label="View Course">
+          <i class="bi bi-play-fill"></i>
+        </a>
+      </div>
+
+      <!-- Category Pill -->
+      <span class="cl-card__category">
+        {{ course.category.name|default:"Uncategorized" }}
+      </span>
+    </div>
+
+    <!-- Body -->
+    <div class="cl-card__body">
+      <h3 class="cl-card__title">{{ course.title }}</h3>
+      
+      <!-- Dynamic Course Tags Subsystem -->
+      {% if course.tags.all %}
+        <div class="cl-card__tags-wrapper d-flex flex-wrap gap-1 mb-2">
+          {% for tag in course.tags.all|slice:":3" %}
+            <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 font-monospace" style="font-size: 0.7rem; letter-spacing: -0.01em;">
+              #{{ tag.name|lower }}
+            </span>
+          {% endfor %}
+          {% if course.tags.all|length > 3 %}
+            <span class="badge bg-light text-muted border rounded-pill px-2 py-1 font-monospace" style="font-size: 0.7rem;">
+              +{{ course.tags.all|length|add:"-3" }}
+            </span>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <p class="cl-card__desc">
+        {{ course.description|default:"No description available."|striptags|truncatewords:15 }}
+      </p>
+
+      <!-- Instructor Row -->
+      <div class="cl-card__instructor">
+        <div class="cl-card__avatar">
+          <i class="bi bi-person-fill"></i>
+        </div>
+        <div class="cl-card__instructor-info">
+          <span class="cl-card__instructor-name">{{ course.instructor.user.get_full_name|default:course.instructor.user.username }}</span>
+          <span class="cl-card__instructor-role">Instructor</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="cl-card__footer">
+      <div class="cl-card__meta">
+        <span class="cl-card__lessons"><i class="bi bi-play-circle me-1"></i>{{ course.lessons.count }} Lessons</span>
+        <span class="cl-card__reviews"><i class="bi bi-star-fill me-1"></i>{{ course.reviews.count|default:"0" }}</span>
+      </div>
+      <div class="cl-card__price-row">
+        {% if course.price <= 0 %}
+          <span class="cl-card__price text-success" style="color: var(--success) !important;">Free</span>
+        {% else %}
+          <span class="cl-card__price">${{ course.price }}</span>
+        {% endif %}
+        <a href="{% url 'course_detail' course.id %}" class="cl-card__view-btn">
+          View <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <div class="col-12 d-flex flex-column justify-content-center align-items-center text-center py-5 grid-empty-state w-100" 
+       style="min-height: 380px; grid-column: 1 / -1; background-color: #f6f7f9; border: 1px dashed #dde1e8; border-radius: 20px;">
+       
+    <div class="mb-4 position-relative d-inline-flex align-items-center justify-content-center rounded-circle shadow-sm" 
+         style="width: 90px; height: 90px; background: #ffffff; border: 1px solid #eef0f3;">
+      <i class="bi bi-mortarboard text-primary opacity-75" style="font-size: 2.5rem; filter: drop-shadow(0 4px 6px rgba(30, 90, 168, 0.15));"></i>
+    </div>
+    
+    <h4 class="fw-bold text-dark mb-2" style="font-weight: 800; letter-spacing: -0.02em;">No Courses Match Your Query</h4>
+    <p class="text-muted small mx-auto mb-4" style="max-width: 360px; line-height: 1.6;">
+      We couldn't find any courses matching your selection. Try adjusting your active filters or clear search query definitions.
+    </p>
+    
+    <a href="{% url 'course_list' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4 py-2.5 fw-bold d-inline-flex align-items-center gap-2 btn-icon" title="Reset Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+  </div>
+{% endfor %}

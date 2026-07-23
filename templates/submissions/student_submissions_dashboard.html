@@ -1,0 +1,254 @@
+{# templates/submissions/student_submissions_dashboard.html #}
+{% extends "base.html" %}
+
+{% block title %}My Assignment Submissions & Results{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <!-- Header Section -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
+    <div>
+      <h1 class="fw-bold display-6 mb-1" style="font-weight: 800; letter-spacing: -0.02em; color: #1c1f26;">My Assignments & Results</h1>
+      <p class="text-muted mb-0">Monitor your submitted practical tasks, view evaluation grades, and review instructor feedback</p>
+    </div>
+    <div class="bg-primary-subtle text-primary px-4 py-2.5 rounded-pill fw-bold shadow-sm small border text-uppercase tracking-wider" style="background-color: rgba(13, 110, 253, 0.08) !important;">
+      Total Tasks: {{ assignments|length }}
+    </div>
+  </div>
+
+    <!-- Real-time JavaScript Search & Filter Bar -->
+  <div class="row g-3 align-items-center mb-4">
+    <!-- (Search Bar) -->
+    <div class="col flex-grow-1">
+      <div class="ll-search mb-0 position-relative">
+        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        <input type="text" 
+               id="dashboardSearch"
+               class="form-control rounded-pill ps-5 py-2.5 shadow-sm border-light-subtle" 
+               placeholder="Search by assignment title, course, or lesson...">
+      </div>
+    </div>
+    
+    <!--  (Status Filter Dropdown) -->
+    <div class="col-sm-auto" style="min-width: 180px;">
+      <select id="dashboardStatusFilter" class="form-select px-3 fw-semibold border rounded-pill shadow-sm" style="height: 46px; background-color: #fff;">
+        <option value="all">All Statuses</option>
+        <option value="graded">Graded Only</option>
+        <option value="pending">Pending Grade</option>
+        <option value="not_submitted">Not Submitted</option>
+        <option value="overdue">Overdue / Missed</option>
+      </select>
+    </div>
+  </div>
+
+
+  <!-- Table Board Card Container -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+      <div class="table-responsive list-scroll">
+        <table class="table align-middle mb-0 custom-student-table">
+          <thead class="table-light text-uppercase fs-7 tracking-wider text-secondary">
+            <tr>
+              <th class="ps-4 py-3">Assignment Target</th>
+              <th class="py-3">Course Module Location</th>
+              <th class="py-3">Evaluation Result</th>
+              <th class="py-3">Submitted Timeline</th>
+              <th class="text-end pe-4 py-3">Grading Feedback</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardTableBody">
+            {% for assignment in assignments %}
+            <tr data-due="{{ assignment.due_date|date:'c' }}" data-status="{{ assignment.status }}">
+              
+              <!-- Assignment Title -->
+              <td class="ps-4" data-label="Assignment Target">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="bg-warning-subtle text-warning d-none d-lg-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; background-color: rgba(255, 193, 7, 0.12) !important;">
+                    <i class="bi bi-journal-text fs-5"></i>
+                  </div>
+                  <div>
+                    <span class="fw-bold d-block text-dark text-assignment-title" style="font-size: 0.95rem;">{{ assignment.title }}</span>
+                    <small class="text-muted d-block mt-0.5" style="font-size: 0.8rem;">
+                      {% if assignment.submission_id %}Submission ID: #{{ assignment.submission_id }}{% else %}Task ID: #{{ assignment.id }}{% endif %}
+                    </small>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Course Module Location -->
+              <td data-label="Course Module Location">
+                <div style="max-width: 260px;">
+                  {% if assignment.lesson %}
+                    <span class="fw-semibold text-dark d-block text-lesson-title text-truncate" style="font-size: 0.9rem;">{{ assignment.lesson.title }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-0.5 fw-bold mb-1" style="font-size: 0.75rem;">
+                      <i class="bi bi-globe me-1"></i> Course-Wide Task
+                    </span>
+                  {% endif %}
+                  <small class="text-muted d-block text-truncate text-course-title" style="font-size: 0.75rem;">
+                    <i class="bi bi-folder2 me-1"></i>Course: {{ assignment.course.title }}
+                  </small>
+                </div>
+              </td>
+
+      
+              <td data-label="Evaluation Result" class="text-grade-status">
+                {% if assignment.status == 'GRADED' %}
+                  <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.8rem; background-color: rgba(47, 133, 90, 0.12) !important;">
+                    <i class="bi bi-check-circle-fill me-1"></i> Graded: {{ assignment.score }} / {{ assignment.max_score }} pts
+                  </span>
+                {% elif assignment.status == 'PENDING' %}
+                  <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1.5 fw-medium" style="font-size: 0.8rem; background-color: rgba(255, 193, 7, 0.12) !important; color: #7c4a15 !important;">
+                    <i class="bi bi-hourglass-split me-1"></i> Pending Grade
+                  </span>
+                {% else %}
+                  <span class="badge-status-container">
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1.5 fw-bold badge-not-submitted" style="font-size: 0.8rem; background-color: rgba(239, 68, 68, 0.1) !important;">
+                      <i class="bi bi-x-circle-fill me-1"></i> Not Submitted
+                    </span>
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Submitted Timeline -->
+              <td data-label="Submitted Timeline">
+                {% if assignment.submission_id %}
+                  <span class="badge bg-light text-dark border px-2.5 py-2 fw-medium" style="font-size: 0.775rem;">
+                    <i class="bi bi-calendar-check text-primary me-1"></i>{{ assignment.submitted_at|date:"d M Y" }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-light text-danger border px-2.5 py-2 fw-semibold badge-due-timeline" style="font-size: 0.775rem;">
+                    <i class="bi bi-calendar-x me-1"></i>Due: {{ assignment.due_date|date:"d M Y" }}
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Instructor Feedback  OR Action Button -->
+              <td class="text-end pe-4" data-label="Grading Feedback">
+                {% if assignment.status == 'GRADED' and assignment.feedback %}
+                  <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold" style="font-size: 0.8rem;" data-bs-toggle="popover" data-bs-placement="left" title="Instructor Feedback" data-bs-content="{{ assignment.feedback }}">
+                    <i class="bi bi-chat-left-text-fill me-1"></i> View Result Note
+                  </button>
+                {% elif assignment.status == 'NOT_SUBMITTED' %}
+                  <span class="action-btn-container">
+                    <a href="{% url 'submission_create' assignment.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm btn-submit-now" style="font-size: 0.8rem;">
+                      <i class="bi bi-cloud-arrow-up-fill me-1"></i> Submit Now
+                    </a>
+                  </span>
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+
+            </tr>
+            {% empty %}
+            <tr id="djangoEmptyState">
+              <td colspan="5" class="text-center text-muted py-5">
+                <i class="bi bi-inbox display-3 d-block mb-3 opacity-40"></i>
+                <h5 class="fw-bold text-dark">No Assignments Found</h5>
+                <p class="small mb-0 text-muted">There are currently no assignment tasks deployed for your courses.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <div id="searchEmptyStateContainer" class="d-none p-5 text-center border-top">
+        <i class="bi bi-search display-3 text-muted mb-3 d-block opacity-40"></i>
+        <h5 class="fw-bold text-dark">No Records Found</h5>
+        <p class="text-muted small mb-0">Please try searching with different keywords.</p>
+      </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const now = new Date();
+    const rows = document.querySelectorAll("#dashboardTableBody tr:not(#djangoEmptyState)");
+    const searchInput = document.getElementById("dashboardSearch");
+    const statusFilterSelect = document.getElementById("dashboardStatusFilter"); 
+    const searchEmptyState = document.getElementById("searchEmptyStateContainer");
+
+    //  overdue 
+    rows.forEach(row => {
+      const status = row.getAttribute("data-status");
+      
+      if (status === 'NOT_SUBMITTED') {
+        const dueDateStr = row.getAttribute("data-due");
+        
+        if (dueDateStr) {
+          const dueDate = new Date(dueDateStr);
+          
+          if (now > dueDate) {
+            const statusContainer = row.querySelector(".badge-status-container");
+            if (statusContainer) {
+              statusContainer.innerHTML = `
+                <span class="badge bg-danger text-white rounded-pill px-3 py-1.5 fw-bold" style="background-color: #c53030 !important;">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i> Overdue (Missed)
+                </span>
+              `;
+            }
+            
+            const actionContainer = row.querySelector(".action-btn-container");
+            if (actionContainer) {
+              actionContainer.innerHTML = `
+                <span class="badge bg-light text-muted border px-3 py-1.5 fw-medium">Closed</span>
+              `;
+            }
+            
+            // ទៅជា OVERDUE 
+            row.setAttribute("data-status", "OVERDUE");
+          }
+        }
+      }
+    });
+
+    function filterDashboardTable() {
+      const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+      const selectedStatus = statusFilterSelect ? statusFilterSelect.value.toLowerCase() : "all";
+      let visibleRowsCount = 0;
+
+      rows.forEach(row => {
+        // get data from each row 
+        const title = row.querySelector(".text-assignment-title")?.textContent.toLowerCase() || "";
+        const course = row.querySelector(".text-course-title")?.textContent.toLowerCase() || "";
+        const lessonElement = row.querySelector(".text-lesson-title");
+        const lesson = lessonElement ? lessonElement.textContent.toLowerCase() : "course-wide task";
+        
+        //  (graded, pending, not_submitted, overdue)
+        const currentStatus = row.getAttribute("data-status").toLowerCase();
+
+        //  text search
+        const matchesSearch = title.includes(query) || course.includes(query) || lesson.includes(query);
+        
+        //  status filter
+        const matchesStatus = (selectedStatus === "all") || (currentStatus === selectedStatus);
+
+        if (matchesSearch && matchesStatus) {
+          row.classList.remove("d-none");
+          visibleRowsCount++;
+        } else {
+          row.classList.add("d-none");
+        }
+      });
+
+      if (visibleRowsCount === 0 && rows.length > 0) {
+        searchEmptyState.classList.remove("d-none");
+      } else {
+        searchEmptyState.classList.add("d-none");
+      }
+    }
+
+    //  (Event Listeners) 
+    if (searchInput) searchInput.addEventListener("input", filterDashboardTable);
+    if (statusFilterSelect) statusFilterSelect.addEventListener("change", filterDashboardTable);
+
+    //  Bootstrap Popover 
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl);
+    });
+  });
+</script>
+{% endblock %}

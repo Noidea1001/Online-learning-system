@@ -1,0 +1,74 @@
+{# templates/quizzes/quiz_confirm_delete.html #}
+{% extends "base.html" %}
+{% block title %}Delete Test — {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+
+      <div class="mb-4">
+        <a href="{% url 'quiz_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-1 small">
+          <i class="bi bi-arrow-left"></i> Back to Tests
+        </a>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div style="height: 6px; background: linear-gradient(90deg, #c53030 0%, #9b2c2c 50%, #e08585 100%);"></div>
+
+        <div class="card-body p-4 p-md-5 text-center">
+          <div class="mx-auto mb-4 text-danger" style="font-size: 3.5rem;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+
+          <h2 class="fw-bold text-dark mb-2">Delete This Test?</h2>
+          <p class="text-muted mb-4 small px-lg-3">
+            This action <strong class="text-danger">cannot be undone</strong>.
+            All questions{% if quiz.has_attempts %}, and every student's attempt and score,{% endif %} will be permanently deleted.
+          </p>
+
+          <div class="bg-light rounded-4 p-4 mb-4 text-start border border-light-subtle">
+            <h6 class="fw-bold text-secondary mb-3 small text-uppercase tracking-wider">Test to be deleted:</h6>
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="avatar-placeholder bg-danger-subtle text-danger">
+                <i class="bi bi-file-earmark-x-fill"></i>
+              </div>
+              <div class="text-truncate-wrapper" style="min-width: 0; flex: 1;">
+                <span class="fw-bold text-dark d-block text-truncate" style="font-size: 1.05rem;">{{ quiz.title }}</span>
+                <small class="text-muted">{{ quiz.course.title }}</small>
+              </div>
+            </div>
+            <div class="row g-3 small border-top pt-3 mt-1">
+              <div class="col-sm-4">
+                <strong class="text-muted d-block mb-1 text-uppercase" style="font-size: 0.7rem;">Questions</strong>
+                <span class="text-dark fw-bold">{{ quiz.question_count }}</span>
+              </div>
+              <div class="col-sm-4">
+                <strong class="text-muted d-block mb-1 text-uppercase" style="font-size: 0.7rem;">Status</strong>
+                <span class="text-dark fw-bold">{{ quiz.get_status_display }}</span>
+              </div>
+              <div class="col-sm-4">
+                <strong class="text-muted d-block mb-1 text-uppercase" style="font-size: 0.7rem;">Attempts</strong>
+                <span class="text-dark fw-bold">{{ quiz.attempt_count }}</span>
+              </div>
+            </div>
+          </div>
+
+          <form method="post" class="m-0">
+            {% csrf_token %}
+            <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 mt-4">
+              <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold order-2 order-sm-1">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-danger rounded-pill px-4 py-2 fw-semibold order-1 order-sm-2">
+                <i class="bi bi-trash-fill me-2"></i>Confirm Delete
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

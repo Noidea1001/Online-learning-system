@@ -1,0 +1,510 @@
+{# templates/courses/course_detail.html #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ course.title }} — Online Learning System{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <div class="cd-topbar fade-in-up">
+    <nav class="cd-breadcrumb">
+      <a href="{% url 'course_list' %}"><i class="bi bi-house-fill"></i> Courses</a>
+      <span class="cd-breadcrumb__sep"><i class="bi bi-chevron-right"></i></span>
+      <span class="cd-breadcrumb__current">{{ course.title|truncatewords:5 }}</span>
+    </nav>
+    <div class="cd-topbar__actions">
+      {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' or course.instructor.user == request.user %}
+        <a href="{% url 'course_update' course.id %}" class="btn btn-outline-primary rounded-pill px-3 fw-semibold btn-icon" title="Edit Course"><i class="bi bi-pencil-square"></i></a>
+        <a href="{% url 'course_delete' course.id %}" class="btn btn-outline-danger rounded-pill px-3 fw-semibold btn-icon" title="Delete Course"><i class="bi bi-trash3-fill"></i></a>
+      {% endif %}
+      
+      <a href="{% url 'course_list' %}" class="btn btn-style-secondary rounded-pill px-3 fw-semibold btn-icon" title="Back"><i class="bi bi-arrow-left"></i></a>
+    </div>
+  </div>
+
+  <div class="cd-hero fade-in-up" style="animation-delay: 0.05s;">
+    <div class="cd-hero__orb cd-hero__orb--1"></div>
+    <div class="cd-hero__orb cd-hero__orb--2"></div>
+
+    <div class="cd-hero__grid">
+      <div class="cd-hero__text">
+        <span class="cd-hero__badge">
+          <i class="bi bi-bookmark-star-fill me-1"></i>{{ course.category.name|default:"Uncategorized" }}
+        </span>
+        {% if course_is_free %}
+          <span class="cd-hero__badge ms-2" style="background: rgba(47, 133, 90,0.15); color: #2f855a; border-color: rgba(47, 133, 90,0.3);">
+            <i class="bi bi-unlock-fill me-1"></i> FREE
+          </span>
+        {% endif %}
+        <h1 class="cd-hero__title">{{ course.title }}</h1>
+        <p class="cd-hero__desc">{{ course.description|truncatewords:30 }}</p>
+
+        <div class="cd-hero__meta">
+          <div class="cd-hero__chip">
+            <div class="cd-hero__chip-icon"><i class="bi bi-person-badge-fill"></i></div>
+            <div class="cd-hero__chip-text">
+              <span class="cd-hero__chip-label">Instructor</span>
+              <span class="cd-hero__chip-value">{{ course.instructor.user.get_full_name|default:course.instructor.user.username }}</span>
+            </div>
+          </div>
+          <div class="cd-hero__chip">
+            <div class="cd-hero__chip-icon"><i class="bi bi-collection-play-fill"></i></div>
+            <div class="cd-hero__chip-text">
+              <span class="cd-hero__chip-label">Lessons</span>
+              <span class="cd-hero__chip-value">{{ course.lessons.count }} Units</span>
+            </div>
+          </div>
+          <div class="cd-hero__chip">
+            <div class="cd-hero__chip-icon"><i class="bi bi-star-fill" style="color: var(--accent-warm);"></i></div>
+            <div class="cd-hero__chip-text">
+              <span class="cd-hero__chip-label">Rating</span>
+              <span class="cd-hero__chip-value">
+                {% if course.approved_reviews.count > 0 %}
+                  {{ course.average_rating }} ★ ({{ course.approved_reviews.count }})
+                {% else %}
+                  No Reviews
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cd-hero__thumb-wrap">
+        <div class="cd-hero__thumb">
+          {% if course.image %}
+            <img src="{{ course.image.url }}" alt="{{ course.title }}" class="cd-hero__thumb-img">
+          {% else %}
+            <div class="cd-hero__thumb-empty">
+              <i class="bi bi-camera-video display-4 opacity-25"></i>
+              <span>No preview available</span>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if enrollment and not enrollment.is_paid and not course_is_free %}
+    <div class="alert alert-warning border-0 rounded-4 shadow-sm py-3 px-4 mb-4 fade-in-up d-flex align-items-center justify-content-between flex-wrap gap-3" 
+         style="background: rgba(255,193,7,0.12); border: 1px solid rgba(255,193,7,0.25) !important;">
+      <div class="d-flex align-items-center gap-3">
+        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
+          <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+        </div>
+        <div>
+          <h6 class="fw-bold text-dark mb-0.5">Enrollment Pending Payment</h6>
+          <span class="text-secondary small">You've enrolled in this course, but payment is pending. Unlock all lessons below by completing the simulated payment checkout.</span>
+        </div>
+      </div>
+      <a href="{% url 'pay_course' course.id %}" class="btn btn-warning rounded-pill px-4 py-2 btn-sm fw-bold text-dark shadow-sm">
+        <i class="bi bi-credit-card-fill me-1"></i> Pay Now (${{ course.price }})
+      </a>
+    </div>
+  {% endif %}
+
+  <div class="cd-layout">
+
+    <!-- LEFT COLUMN -->
+    <div class="cd-main">
+
+      <!-- Overview Card -->
+      <div class="cd-section fade-in-up" style="animation-delay: 0.1s;">
+        <div class="cd-section__header">
+          <div class="cd-section__icon cd-section__icon--blue">
+            <i class="bi bi-file-earmark-text-fill"></i>
+          </div>
+          <h3 class="cd-section__title">Course Overview</h3>
+        </div>
+        <div class="cd-section__body">
+          <div class="cd-overview-text" style="white-space: pre-line;">{{ course.description }}</div>
+          
+          {% if course.tags.all %}
+            <div class="mt-4 pt-3 border-top">
+              <h6 class="fw-bold text-secondary small text-uppercase mb-2"><i class="bi bi-tags-fill me-1"></i>Course Tags</h6>
+              <div class="d-flex flex-wrap gap-2">
+                {% for tag in course.tags.all %}
+                  <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-semibold" style="font-size: 0.8rem;">
+                    <i class="bi bi-hash text-muted"></i>{{ tag.name }}
+                  </span>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Course-Wide Tasks -->
+      {% if is_enrolled or request.user.is_lms_admin or request.user.role == 'EMPLOYEE' or course.instructor.user == request.user %}
+        <div class="cd-section fade-in-up" style="animation-delay: 0.12s; margin-bottom: 1.5rem;">
+          <div class="cd-section__header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <div class="cd-section__icon" style="background-color: rgba(183, 121, 31, 0.12); color: #b7791f;">
+                <i class="bi bi-clipboard-check-fill"></i>
+              </div>
+              <h3 class="cd-section__title mb-0">Course-Wide Tasks</h3>
+            </div>
+            
+            {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' or course.instructor.user == request.user %}
+              <a href="{% url 'assignment_create' %}?course={{ course.id }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold ms-auto btn-icon" title="Add Task"><i class="bi bi-plus-lg"></i></a>
+            {% endif %}
+          </div>
+          
+          <div class="cd-section__body {% if course_wide_assignments %}p-3{% endif %}">
+            {% if course_wide_assignments %}
+              <div class="row g-3 list-scroll list-scroll--md">
+                {% for assignment in course_wide_assignments %}
+                  <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-3 bg-white position-relative border-start border-4 border-warning" style="border-left: 4px solid #b7791f !important;">
+                      <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+                        <h5 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 65%; font-size: 1rem;">
+                          {{ assignment.title }}
+                        </h5>
+                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fw-bold flex-shrink-0" style="font-size: 0.75rem;">
+                          <i class="bi bi-calendar-event-fill me-1"></i>Due: {{ assignment.due_date|date:"M d, Y" }}
+                        </span>
+                      </div>
+                      
+                      <p class="text-secondary small mb-3 flex-grow-1" style="line-height: 1.5; font-size: 0.85rem;">
+                        {{ assignment.description|truncatewords:20 }}
+                      </p>
+
+                      <div class="d-flex align-items-center justify-content-between mt-auto pt-2 border-top border-light">
+                        <span class="text-muted small fw-semibold" style="font-size: 0.8rem;">
+                          <i class="bi bi-award-fill text-warning me-1"></i>Score: {{ assignment.max_score|floatformat:0 }} pts
+                        </span>
+                        <div class="d-flex gap-2">
+                          <a href="{% url 'assignment_detail' assignment.id %}" class="btn btn-sm btn-light rounded-pill px-3 fw-medium text-primary" style="font-size: 0.75rem;">
+                            Open Task
+                          </a>
+                          {% if assignment.assignment_file %}
+                            <a href="{{ assignment.assignment_file.url }}" class="btn btn-sm btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" download>
+                              <i class="bi bi-download" style="font-size: 0.75rem;"></i>
+                            </a>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-4 text-muted">
+                <i class="bi bi-folder-symlink display-6 opacity-25 text-muted mb-2 d-block"></i>
+                <p class="mb-0 small italic">No general course-wide tasks assigned yet.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Curriculum -->
+      <div id="curriculum-section" class="cd-section fade-in-up" style="animation-delay: 0.15s;">
+        <div class="cd-section__header">
+          <div class="cd-section__icon cd-section__icon--purple">
+            <i class="bi bi-list-columns-reverse"></i>
+          </div>
+          <h3 class="cd-section__title">Course Curriculum</h3>
+          <span class="cd-section__count">{{ course.lessons.count }} lessons</span>
+          
+          {% if request.user.is_lms_admin or request.user.role == 'EMPLOYEE' or course.instructor.user == request.user %}
+            <a href="{% url 'lesson_create' %}?course={{ course.id }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold ms-auto btn-icon" title="Add Lesson"><i class="bi bi-plus-lg"></i></a>
+          {% endif %}
+        </div>
+        
+        <div class="cd-section__body list-scroll p-0">
+          {% for lesson in course.lessons.all %}
+            <div class="cd-lesson-row">
+              <div class="cd-lesson-row__left">
+                <div class="cd-lesson-row__num">{{ lesson.order|default:forloop.counter }}</div>
+
+                <div class="cd-lesson-row__info">
+                  <p class="cd-lesson-row__title">{{ lesson.title }}</p>
+                  <div class="cd-lesson-row__tags">
+                    {% if lesson.youtube_embed_url %}
+                      <span class="cd-tag cd-tag--red"><i class="bi bi-youtube me-1"></i>YouTube</span>
+                    {% elif lesson.video_file %}
+                      <span class="cd-tag cd-tag--green"><i class="bi bi-play-circle-fill me-1"></i>Video</span>
+                    {% endif %}
+                    {% if lesson.pdf_resource %}
+                      <span class="cd-tag cd-tag--amber"><i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF</span>
+                    {% endif %}
+                    {% if not lesson.youtube_embed_url and not lesson.video_file and not lesson.pdf_resource %}
+                      <span class="cd-tag cd-tag--gray"><i class="bi bi-file-earmark-text me-1"></i>Reading</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {% if is_enrolled or course_is_free %}
+                <a href="{% url 'lesson_detail' lesson.id %}" class="cd-lesson-row__btn">
+                  Start <i class="bi bi-arrow-right"></i>
+                </a>
+              {% else %}
+                <span class="cd-lesson-row__btn" style="opacity:0.55; cursor:not-allowed; border-color: var(--border); color: var(--text-muted);">
+                  <i class="bi bi-lock-fill"></i> Locked
+                </span>
+              {% endif %}
+            </div>
+          {% empty %}
+            <div class="text-center py-5 text-muted border border-dashed rounded-4">
+              <i class="bi bi-journal-x display-4 opacity-25 mb-3 d-block"></i>
+              <p class="mb-0">No lessons added yet.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Tests -->
+      <div class="cd-section fade-in-up" style="animation-delay: 0.16s; margin-top: 1.5rem;">
+        <div class="cd-section__header d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <div class="cd-section__icon" style="background-color: rgba(30, 90, 168, 0.1); color: var(--primary);">
+              <i class="bi bi-ui-checks-grid"></i>
+            </div>
+            <h3 class="cd-section__title mb-0">Tests</h3>
+            <span class="cd-section__count">{{ published_quizzes|length }} test{{ published_quizzes|length|pluralize }}</span>
+          </div>
+          {% if request.user.is_lms_admin or course.instructor.user == request.user %}
+            <a href="{% url 'quiz_builder' %}?course={{ course.id }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold ms-auto btn-icon" title="Add Test"><i class="bi bi-plus-lg"></i></a>
+          {% endif %}
+        </div>
+
+        <div class="cd-section__body p-0">
+          {% for quiz in published_quizzes %}
+            <div class="cd-lesson-row">
+              <div class="cd-lesson-row__left">
+                <div class="cd-lesson-row__num"><i class="bi bi-ui-checks-grid" style="font-size: 0.85rem;"></i></div>
+                <div class="cd-lesson-row__info">
+                  <p class="cd-lesson-row__title">{{ quiz.title }}</p>
+                  <div class="cd-lesson-row__tags">
+                    <span class="cd-tag cd-tag--gray"><i class="bi bi-question-circle me-1"></i>{{ quiz.question_count }} question{{ quiz.question_count|pluralize }}</span>
+                    {% if quiz.time_limit_minutes %}
+                      <span class="cd-tag cd-tag--gray"><i class="bi bi-stopwatch me-1"></i>{{ quiz.time_limit_minutes }} min</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {% if request.user.role == 'STUDENT' %}
+                {% if quiz.progress.in_progress_id %}
+                  <a href="{% url 'quiz_take' quiz.id %}" class="cd-lesson-row__btn" style="border-color: var(--warning); color: var(--warning);">
+                    Continue <i class="bi bi-arrow-right"></i>
+                  </a>
+                {% elif quiz.progress.can_attempt %}
+                  <a href="{% url 'quiz_take' quiz.id %}" class="cd-lesson-row__btn">
+                    {% if quiz.progress.attempts_used %}Retake{% else %}Start{% endif %} <i class="bi bi-arrow-right"></i>
+                  </a>
+                {% elif quiz.progress.best_score is not None %}
+                  <span class="cd-lesson-row__btn" style="border-color: var(--success); color: var(--success);">
+                    {{ quiz.progress.best_score }}% <i class="bi bi-check-circle"></i>
+                  </span>
+                {% else %}
+                  <span class="cd-lesson-row__btn" style="opacity:0.55; cursor:not-allowed; border-color: var(--border); color: var(--text-muted);">
+                    <i class="bi bi-clock-history"></i> No attempts left
+                  </span>
+                {% endif %}
+              {% elif is_enrolled or course_is_free %}
+                <a href="{% url 'quiz_detail' quiz.id %}" class="cd-lesson-row__btn">
+                  Manage <i class="bi bi-arrow-right"></i>
+                </a>
+              {% endif %}
+            </div>
+          {% empty %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-ui-checks-grid display-6 opacity-25 mb-2 d-block"></i>
+              <p class="mb-0 small">No tests published for this course yet.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Student Testimonials - Bottom Section (Fixed) -->
+      <div class="cd-section fade-in-up" style="animation-delay: 0.18s; margin-top: 2.5rem;">
+        <div class="cd-section__header d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="cd-section__icon" style="background-color: rgba(183, 121, 31, 0.12); color: #b7791f; width: 40px; height: 40px;">
+              <i class="bi bi-star-fill fs-4"></i>
+            </div>
+            <h3 class="cd-section__title mb-0">Student Testimonials</h3>
+          </div>
+          {% if course.approved_reviews.count > 0 %}
+            <span class="badge bg-warning text-dark fw-bold rounded-pill px-3 py-2">
+              ★ {{ course.average_rating|floatformat:1 }} ({{ course.approved_reviews.count }})
+            </span>
+          {% endif %}
+        </div>
+        
+        <div class="cd-section__body list-scroll">
+          {% for review in course.approved_reviews.all %}
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                       style="width: 42px; height: 42px; font-size: 0.9rem;">
+                    {{ review.student.user.username|slice:":2"|upper }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold">{{ review.student.user.get_full_name|default:review.student.user.username }}</div>
+                  </div>
+                </div>
+                <div class="text-warning fs-4">
+                  {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="mt-3 text-secondary" style="line-height: 1.65;">
+                "{{ review.comment }}"
+              </div>
+            </div>
+          {% empty %}
+            <div class="card border-0 shadow-sm rounded-4 p-5 text-center text-muted">
+              <i class="bi bi-chat-left-quote display-4 opacity-25 mb-3 d-block"></i>
+              <p class="mb-1">No testimonials yet.</p>
+              <small>Be the first to share your feedback!</small>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN - Sidebar -->
+    <div class="cd-sidebar">
+      <div class="cd-sidebar__sticky">
+        <!-- Pricing & Access -->
+        <div class="cd-pricing fade-in-up" style="animation-delay: 0.2s;">
+          {% if course_is_free %}
+            <div class="cd-pricing__accent" style="background: linear-gradient(135deg, #2f855a, #22543d);"></div>
+          {% else %}
+            <div class="cd-pricing__accent"></div>
+          {% endif %}
+          <div class="cd-pricing__body">
+            <!-- Your existing pricing code (free / paid) remains unchanged -->
+            {% if course_is_free %}
+              <!-- FREE ACCESS PIPELINE -->
+              <span class="cd-pricing__label">Course Access</span>
+              <div class="cd-pricing__amount">
+                <span style="color: #2f855a; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em;">FREE</span>
+              </div>
+              <span class="cd-pricing__period">No payment needed · Open to all members</span>
+
+              {% if is_enrolled %}
+                <a href="#curriculum-section" class="cd-pricing__enroll-btn text-decoration-none text-center d-block" style="background: linear-gradient(135deg, #2f855a, #22543d) !important; box-shadow: 0 4px 14px rgba(47, 133, 90, 0.35);">
+                  <i class="bi bi-play-circle-fill me-2"></i> Ready to Study
+                </a>
+              {% else %}
+                <form action="{% url 'enroll_course' course.id %}" method="post" class="w-100">
+                  {% csrf_token %}
+                  <button type="submit" class="cd-pricing__enroll-btn border-0 text-white w-100" style="background: linear-gradient(135deg, #2f855a, #22543d) !important; box-shadow: 0 4px 14px rgba(47, 133, 90, 0.35);">
+                    <i class="bi bi-play-circle-fill me-2"></i> Enroll for Free
+                  </button>
+                </form>
+              {% endif %}
+
+              <div class="cd-pricing__features mt-4">
+                <div class="cd-pricing__feature"><i class="bi bi-unlock-fill text-success me-2"></i>Free &amp; open to all members</div>
+                <div class="cd-pricing__feature"><i class="bi bi-infinity text-success me-2"></i>Unlimited lifetime access</div>
+                <div class="cd-pricing__feature"><i class="bi bi-phone text-info me-2"></i>Access on any device</div>
+                <div class="cd-pricing__feature"><i class="bi bi-trophy-fill text-warning me-2"></i>Certificate of completion</div>
+              </div>
+
+            {% else %}
+              <!-- PREMIUM INVESTMENT PIPELINE (keep your original code) -->
+              <span class="cd-pricing__label">Course Investment</span>
+              <div class="cd-pricing__amount">
+                {% if course.price <= 0 %}
+                  <span style="color: #2f855a; font-size: 2rem; font-weight: 800;">Free</span>
+                {% else %}
+                  <span class="cd-pricing__dollar">$</span>{{ course.price }}
+                {% endif %}
+              </div>
+              <span class="cd-pricing__period">One-time payment · Lifetime access</span>
+
+              {% if enrollment and not enrollment.is_paid %}
+                <a href="{% url 'pay_course' course.id %}" class="cd-pricing__enroll-btn text-decoration-none text-center d-block" style="background: linear-gradient(135deg, #b7791f, #b7791f) !important; box-shadow: 0 4px 14px rgba(255, 193, 7, 0.35); color: #1c1f26 !important;">
+                  <i class="bi bi-credit-card-fill me-2"></i> Pay Now (${{ course.price }})
+                </a>
+              {% elif is_enrolled %}
+                <a href="#curriculum-section" class="cd-pricing__enroll-btn text-decoration-none text-center d-block" style="background: linear-gradient(135deg, #2f855a, #22543d) !important; box-shadow: 0 4px 14px rgba(47, 133, 90, 0.25);">
+                  <i class="bi bi-check-circle-fill me-2"></i> Ready to Study
+                </a>
+              {% else %}
+                {% if request.user.is_authenticated %}
+                  <form action="{% url 'enroll_course' course.id %}" method="post" class="w-100">
+                    {% csrf_token %}
+                    <button type="submit" class="cd-pricing__enroll-btn border-0 text-white w-100">
+                      <i class="bi bi-cart-plus-fill me-2"></i> Enroll Now
+                    </button>
+                  </form>
+                {% else %}
+                  <a href="{% url 'login' %}?next={{ request.path }}" class="cd-pricing__enroll-btn text-center text-white text-decoration-none d-block">
+                    <i class="bi bi-box-arrow-in-right me-2"></i> Sign In to Enroll
+                  </a>
+                {% endif %}
+              {% endif %}
+
+              <div class="cd-pricing__features mt-4">
+                <div class="cd-pricing__feature"><i class="bi bi-infinity text-success me-2"></i>Unlimited lifetime access</div>
+                <div class="cd-pricing__feature"><i class="bi bi-phone text-info me-2"></i>Access on any device</div>
+                <div class="cd-pricing__feature"><i class="bi bi-trophy-fill text-warning me-2"></i>Certificate of completion</div>
+                <div class="cd-pricing__feature"><i class="bi bi-download text-primary me-2"></i>Downloadable resources</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Course Details Sidebar -->
+        <div class="cd-info-card fade-in-up mt-4" style="animation-delay: 0.25s;">
+          <h6 class="cd-info-card__title mb-3 fw-bold">
+            <i class="bi bi-info-circle-fill text-primary me-2"></i>Course Details
+          </h6>
+          <div class="cd-info-card__row d-flex justify-content-between py-2 border-bottom small">
+            <span class="cd-info-card__label text-muted">Category</span>
+            <span class="cd-info-card__value fw-semibold text-dark">{{ course.category.name|default:"—" }}</span>
+          </div>
+          <div class="cd-info-card__row d-flex justify-content-between py-2 border-bottom small">
+            <span class="cd-info-card__label text-muted">Instructor</span>
+            <span class="cd-info-card__value fw-semibold text-dark">{{ course.instructor.user.get_full_name|default:course.instructor.user.username }}</span>
+          </div>
+          <div class="cd-info-card__row d-flex justify-content-between py-2 border-bottom small">
+            <span class="cd-info-card__label text-muted">Lessons</span>
+            <span class="cd-info-card__value fw-semibold text-dark">{{ course.lessons.count }}</span>
+          </div>
+          <div class="cd-info-card__row d-flex justify-content-between py-2 border-bottom small">
+            <span class="cd-info-card__label text-muted">Access</span>
+            <span class="cd-info-card__value">
+              {% if course_is_free %}
+                <span class="badge bg-success rounded-pill px-2 py-1">Free</span>
+              {% else %}
+                <span class="badge bg-primary rounded-pill">Paid</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="cd-info-card__row d-flex justify-content-between py-2 small">
+            <span class="cd-info-card__label text-muted">Published</span>
+            <span class="cd-info-card__value fw-semibold text-dark">{{ course.created_at|date:"M d, Y" }}</span>
+          </div>
+        </div>
+
+        {% if request.user.role == 'STUDENT' and is_enrolled %}
+          <div class="cd-info-card fade-in-up mt-4" style="animation-delay: 0.3s;">
+            <h6 class="cd-info-card__title mb-2 fw-bold">
+              <i class="bi bi-star-fill text-warning me-2"></i>Rate This Course
+            </h6>
+            <p class="text-muted small mb-3">Share your experience to help other students.</p>
+            <a href="{% url 'review_create' course.id %}" class="btn w-100 rounded-pill fw-bold py-2 text-decoration-none text-center text-white d-block" 
+               style="background: linear-gradient(135deg, #b7791f, #96591a); border: none; box-shadow: 0 4px 14px rgba(183, 121, 31, 0.3);">
+              <i class="bi bi-pencil-square me-2"></i>Write a Review
+            </a>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

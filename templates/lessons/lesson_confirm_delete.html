@@ -1,0 +1,167 @@
+{# templates/lessons/lesson_confirm_delete.html #}
+{% extends "base.html" %}
+{% block title %}Delete {{ lesson.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+
+      <!-- Back Navigation Link -->
+      <div class="mb-4">
+        <a href="{% url 'lesson_detail' lesson.id %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-1 small transition-smooth">
+          <i class="bi bi-arrow-left"></i> Back to Lesson Details
+        </a>
+      </div>
+
+      <!-- Delete Confirmation Card Component -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        
+        <!-- Premium Danger Accent Top Bar Style Match -->
+        <div class="form-header-accent-danger"></div>
+
+        <div class="card-body p-4 p-md-5 text-center">
+          
+          <!-- Warning Icon Animation Container -->
+          <div class="mx-auto mb-4 text-danger warning-icon-glow" style="font-size: 3.5rem; width: fit-content; height: fit-content;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+
+          <h2 class="fw-bold text-dark mb-2" style="font-weight: 800; letter-spacing: -0.02em;">
+            Delete Lesson Module?
+          </h2>
+          
+          <p class="text-muted mb-4 small px-lg-3" style="line-height: 1.5;">
+            This action <strong class="text-danger">cannot be undone</strong>. 
+            The lesson module and all associated operational datasets, videos, and descriptions will be permanently removed.
+          </p>
+
+          <!-- Lesson Profile Summary Metadata Box -->
+          <div class="bg-light rounded-4 p-4 mb-4 text-start border border-light-subtle">
+            <h6 class="fw-bold text-secondary mb-3 small text-uppercase tracking-wider">Lesson to be deleted:</h6>
+            
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="avatar-placeholder bg-danger-subtle text-danger border border-white">
+                <i class="bi bi-journal-x"></i>
+              </div>
+              <div>
+                <span class="fw-bold text-dark d-block" style="font-size: 1.05rem;">{{ lesson.title }}</span>
+                <small class="text-muted">Course: {{ lesson.course.title }}</small>
+              </div>
+            </div>
+            
+            <div class="row g-3 small border-top pt-3 mt-1">
+              <div class="col-sm-6 text-truncate">
+                <strong class="text-muted d-block mb-1 text-uppercase font-monospace" style="font-size: 0.7rem; letter-spacing: 0.05em;">Syllabus Sequence</strong>
+                <span class="text-dark fw-medium">Sequence #{{ lesson.order }}</span>
+              </div>
+              <div class="col-sm-6">
+                <strong class="text-muted d-block mb-1 text-uppercase font-monospace" style="font-size: 0.7rem; letter-spacing: 0.05em;">Structure Status</strong>
+                <span class="text-dark fw-medium">Active Topic</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Action Components form -->
+          <form method="post" class="m-0">
+            {% csrf_token %}
+
+            <div class="d-flex flex-column flex-sm-row justify-content-center gap-custom-delete mt-4">
+              <a href="{% url 'lesson_detail' lesson.id %}" 
+                 class="btn btn-style-light rounded-pill px-4 py-2.5 fw-semibold transition-smooth text-secondary border order-2 order-sm-1">
+                Cancel
+              </a>
+              
+              <button type="submit" 
+                      class="btn btn-danger rounded-pill px-4 py-2.5 fw-semibold shadow-danger-btn transition-smooth order-1 order-sm-2">
+                <i class="bi bi-trash-fill me-2"></i>Confirm Delete
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+      <!-- Security Guardrails Context Badge Footer -->
+      <p class="text-center text-muted small mt-4 opacity-75">
+        <i class="bi bi-shield-lock-fill me-1 text-secondary"></i> Security Guardrails Active • Permanent Deletion Action
+      </p>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Premium Danger Accent Top Bar Style Match */
+  .form-header-accent-danger {
+    height: 6px;
+    background: linear-gradient(90deg, #c53030 0%, #9b2c2c 50%, #e08585 100%);
+    width: 100%;
+  }
+
+  /* Identity Core Blocks Avatar Placeholder Layout */
+  .avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    flex-shrink: 0;
+  }
+  
+  .bg-danger-subtle {
+    background-color: #fef2f2 !important;
+  }
+
+  /* Soft glowing alert iconography background animations effects */
+  .warning-icon-glow {
+    filter: drop-shadow(0 4px 10px rgba(197, 48, 48, 0.15));
+  }
+
+  /* Clean syntax class for component gap setup */
+  .gap-custom-delete {
+    gap: 0.65rem !important;
+  }
+
+  /* Buttons UX Interactions Styling */
+  .transition-smooth {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-style-light {
+    background-color: #f8f9fb;
+    border: 1px solid #c7cdd8;
+    color: #5a6170;
+  }
+
+  .btn-style-light:hover {
+    background-color: #dde1e8;
+    border-color: #c7cdd8;
+    color: #1c1f26;
+  }
+
+  .shadow-danger-btn {
+    box-shadow: 0 4px 14px 0 rgba(197, 48, 48, 0.3);
+  }
+  
+  .btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px 0 rgba(197, 48, 48, 0.4);
+  }
+
+  /* Mobile Structural Breakdown Tweaks */
+  @media (max-width: 575.98px) {
+    .d-flex.flex-column.flex-sm-row > .btn,
+    .d-flex.flex-column.flex-sm-row > .btn-danger,
+    .d-flex.flex-column.flex-sm-row > .btn-style-light {
+      width: 100% !important;
+    }
+  }
+</style>
+{% endblock %}

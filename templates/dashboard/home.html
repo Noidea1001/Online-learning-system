@@ -1,0 +1,1681 @@
+{# templates/dashboard/home.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard — Online Learning System{% endblock %}
+{% block main_class %}flex-grow-1 p-0{% endblock %}
+
+{% block content %}
+<div class="db-shell">
+
+  <!-- ── Data Holder (JS reads from here) ───────────────── -->
+  <div id="db-data-holder" class="d-none"
+    data-total-users="{{ total_users|default:0 }}"
+    data-total-students="{{ total_students|default:0 }}"
+    data-total-instructors="{{ total_instructors|default:0 }}"
+    data-total-employees="{{ total_employees|default:0 }}"
+    data-total-enrollments="{{ total_enrollments|default:0 }}"
+    data-total-paid-enrollments="{{ total_paid_enrollments|default:0 }}"
+    data-total-assignments="{{ total_assignments|default:0 }}"
+    data-total-submissions="{{ total_submissions|default:0 }}"
+    data-total-published="{{ total_published|default:0 }}"
+    data-total-courses="{{ total_courses|default:0 }}"
+    data-my-courses-count="{{ my_courses_count|default:0 }}"
+    data-my-published-count="{{ my_published_count|default:0 }}"
+    data-my-students-count="{{ my_students_count|default:0 }}"
+    data-my-paid-enrollments="{{ my_paid_enrollments|default:0 }}"
+    data-pending-submissions-count="{{ my_pending_count|default:0 }}"
+    data-my-enrollments-count="{{ my_enrollments_count|default:0 }}"
+    data-my-paid-count="{{ my_paid_count|default:0 }}"
+    data-my-submissions-count="{{ my_submissions_count|default:0 }}"
+    data-my-graded-count="{{ my_graded_count|default:0 }}"
+    data-available-courses-count="{{ available_courses_count|default:0 }}"
+    data-daily-labels='{{ daily_labels_json|safe }}'
+    data-daily-enrollments='{{ daily_enrollments_json|safe }}'
+    data-daily-submissions='{{ daily_submissions_json|safe }}'
+    data-daily-test-attempts='{{ daily_test_attempts_json|safe }}'
+    data-daily-test-scores='{{ daily_test_scores_json|safe }}'
+  >
+</div>
+
+  <main class="db-main">
+
+    <!-- ── Topbar ─────────────────────────────────────── -->
+    <div class="db-topbar">
+      <div class="db-topbar__left">
+        <h1>Dashboard</h1>
+        <div class="db-topbar__meta">
+          <span class="db-topbar__date">
+            <i class="bi bi-calendar3"></i>
+            {% now "l, F j, Y" %}
+          </span>
+          <span class="db-topbar__pill">
+            <i class="bi bi-circle-fill" style="font-size:6px;"></i> System Online
+          </span>
+        </div>
+      </div>
+      <div class="db-topbar__actions">
+
+        {% if request.user.role == 'STUDENT' %}
+          <a href="{% url 'course_list' %}" class="db-btn db-btn--ghost">
+            <i class="bi bi-compass"></i> Browse Courses
+          </a>
+        {% endif %}
+        {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' or request.user.role == 'INSTRUCTOR' %}
+          <a href="{% url 'course_create' %}" class="db-btn db-btn--primary">
+            <i class="bi bi-plus-lg"></i> New Course
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+
+    <!-- Hero -->
+    <div class="db-hero mb-4">
+      <div class="db-hero__glow-1"></div>
+      <div class="db-hero__glow-2"></div>
+      <div class="db-hero__glow-3"></div>
+      <div class="db-hero__decor">
+        <svg class="decor-grid" width="360" height="200" viewBox="0 0 360 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 20H360M0 60H360M0 100H360M0 140H360M0 180H360" stroke="rgba(255,255,255,0.03)" stroke-width="1.5"/>
+          <path d="M40 0V200M100 0V200M160 0V200M220 0V200M280 0V200M340 0V200" stroke="rgba(255,255,255,0.03)" stroke-width="1.5"/>
+          <path d="M30 160 C 80 130, 120 70, 180 90 C 240 110, 280 40, 330 30" stroke="url(#paint0_linear_admin)" stroke-width="3.5" stroke-linecap="round" opacity="0.65" class="decor-line"/>
+          <path d="M30 170 C 90 140, 130 90, 190 120 C 250 150, 290 80, 330 60" stroke="url(#paint1_linear_admin)" stroke-width="2" stroke-linecap="round" opacity="0.3" class="decor-line"/>
+          <defs>
+            <linearGradient id="paint0_linear_admin" x1="0" y1="0" x2="360" y2="0" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1e5aa8"/>
+              <stop offset="0.5" stop-color="#1e5aa8"/>
+              <stop offset="1" stop-color="#2b6cb0"/>
+            </linearGradient>
+            <linearGradient id="paint1_linear_admin" x1="0" y1="0" x2="360" y2="0" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#2f855a"/>
+              <stop offset="1" stop-color="#1e5aa8"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="db-hero__inner">
+        <div>
+          <div class="db-hero__badge"><i class="bi bi-shield-fill-check"></i> Admin Control Center</div>
+          <div class="db-hero__title"><span class="live-greeting">Good to see you</span>, <span class="username-gradient username-gradient--admin">{{ request.user.get_full_name|default:request.user.username }}</span></div>
+          <p class="db-hero__sub">Your learning platform is running smoothly. Here's today's snapshot.</p>
+        </div>
+        <div class="db-hero__stats">
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ total_users }}</div>
+            <div class="db-hero__stat-lbl">Total Users</div>
+          </div>
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ total_courses }}</div>
+            <div class="db-hero__stat-lbl">Courses</div>
+          </div>
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ total_enrollments }}</div>
+            <div class="db-hero__stat-lbl">Enrollments</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="db-stats">
+      <div class="db-stat db-stat--blue">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--blue"><i class="bi bi-people-fill"></i></div>
+          <span class="db-stat__tag db-stat__tag--info"><i class="bi bi-arrow-up-short"></i>Users</span>
+        </div>
+        <div class="db-stat__val">{{ total_users }}</div>
+        <div class="db-stat__label">Total Users</div>
+        <div class="db-stat__sub">{{ total_students }} students · {{ total_instructors }} instructors</div>
+        <div class="db-stat__bar">
+          <div class="db-stat__bar-fill" style="background:var(--grad-primary);" data-pct="{{ total_students }}" data-total="{{ total_users }}"></div>
+        </div>
+      </div>
+
+      <div class="db-stat db-stat--green">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--green"><i class="bi bi-mortarboard-fill"></i></div>
+          <span class="db-stat__tag db-stat__tag--up"><i class="bi bi-arrow-up-short"></i>Active</span>
+        </div>
+        <div class="db-stat__val">{{ total_students }}</div>
+        <div class="db-stat__label">Students</div>
+        <div class="db-stat__sub">{{ total_enrollments }} total enrollments</div>
+        <div class="db-stat__bar">
+          <div class="db-stat__bar-fill" style="background:var(--grad-success);" data-pct="{{ total_students }}" data-total="{{ total_users }}"></div>
+        </div>
+      </div>
+
+      <div class="db-stat db-stat--amber">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--amber"><i class="bi bi-journal-richtext"></i></div>
+          <span class="db-stat__tag db-stat__tag--info">Published</span>
+        </div>
+        <div class="db-stat__val">{{ total_courses }}</div>
+        <div class="db-stat__label">Courses</div>
+        <div class="db-stat__sub">{{ total_published }} live · {{ total_instructors }} instructors</div>
+        <div class="db-stat__bar">
+          <div class="db-stat__bar-fill" style="background:var(--grad-warning);" data-pct="{{ total_published }}" data-total="{{ total_courses }}"></div>
+        </div>
+      </div>
+
+      <div class="db-stat db-stat--indigo">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--indigo"><i class="bi bi-file-earmark-check-fill"></i></div>
+          <span class="db-stat__tag db-stat__tag--info">Graded</span>
+        </div>
+        <div class="db-stat__val">{{ total_submissions }}</div>
+        <div class="db-stat__label">Submissions</div>
+        <div class="db-stat__sub">{{ total_assignments }} assignments total</div>
+        <div class="db-stat__bar">
+          <div class="db-stat__bar-fill" style="background:var(--grad-assignment);" data-pct="{{ total_submissions }}" data-total="{{ total_assignments }}"></div>
+        </div>
+      </div>
+    </div><!-- /.db-stats -->
+
+    <!-- ── Analytics Time Filter Bar ──────────────────────── -->
+    <div class="db-filter-panel">
+      <div class="db-filter-panel__left">
+        <span class="db-filter-panel__icon">
+          <i class="bi bi-sliders2"></i>
+        </span>
+        <div>
+          <div class="db-filter-panel__title">Analytics Time Filter</div>
+          <div class="db-filter-panel__sub">Filter all graph trends & performance curves by Month and Year</div>
+        </div>
+      </div>
+      <div class="db-filter-panel__controls">
+        <div class="db-filter-select-wrap">
+          <i class="bi bi-calendar3 db-filter-select-wrap__icon"></i>
+          <select id="analyticsMonthSelect" class="db-filter-select">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div class="db-filter-select-wrap">
+          <i class="bi bi-clock-history db-filter-select-wrap__icon"></i>
+          <select id="analyticsYearSelect" class="db-filter-select">
+            <option value="2024">2024</option><option value="2025">2025</option>
+            <option value="2026">2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+        <span class="db-filter-live-badge" id="activeFilterBadge">
+          <i class="bi bi-check-circle-fill"></i> Live
+        </span>
+      </div>
+    </div><!-- /.db-filter-panel -->
+
+    <!-- ── Row 1: Enrollment Trend + Test & Quiz Performance ─ -->
+    <div class="db-grid--2">
+
+      <!-- Daily Enrollment Trend Graph -->
+      <div class="db-panel db-graph-card">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl">
+            <span class="ttl-icon ttl-icon--blue"><i class="bi bi-graph-up"></i></span>
+            Enrollment Trend
+            <span class="db-trend-badge db-trend-badge--up" id="enrollTrendBadge"><i class="bi bi-funnel-fill me-1"></i>Monthly View</span>
+          </div>
+          <a href="{% url 'enrollment_list' %}" class="db-panel__view">View all →</a>
+        </div>
+        <div class="db-graph-legend">
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#1e5aa8;"></span>Enrollments</span>
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#2f855a;"></span>Submissions</span>
+        </div>
+        <div class="db-chart db-chart--tall">
+          <canvas id="enrollmentTrendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Daily Test Activity Performance Graph -->
+      <div class="db-panel db-graph-card">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl">
+            <span class="ttl-icon ttl-icon--green"><i class="bi bi-activity"></i></span>
+            Test &amp; Quiz Performance
+            <span class="db-trend-badge db-trend-badge--neutral"><i class="bi bi-graph-up-arrow"></i>Daily Analytics</span>
+          </div>
+          <a href="{% url 'quiz_list' %}" class="db-panel__view">Manage Tests →</a>
+        </div>
+        <!-- Styled KPI Stat Mini-Cards -->
+        <div class="row g-2 px-3 pt-3 pb-0">
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded-3 border text-center" style="background:rgba(30,90,168,0.04); border-color:rgba(30,90,168,0.12)!important;">
+              <div class="fw-bold fs-4 text-primary mb-0">{{ total_tests|default:0 }}</div>
+              <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-journal-check me-1"></i>Published</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded-3 border text-center" style="background:rgba(124,58,237,0.04); border-color:rgba(124,58,237,0.12)!important;">
+              <div class="fw-bold fs-4" style="color:#7c3aed;">{{ total_test_attempts|default:0 }}</div>
+              <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-person-lines-fill me-1"></i>Attempts</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded-3 border text-center" style="background:rgba(5,150,105,0.04); border-color:rgba(5,150,105,0.12)!important;">
+              <div class="fw-bold fs-4" style="color:#059669;">{% if avg_test_score is not None %}{{ avg_test_score }}%{% else %}—{% endif %}</div>
+              <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-trophy-fill me-1"></i>Avg Score</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded-3 border text-center" style="background:rgba(197,48,48,0.04); border-color:rgba(197,48,48,0.12)!important;">
+              <div class="fw-bold fs-4" style="color:#c53030;">{{ pending_test_grading|default:0 }}</div>
+              <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-hourglass-split me-1"></i>Pending</div>
+            </div>
+          </div>
+        </div>
+        <div class="db-graph-legend">
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#7c3aed;"></span>Attempts</span>
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#059669;"></span>Avg Score</span>
+        </div>
+        <div class="db-chart db-chart--tall">
+          <canvas id="testActivityChart"></canvas>
+        </div>
+      </div>
+
+    </div><!-- /.db-grid--2 row 1 -->
+
+    <!-- ── Row 2: User Distribution + Enrollment Status ─── -->
+    <div class="db-grid--2">
+
+      <!-- User Distribution Bar Chart -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl">
+            <span class="ttl-icon ttl-icon--blue"><i class="bi bi-bar-chart-fill"></i></span>
+            User Distribution
+          </div>
+        </div>
+        <div class="db-chart">
+          <canvas id="userBarChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Enrollment Status Donut -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl">
+            <span class="ttl-icon ttl-icon--green"><i class="bi bi-pie-chart-fill"></i></span>
+            Enrollment Status
+          </div>
+        </div>
+        <div style="padding:1.25rem 1.5rem 1.5rem; display:flex; flex-direction:column; align-items:center; gap:1rem;">
+          <canvas id="enrollmentDonut" style="max-width:180px; max-height:180px;"></canvas>
+          <div class="db-donut-legend">
+            <div class="db-donut-legend__row">
+              <span class="db-donut-legend__name"><span class="db-donut-legend__dot" style="background:#2f855a;"></span>Paid</span>
+              <span class="db-donut-legend__cnt">{{ total_paid_enrollments }}</span>
+            </div>
+            <div class="db-donut-legend__row">
+              <span class="db-donut-legend__name"><span class="db-donut-legend__dot" style="background:#b7791f;"></span>Unpaid</span>
+              <span class="db-donut-legend__cnt">{{ total_unpaid_enrollments }}</span>
+            </div>
+            <div class="db-donut-legend__row">
+              <span class="db-donut-legend__name"><span class="db-donut-legend__dot" style="background:#1e5aa8;"></span>Not Enrolled</span>
+              <span class="db-donut-legend__cnt">{{ total_unenrolled_students }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.db-grid--2 row 2 -->
+
+    <!-- ── Row 3: Quick Actions + Platform Metrics ─────── -->
+    <div class="db-grid--2">
+
+      <!-- Quick Actions -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--amber"><i class="bi bi-lightning-charge-fill"></i></span>Quick Actions</div>
+        </div>
+        <div class="db-actions">
+          <a href="{% url 'student_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(47,133,90,0.1);color:var(--success);"><i class="bi bi-people-fill"></i></div>
+            <span class="db-action__label">Students</span>
+          </a>
+          <a href="{% url 'instructor_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(30,90,168,0.1);color:var(--primary);"><i class="bi bi-person-workspace"></i></div>
+            <span class="db-action__label">Instructors</span>
+          </a>
+          <a href="{% url 'course_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(183,121,31,0.1);color:var(--warning);"><i class="bi bi-journal-richtext"></i></div>
+            <span class="db-action__label">Courses</span>
+          </a>
+          <a href="{% url 'category_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(30,90,168,0.1);color:#1e5aa8;"><i class="bi bi-tag-fill"></i></div>
+            <span class="db-action__label">Categories</span>
+          </a>
+          <a href="{% url 'employee_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(43,108,176,0.1);color:var(--info);"><i class="bi bi-shield-lock-fill"></i></div>
+            <span class="db-action__label">Employees</span>
+          </a>
+          <a href="{% url 'review_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(183,121,31,0.15);color:#96591a;"><i class="bi bi-star-fill"></i></div>
+            <span class="db-action__label">Reviews</span>
+          </a>
+          {% if request.user.is_superuser %}
+          <a href="{% url 'adminpanel_home' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(197,48,48,0.1);color:var(--danger);"><i class="bi bi-shield-lock-fill"></i></div>
+            <span class="db-action__label">Admin Panel</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Platform Metrics -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--green"><i class="bi bi-graph-up-arrow"></i></span>Platform Metrics</div>
+        </div>
+        <div class="db-metrics">
+          <div class="db-metric">
+            <div class="db-metric__top">
+              <span class="db-metric__lbl">Payment Rate</span>
+              <span class="db-metric__pct" id="payRatePct">—</span>
+            </div>
+            <div class="db-metric__track">
+              <div class="db-metric__fill" id="payRateBar" style="background:var(--grad-success);" data-val="{{ total_paid_enrollments }}" data-max="{{ total_enrollments }}"></div>
+            </div>
+          </div>
+          <div class="db-metric">
+            <div class="db-metric__top">
+              <span class="db-metric__lbl">Publish Rate</span>
+              <span class="db-metric__pct" id="pubRatePct">—</span>
+            </div>
+            <div class="db-metric__track">
+              <div class="db-metric__fill" id="pubRateBar" style="background:var(--grad-warning);" data-val="{{ total_published }}" data-max="{{ total_courses }}"></div>
+            </div>
+          </div>
+          <div class="db-metric">
+            <div class="db-metric__top">
+              <span class="db-metric__lbl">Student Share</span>
+              <span class="db-metric__pct" id="stuRatePct">—</span>
+            </div>
+            <div class="db-metric__track">
+              <div class="db-metric__fill" id="stuRateBar" style="background:var(--grad-primary);" data-val="{{ total_students }}" data-max="{{ total_users }}"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Platform Summary -->
+        <div class="db-panel__hd" style="border-top:1px solid var(--border); border-bottom:none; margin-top:.5rem;">
+          <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--teal"><i class="bi bi-grid-3x3-gap-fill"></i></span>Platform Summary</div>
+        </div>
+        <div class="db-mini-grid">
+          <div class="db-mini">
+            <div class="db-mini__val" style="color:var(--success);">{{ total_paid_enrollments }}</div>
+            <div class="db-mini__lbl">Paid</div>
+          </div>
+          <div class="db-mini">
+            <div class="db-mini__val" style="color:var(--warning);">{{ total_employees }}</div>
+            <div class="db-mini__lbl">Employees</div>
+          </div>
+          <div class="db-mini">
+            <div class="db-mini__val" style="color:var(--primary);">{{ total_published }}</div>
+            <div class="db-mini__lbl">Published</div>
+          </div>
+          <div class="db-mini">
+            <div class="db-mini__val" style="color:#1e5aa8;">{{ total_assignments }}</div>
+            <div class="db-mini__lbl">Assignments</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.db-grid--2 row 3 -->
+
+    {% elif request.user.role == 'INSTRUCTOR' %}
+
+    <!-- Hero -->
+    <div class="db-hero mb-4">
+      <div class="db-hero__glow-1"></div>
+      <div class="db-hero__glow-2"></div>
+      <div class="db-hero__decor">
+        <svg class="decor-grid" width="360" height="200" viewBox="0 0 360 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 20H360M0 60H360M0 100H360M0 140H360M0 180H360" stroke="rgba(255,255,255,0.03)" stroke-width="1.5"/>
+          <path d="M40 0V200M100 0V200M160 0V200M220 0V200M280 0V200M340 0V200" stroke="rgba(255,255,255,0.03)" stroke-width="1.5"/>
+          <path d="M40 50 C 90 70, 130 30, 200 80 C 260 120, 280 60, 320 120" stroke="url(#paint0_linear_instr)" stroke-width="3.5" stroke-linecap="round" opacity="0.65" class="decor-line"/>
+          <path d="M40 70 C 80 90, 140 50, 190 100 C 240 140, 290 80, 320 140" stroke="url(#paint1_linear_instr)" stroke-width="2" stroke-linecap="round" opacity="0.3" class="decor-line"/>
+          <defs>
+            <linearGradient id="paint0_linear_instr" x1="0" y1="0" x2="360" y2="0" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1e5aa8"/>
+              <stop offset="0.5" stop-color="#c53030"/>
+              <stop offset="1" stop-color="#b7791f"/>
+            </linearGradient>
+            <linearGradient id="paint1_linear_instr" x1="0" y1="0" x2="360" y2="0" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1e5aa8"/>
+              <stop offset="1" stop-color="#1e5aa8"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="db-hero__inner">
+        <div>
+          <div class="db-hero__badge"><i class="bi bi-person-workspace"></i> Instructor Portal</div>
+          <div class="db-hero__title"><span class="live-greeting">Hello</span>, <span class="username-gradient username-gradient--instructor">{{ request.user.get_full_name|default:request.user.username }}</span></div>
+          <p class="db-hero__sub">Manage your courses, track student progress and review submissions.</p>
+        </div>
+        <div class="db-hero__stats">
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ my_courses_count|default:"0" }}</div>
+            <div class="db-hero__stat-lbl">Courses</div>
+          </div>
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ my_students_count|default:"0" }}</div>
+            <div class="db-hero__stat-lbl">Students</div>
+          </div>
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ pending_submissions_count|default:"0" }}</div>
+            <div class="db-hero__stat-lbl">Pending</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Stats -->
+    <div class="db-stats">
+      <div class="db-stat db-stat--blue">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--blue"><i class="bi bi-journal-richtext"></i></div>
+        </div>
+        <div class="db-stat__val">{{ my_courses_count|default:"0" }}</div>
+        <div class="db-stat__label">My Courses</div>
+        <div class="db-stat__sub">{{ my_published_count|default:"0" }} published</div>
+        <div class="db-stat__bar">
+          <div class="db-stat__bar-fill" style="background:var(--grad-primary);" data-pct="{{ my_published_count|default:0 }}" data-total="{{ my_courses_count|default:1 }}"></div>
+        </div>
+      </div>
+      <div class="db-stat db-stat--green">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--green"><i class="bi bi-people-fill"></i></div>
+        </div>
+        <div class="db-stat__val">{{ my_students_count|default:"0" }}</div>
+        <div class="db-stat__label">My Students</div>
+        <div class="db-stat__sub">{{ my_paid_enrollments|default:"0" }} paid enrollments</div>
+        <div class="db-stat__bar">
+          <div class="db-stat__bar-fill" style="background:var(--grad-success);" data-pct="{{ my_paid_enrollments|default:0 }}" data-total="{{ my_students_count|default:1 }}"></div>
+        </div>
+      </div>
+      <div class="db-stat db-stat--rose">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--rose"><i class="bi bi-file-earmark-x-fill"></i></div>
+        </div>
+        <div class="db-stat__val">{{ pending_submissions_count|default:"0" }}</div>
+        <div class="db-stat__label">Pending Review</div>
+        <div class="db-stat__sub">Submissions awaiting grade</div>
+      </div>
+      <div class="db-stat db-stat--amber">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--amber"><i class="bi bi-graph-up-arrow"></i></div>
+        </div>
+        <div class="db-stat__val">{{ my_paid_enrollments|default:"0" }}</div>
+        <div class="db-stat__label">Paid Enrollments</div>
+        <div class="db-stat__sub">Across all your courses</div>
+      </div>
+    </div><!-- /.db-stats -->
+
+    <!-- ── Analytics Time Filter Bar ──────────────────────── -->
+    <div class="db-filter-panel">
+      <div class="db-filter-panel__left">
+        <span class="db-filter-panel__icon">
+          <i class="bi bi-sliders2"></i>
+        </span>
+        <div>
+          <div class="db-filter-panel__title">Analytics Time Filter</div>
+          <div class="db-filter-panel__sub">Filter all your course graph trends & performance curves by Month and Year</div>
+        </div>
+      </div>
+      <div class="db-filter-panel__controls">
+        <div class="db-filter-select-wrap">
+          <i class="bi bi-calendar3 db-filter-select-wrap__icon"></i>
+          <select id="analyticsMonthSelect" class="db-filter-select analyticsMonthSelect">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div class="db-filter-select-wrap">
+          <i class="bi bi-clock-history db-filter-select-wrap__icon"></i>
+          <select id="analyticsYearSelect" class="db-filter-select analyticsYearSelect">
+            <option value="2024">2024</option><option value="2025">2025</option>
+            <option value="2026">2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+        <span class="db-filter-live-badge">
+          <i class="bi bi-check-circle-fill"></i> Live
+        </span>
+      </div>
+    </div><!-- /.db-filter-panel -->
+
+    <!-- ── Row 1: Course Enrollment Trend + My Tests Performance ─ -->
+    <div class="db-grid--2">
+
+      <!-- Enrollment & Activity Trend Graph -->
+      <div class="db-panel db-graph-card">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl">
+            <span class="ttl-icon ttl-icon--indigo"><i class="bi bi-graph-up"></i></span>
+            Course Enrollment &amp; Activity Trend
+            <span class="db-trend-badge db-trend-badge--up"><i class="bi bi-funnel-fill me-1"></i>Monthly View</span>
+          </div>
+        </div>
+        <div class="db-graph-legend">
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#1e5aa8;"></span>Enrollments</span>
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#2f855a;"></span>Submissions</span>
+        </div>
+        <div class="db-chart db-chart--tall">
+          <canvas id="instrEnrollTrend"></canvas>
+        </div>
+      </div>
+
+      <!-- My Tests & Quiz Performance -->
+      <div class="db-panel db-graph-card">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl">
+            <span class="ttl-icon ttl-icon--blue"><i class="bi bi-activity"></i></span>
+            My Tests &amp; Quiz Performance
+            <span class="db-trend-badge db-trend-badge--neutral"><i class="bi bi-graph-up-arrow"></i>Daily Analytics</span>
+          </div>
+          <a href="{% url 'quiz_list' %}" class="db-panel__view">Manage Tests →</a>
+        </div>
+
+        <!-- Styled KPI Stat Mini-Cards -->
+        <div class="row g-2 px-3 pt-3 pb-0">
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded-3 border text-center" style="background:rgba(30,90,168,0.04); border-color:rgba(30,90,168,0.12)!important;">
+              <div class="fw-bold fs-4 text-primary mb-0">{{ my_tests_count|default:0 }}</div>
+              <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-journal-check me-1"></i>Published</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded-3 border text-center" style="background:rgba(124,58,237,0.04); border-color:rgba(124,58,237,0.12)!important;">
+              <div class="fw-bold fs-4" style="color:#7c3aed;">{{ my_test_attempts_count|default:0 }}</div>
+              <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-person-lines-fill me-1"></i>Attempts</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded-3 border text-center" style="background:rgba(5,150,105,0.04); border-color:rgba(5,150,105,0.12)!important;">
+              <div class="fw-bold fs-4" style="color:#059669;">{% if my_avg_test_score is not None %}{{ my_avg_test_score }}%{% else %}—{% endif %}</div>
+              <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-trophy-fill me-1"></i>Avg Score</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded-3 border text-center" style="background:rgba(197,48,48,0.04); border-color:rgba(197,48,48,0.12)!important;">
+              <div class="fw-bold fs-4" style="color:#c53030;">{{ my_pending_test_grading|default:0 }}</div>
+              <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-hourglass-split me-1"></i>Pending</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-graph-legend">
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#7c3aed;"></span>Attempts</span>
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#059669;"></span>Avg Score</span>
+        </div>
+        <div class="db-chart db-chart--tall">
+          <canvas id="instrTestTrend"></canvas>
+        </div>
+      </div>
+
+    </div><!-- /.db-grid--2 row 1 -->
+
+    <!-- ── Row 2: Course Status Donut + Pending Reviews ──── -->
+    <div class="db-grid--2">
+
+      <!-- Course Status Donut -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--blue"><i class="bi bi-pie-chart-fill"></i></span>Course Status</div>
+        </div>
+        <div class="db-donut-row">
+          <canvas id="instrCourseDonut" style="max-width:150px;max-height:150px;flex-shrink:0;"></canvas>
+          <div class="db-donut-row__side">
+            <div class="db-donut-legend">
+              <div class="db-donut-legend__row">
+                <span class="db-donut-legend__name"><span class="db-donut-legend__dot" style="background:#1e5aa8;"></span>Published</span>
+                <span class="db-donut-legend__cnt">{{ my_published_count|default:"0" }}</span>
+              </div>
+              <div class="db-donut-legend__row">
+                <span class="db-donut-legend__name"><span class="db-donut-legend__dot" style="background:#dde1e8;"></span>Draft</span>
+                <span class="db-donut-legend__cnt">{{ my_draft_count|default:0 }}</span>
+              </div>
+            </div>
+            <div class="db-metrics" style="padding:0;">
+              <div class="db-metric">
+                <div class="db-metric__top">
+                  <span class="db-metric__lbl">Paid Enrollment Rate</span>
+                  <span class="db-metric__pct" id="instrPayPct">—</span>
+                </div>
+                <div class="db-metric__track">
+                  <div class="db-metric__fill" id="instrPayBar" style="background:var(--grad-success);" data-val="{{ my_paid_enrollments|default:0 }}" data-max="{{ my_students_count|default:1 }}"></div>
+                </div>
+              </div>
+              <div class="db-metric">
+                <div class="db-metric__top">
+                  <span class="db-metric__lbl">Publish Rate</span>
+                  <span class="db-metric__pct" id="instrPubPct">—</span>
+                </div>
+                <div class="db-metric__track">
+                  <div class="db-metric__fill" id="instrPubBar" style="background:var(--grad-primary);" data-val="{{ my_published_count|default:0 }}" data-max="{{ my_courses_count|default:1 }}"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Reviews -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--rose"><i class="bi bi-inbox-fill"></i></span>Pending Reviews</div>
+        </div>
+        {% for sub in pending_submissions %}
+        <div class="db-item">
+          <div class="db-item__av" style="background:var(--grad-assignment);">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <div class="db-item__body">
+            <div class="db-item__name">{{ sub.student.user.get_full_name|default:sub.student.user.username }}</div>
+            <div class="db-item__meta">{{ sub.assignment.title }}</div>
+          </div>
+          <span class="db-badge db-badge--pending">Pending</span>
+        </div>
+        {% empty %}
+        <div class="db-empty">
+          <div class="db-empty__ic"><i class="bi bi-check2-all"></i></div>
+          <h5>All Caught Up!</h5>
+          <p>No pending submissions to review.</p>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div><!-- /.db-grid--2 row 2 -->
+
+    <!-- ── Row 3: My Courses + Quick Actions ────────────── -->
+    <div class="db-grid--2">
+
+      <!-- My Courses -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--blue"><i class="bi bi-journal-richtext"></i></span>My Courses</div>
+          <a href="{% url 'course_list' %}" class="db-panel__view">View all →</a>
+        </div>
+        {% for course in my_courses %}
+        <div class="db-item">
+          <div class="db-item__av db-item__av--indigo"><i class="bi bi-journal-text" style="font-size:0.8rem;"></i></div>
+          <div class="db-item__body">
+            <div class="db-item__name">{{ course.title }}</div>
+            <div class="db-item__meta">{{ course.category.name|default:"Uncategorized" }} · {{ course.lessons.count }} lessons</div>
+          </div>
+          {% if course.is_published %}
+            <span class="db-badge db-badge--live">Live</span>
+          {% else %}
+            <span class="db-badge db-badge--draft">Draft</span>
+          {% endif %}
+          <a href="{% url 'course_detail' course.id %}" class="db-item__link"><i class="bi bi-eye"></i></a>
+        </div>
+        {% empty %}
+        <div class="db-empty">
+          <div class="db-empty__ic"><i class="bi bi-journal-x"></i></div>
+          <h5>No Courses Yet</h5>
+          <p>Create your first course to get started.</p>
+        </div>
+        {% endfor %}
+      </div><!-- /.db-panel My Courses -->
+
+      <!-- Quick Actions -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--amber"><i class="bi bi-lightning-charge-fill"></i></span>Quick Actions</div>
+        </div>
+        <div class="db-actions">
+          <a href="{% url 'course_create' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(30, 90, 168,0.1);color:var(--primary);"><i class="bi bi-plus-circle-fill"></i></div>
+            <span class="db-action__label">New Course</span>
+          </a>
+          <a href="{% url 'course_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(47, 133, 90,0.1);color:var(--success);"><i class="bi bi-journal-bookmark"></i></div>
+            <span class="db-action__label">All Courses</span>
+          </a>
+          <a href="{% url 'student_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(43, 108, 176,0.1);color:var(--info);"><i class="bi bi-people-fill"></i></div>
+            <span class="db-action__label">Students</span>
+          </a>
+          <a href="{% url 'enrollment_list' %}" class="db-action">
+            <div class="db-action__ic" style="background:rgba(183, 121, 31,0.1);color:var(--warning);"><i class="bi bi-card-checklist"></i></div>
+            <span class="db-action__label">Enrollments</span>
+          </a>
+        </div>
+      </div>
+
+    </div><!-- /.db-grid--2 row 3 -->
+
+    {% else %}
+
+    <!-- Hero -->
+    <div class="db-hero mb-4">
+      <div class="db-hero__glow-1"></div>
+      <div class="db-hero__glow-2"></div>
+      <div class="db-hero__glow-3"></div>
+      <div class="db-hero__decor">
+        <svg class="decor-grid" width="360" height="200" viewBox="0 0 360 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 20H360M0 60H360M0 100H360M0 140H360M0 180H360" stroke="rgba(255,255,255,0.03)" stroke-width="1.5"/>
+          <path d="M40 0V200M100 0V200M160 0V200M220 0V200M280 0V200M340 0V200" stroke="rgba(255,255,255,0.03)" stroke-width="1.5"/>
+          <path d="M30 60 C 90 40, 150 140, 210 50 C 270 -40, 310 110, 330 90" stroke="url(#paint0_linear_stud)" stroke-width="3.5" stroke-linecap="round" opacity="0.65" class="decor-line"/>
+          <path d="M30 80 C 80 60, 140 160, 200 70 C 260 -20, 300 130, 330 110" stroke="url(#paint1_linear_stud)" stroke-width="2" stroke-linecap="round" opacity="0.3" class="decor-line"/>
+          <defs>
+            <linearGradient id="paint0_linear_stud" x1="0" y1="0" x2="360" y2="0" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#2b6cb0"/>
+              <stop offset="0.5" stop-color="#2f855a"/>
+              <stop offset="1" stop-color="#a9c6e8"/>
+            </linearGradient>
+            <linearGradient id="paint1_linear_stud" x1="0" y1="0" x2="360" y2="0" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#2b6cb0"/>
+              <stop offset="1" stop-color="#2f855a"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="db-hero__inner">
+        <div>
+          <div class="db-hero__badge"><i class="bi bi-mortarboard-fill"></i> Student Portal</div>
+          <div class="db-hero__title"><span class="live-greeting">Keep learning</span>, <span class="username-gradient username-gradient--student">{{ request.user.get_full_name|default:request.user.username }}</span></div>
+          <p class="db-hero__sub">Track your progress, access your courses and stay on top of assignments.</p>
+        </div>
+        <div class="db-hero__stats">
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ my_enrollments_count|default:"0" }}</div>
+            <div class="db-hero__stat-lbl">Enrolled</div>
+          </div>
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ my_submissions_count|default:"0" }}</div>
+            <div class="db-hero__stat-lbl">Submitted</div>
+          </div>
+          <div class="db-hero__stat">
+            <div class="db-hero__stat-val">{{ my_graded_count|default:"0" }}</div>
+            <div class="db-hero__stat-lbl">Graded</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+
+    <!-- KPI Stats -->
+    <div class="db-stats">
+      <div class="db-stat db-stat--blue">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--blue"><i class="bi bi-mortarboard-fill"></i></div>
+        </div>
+        <div class="db-stat__val">{{ my_enrollments_count|default:"0" }}</div>
+        <div class="db-stat__label">Enrolled Courses</div>
+        <div class="db-stat__sub">{{ my_paid_count|default:"0" }} fully paid</div>
+        <div class="db-stat__bar">
+          <div class="db-stat__bar-fill" style="background:var(--grad-primary);" data-pct="{{ my_paid_count|default:0 }}" data-total="{{ my_enrollments_count|default:1 }}"></div>
+        </div>
+      </div>
+      <div class="db-stat db-stat--green">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--green"><i class="bi bi-file-earmark-arrow-up-fill"></i></div>
+        </div>
+        <div class="db-stat__val">{{ my_submissions_count|default:"0" }}</div>
+        <div class="db-stat__label">Submissions</div>
+        <div class="db-stat__sub">{{ my_graded_count|default:"0" }} graded</div>
+        <div class="db-stat__bar">
+          <div class="db-stat__bar-fill" style="background:var(--grad-success);" data-pct="{{ my_graded_count|default:0 }}" data-total="{{ my_submissions_count|default:1 }}"></div>
+        </div>
+      </div>
+      <div class="db-stat db-stat--amber">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--amber"><i class="bi bi-star-fill"></i></div>
+        </div>
+        <div class="db-stat__val">{{ my_graded_count|default:"0" }}</div>
+        <div class="db-stat__label">Graded Work</div>
+        <div class="db-stat__sub">Assessed assignments</div>
+      </div>
+      <div class="db-stat db-stat--teal">
+        <div class="db-stat__head">
+          <div class="db-stat__icon db-stat__icon--teal"><i class="bi bi-grid-fill"></i></div>
+        </div>
+        <div class="db-stat__val">{{ my_enrollments_count|default:"0" }}</div>
+        <div class="db-stat__label">My Courses</div>
+        <div class="db-stat__sub">Ready to explore</div>
+      </div>
+    </div><!-- /.db-stats -->
+
+    <!-- ── Analytics Time Filter Bar ──────────────────────── -->
+    <div class="db-filter-panel">
+      <div class="db-filter-panel__left">
+        <span class="db-filter-panel__icon">
+          <i class="bi bi-sliders2"></i>
+        </span>
+        <div>
+          <div class="db-filter-panel__title">Analytics Time Filter</div>
+          <div class="db-filter-panel__sub">Filter all your activity trends & performance curves by Month and Year</div>
+        </div>
+      </div>
+      <div class="db-filter-panel__controls">
+        <div class="db-filter-select-wrap">
+          <i class="bi bi-calendar3 db-filter-select-wrap__icon"></i>
+          <select id="analyticsMonthSelect" class="db-filter-select analyticsMonthSelect">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div class="db-filter-select-wrap">
+          <i class="bi bi-clock-history db-filter-select-wrap__icon"></i>
+          <select id="analyticsYearSelect" class="db-filter-select analyticsYearSelect">
+            <option value="2024">2024</option><option value="2025">2025</option>
+            <option value="2026">2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+        <span class="db-filter-live-badge">
+          <i class="bi bi-check-circle-fill"></i> Live
+        </span>
+      </div>
+    </div><!-- /.db-filter-panel -->
+
+    <!-- Charts Row -->
+    <div class="db-grid--2">
+
+      <!-- Progress Donut -->
+      <div class="db-panel">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--blue"><i class="bi bi-pie-chart-fill"></i></span>My Learning Progress</div>
+        </div>
+        <div class="db-donut-row">
+          <canvas id="stuProgressDonut" style="max-width:140px;max-height:140px;flex-shrink:0;"></canvas>
+          <div class="db-donut-row__side">
+            <div class="db-donut-legend">
+              <div class="db-donut-legend__row">
+                <span class="db-donut-legend__name"><span class="db-donut-legend__dot" style="background:#2f855a;"></span>Graded</span>
+                <span class="db-donut-legend__cnt">{{ my_graded_count|default:"0" }}</span>
+              </div>
+              <div class="db-donut-legend__row">
+                <span class="db-donut-legend__name"><span class="db-donut-legend__dot" style="background:#b7791f;"></span>Pending</span>
+                <span class="db-donut-legend__cnt">{{ my_pending_count|default:0 }}</span>
+              </div>
+              <div class="db-donut-legend__row">
+                <span class="db-donut-legend__name"><span class="db-donut-legend__dot" style="background:#1e5aa8;"></span>Paid</span>
+                <span class="db-donut-legend__cnt">{{ my_paid_count|default:"0" }}</span>
+              </div>
+            </div>
+            <div class="db-metrics" style="padding:0;">
+              <div class="db-metric">
+                <div class="db-metric__top">
+                  <span class="db-metric__lbl">Graded / Submitted</span>
+                  <span class="db-metric__pct" id="stuGradePct">—</span>
+                </div>
+                <div class="db-metric__track">
+                  <div class="db-metric__fill" id="stuGradeBar" style="background:var(--grad-success);" data-val="{{ my_graded_count|default:0 }}" data-max="{{ my_submissions_count|default:1 }}"></div>
+                </div>
+              </div>
+              <div class="db-metric">
+                <div class="db-metric__top">
+                  <span class="db-metric__lbl">Paid / Enrolled</span>
+                  <span class="db-metric__pct" id="stuPaidPct">—</span>
+                </div>
+                <div class="db-metric__track">
+                  <div class="db-metric__fill" id="stuPaidBar" style="background:var(--grad-primary);" data-val="{{ my_paid_count|default:0 }}" data-max="{{ my_enrollments_count|default:1 }}"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Learning & Test Activity Trend Graph -->
+      <div class="db-panel db-graph-card">
+        <div class="db-panel__hd">
+          <div class="db-panel__ttl">
+            <span class="ttl-icon ttl-icon--teal"><i class="bi bi-graph-up"></i></span>
+            Learning & Test Activity Trend
+            <span class="db-trend-badge db-trend-badge--up"><i class="bi bi-arrow-up-short"></i>Last 7 days</span>
+          </div>
+        </div>
+        <div class="db-graph-legend">
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#2f855a;"></span>Submissions</span>
+          <span class="db-legend-chip"><span class="db-legend-dot" style="background:#7c3aed;"></span>Test Attempts</span>
+        </div>
+        <div class="db-chart db-chart--tall">
+          <canvas id="stuActivityTrend"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Enrolled Courses -->
+    <div class="db-panel mb-4">
+      <div class="db-panel__hd">
+        <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--blue"><i class="bi bi-mortarboard-fill"></i></span>My Enrolled Courses</div>
+        <a href="{% url 'course_list' %}" class="db-panel__view">Browse more →</a>
+      </div>
+      <div class="db-courses">
+        {% for enrollment in my_enrollments %}
+        <div class="db-ccard">
+          <div class="db-ccard__thumb">
+            {% if enrollment.course.image %}
+              <img src="{{ enrollment.course.image.url }}" alt="{{ enrollment.course.title }}">
+            {% else %}
+              <div class="db-ccard__placeholder">
+                <i class="bi bi-camera-video"></i>
+                <span>No Preview</span>
+              </div>
+            {% endif %}
+            <span class="db-ccard__sticker db-ccard__sticker--{% if enrollment.is_paid %}paid{% else %}unpaid{% endif %}">
+              {% if enrollment.is_paid %}Paid{% else %}Unpaid{% endif %}
+            </span>
+          </div>
+          <div class="db-ccard__body">
+            <div class="db-ccard__title">{{ enrollment.course.title }}</div>
+            <div class="db-ccard__instr"><i class="bi bi-person-fill me-1"></i>{{ enrollment.course.instructor.user.get_full_name|default:enrollment.course.instructor.user.username }}</div>
+            <div class="db-ccard__prog-row">
+              <span>Progress</span>
+              <span>{% if enrollment.course.lessons.count > 0 %}{{ enrollment.completed_lessons.count }}/{{ enrollment.course.lessons.count }} lessons{% else %}0/0 lessons{% endif %}</span>
+            </div>
+            <div class="db-ccard__bar">
+              <div class="db-ccard__bar-fill" data-progress="{{ enrollment.calculated_progress }}" style="width:0;"></div>
+            </div>
+            <div class="db-ccard__foot">
+              {% if enrollment.is_paid %}
+                <a href="{% url 'course_detail' enrollment.course.id %}" class="db-ccard__cta db-ccard__cta--go">
+                  <i class="bi bi-play-fill"></i> Continue
+                </a>
+              {% else %}
+                <a href="{% url 'pay_course' enrollment.course.id %}" class="db-ccard__cta db-ccard__cta--pay">
+                  <i class="bi bi-credit-card-fill"></i> Pay Now
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="db-empty" style="grid-column:1/-1;">
+          <div class="db-empty__ic"><i class="bi bi-journal-x"></i></div>
+          <h5>No Enrolled Courses Yet</h5>
+          <p>Start your learning journey by exploring our course catalog.</p>
+          <a href="{% url 'course_list' %}" class="db-btn db-btn--primary mt-3">
+            <i class="bi bi-compass"></i> Explore Courses
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    {% if recent_submissions %}
+    <div class="db-panel">
+      <div class="db-panel__hd">
+        <div class="db-panel__ttl"><span class="ttl-icon ttl-icon--green"><i class="bi bi-file-earmark-check-fill"></i></span>Recent Submissions</div>
+      </div>
+      {% for sub in recent_submissions %}
+      <div class="db-item">
+        <div class="db-item__av db-item__av--indigo db-item__av--icon"><i class="bi bi-file-earmark-text" style="font-size:0.85rem;"></i></div>
+        <div class="db-item__body">
+          <div class="db-item__name">{{ sub.assignment.title }}</div>
+          <div class="db-item__meta">Submitted {{ sub.submitted_at|timesince }} ago</div>
+        </div>
+        {% if sub.score %}
+          <span class="db-badge db-badge--graded"><i class="bi bi-star-fill me-1"></i>{{ sub.score }}</span>
+        {% else %}
+          <span class="db-badge db-badge--pending">Pending</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- My Test Performance -->
+    <div class="db-panel mt-4 db-graph-card">
+      <div class="db-panel__hd">
+        <div class="db-panel__ttl">
+          <span class="ttl-icon ttl-icon--blue"><i class="bi bi-activity"></i></span>
+          My Test Performance
+          <span class="db-trend-badge db-trend-badge--neutral"><i class="bi bi-graph-up-arrow"></i>Daily Analytics</span>
+        </div>
+        <a href="{% url 'student_quiz_list' %}" class="db-panel__view">My Tests →</a>
+      </div>
+
+      <!-- Styled KPI Mini-Cards -->
+      <div class="row g-2 px-3 pt-3 pb-0">
+        <div class="col-4">
+          <div class="p-2 rounded-3 border text-center" style="background:rgba(124,58,237,0.04); border-color:rgba(124,58,237,0.12)!important;">
+            <div class="fw-bold fs-4" style="color:#7c3aed;">{{ my_test_attempts_count|default:0 }}</div>
+            <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-person-lines-fill me-1"></i>Tests Taken</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="p-2 rounded-3 border text-center" style="background:rgba(5,150,105,0.04); border-color:rgba(5,150,105,0.12)!important;">
+            <div class="fw-bold fs-4" style="color:#059669;">{% if my_avg_test_score is not None %}{{ my_avg_test_score }}%{% else %}—{% endif %}</div>
+            <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-trophy-fill me-1"></i>Avg Score</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="p-2 rounded-3 border text-center" style="background:rgba(30,90,168,0.04); border-color:rgba(30,90,168,0.12)!important;">
+            <div class="fw-bold fs-4 text-primary">{{ available_tests_count|default:0 }}</div>
+            <div class="small text-muted fw-semibold" style="font-size:0.72rem;"><i class="bi bi-journal-check me-1"></i>Available</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend + Trend Graph -->
+      <div class="db-graph-legend">
+        <span class="db-legend-chip"><span class="db-legend-dot" style="background:#7c3aed;"></span>Attempts</span>
+        <span class="db-legend-chip"><span class="db-legend-dot" style="background:#059669;"></span>Avg Score %</span>
+      </div>
+      <div class="db-chart db-chart--tall">
+        <canvas id="stuTestPerformance"></canvas>
+      </div>
+
+      <!-- Recent Test Attempts List -->
+      {% if recent_test_attempts %}
+        {% for attempt in recent_test_attempts %}
+          <div class="db-item">
+            <div class="db-item__av {% if attempt.needs_grading %}db-item__av--amber{% elif attempt.passed == False %}db-item__av--rose{% else %}db-item__av--green{% endif %} db-item__av--icon">
+              <i class="bi bi-ui-checks-grid" style="font-size:0.85rem;"></i>
+            </div>
+            <div class="db-item__body">
+              <div class="db-item__name">{{ attempt.quiz.title }}</div>
+              <div class="db-item__meta">{{ attempt.quiz.course.title }} • {{ attempt.submitted_at|timesince }} ago</div>
+            </div>
+            {% if attempt.needs_grading %}
+              <span class="db-badge db-badge--pending">Pending</span>
+            {% else %}
+              <span class="db-badge db-badge--graded">{{ attempt.score }}%</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="db-empty">
+          <div class="db-empty__ic"><i class="bi bi-ui-checks-grid"></i></div>
+          <h5>No Tests Taken Yet</h5>
+          <p>Tests from your enrolled courses will show up here once you take one.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    {% endif %}
+    {# end role check #}
+
+  </main>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+<script>
+/* ── Chart Defaults ─────────────────────────────────────── */
+Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#5a6170';
+
+const palette = {
+  blue:   '#1e5aa8',
+  green:  '#2f855a',
+  amber:  '#b7791f',
+  rose:   '#c53030',
+  indigo: '#1e5aa8',
+  teal:   '#2b6cb0',
+  slate:  '#dde1e8',
+};
+
+/* Shared, on-brand tooltip styling so every chart on the dashboard reads
+   as one polished system instead of Chart.js's generic default box. */
+const tooltipStyle = {
+  backgroundColor: '#1C1F26',
+  titleColor: '#ffffff',
+  bodyColor: '#DDE1E8',
+  padding: 10,
+  cornerRadius: 8,
+  displayColors: true,
+  boxPadding: 4,
+  titleFont: { weight: '700', size: 12 },
+  bodyFont: { size: 12 },
+  caretSize: 6,
+};
+
+/* Turns a flat hex color into a subtle top-to-bottom gradient for bar
+   fills — same hue, just enough depth to not look like a flat mockup. */
+function withGradient(ctx, hex) {
+  const chartArea = ctx.chart.chartArea;
+  if (!chartArea) return hex;
+  const gradient = ctx.chart.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+  gradient.addColorStop(0, hex);
+  gradient.addColorStop(1, hex + 'b3'); // ~70% opacity toward the base
+  return gradient;
+}
+
+/* ── Generic Animate Bars ───────────────────────────────── */
+function animateBars() {
+  document.querySelectorAll('.db-metric__fill[data-val]').forEach(bar => {
+    const val = parseFloat(bar.dataset.val) || 0;
+    const max = parseFloat(bar.dataset.max) || 1;
+    const pct = Math.min(100, Math.round((val / max) * 100));
+    const pctEl = bar.closest('.db-metric')?.querySelector('[id$="Pct"]');
+    requestAnimationFrame(() => {
+      bar.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
+    });
+  });
+
+  document.querySelectorAll('.db-stat__bar-fill[data-pct]').forEach(bar => {
+    const val = parseFloat(bar.dataset.pct) || 0;
+    const total = parseFloat(bar.dataset.total) || 1;
+    requestAnimationFrame(() => {
+      bar.style.width = Math.min(100, Math.round((val / total) * 100)) + '%';
+    });
+  });
+
+  document.querySelectorAll('.db-ccard__bar-fill[data-progress]').forEach(bar => {
+    requestAnimationFrame(() => { bar.style.width = bar.dataset.progress + '%'; });
+  });
+}
+
+/* ── Named Bar Helper ───────────────────────────────────── */
+function animateNamedBar(barId, pctId, val, max) {
+  const pct = max > 0 ? Math.min(100, Math.round((val / max) * 100)) : 0;
+  const bar = document.getElementById(barId);
+  const pctEl = document.getElementById(pctId);
+  if (bar) bar.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+/* ── Bar Chart Helper ───────────────────────────────────── */
+function makeBarChart(id, labels, values, colors, opts) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const unitLabel = (opts && opts.unit) || '';
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: (ctx) => Array.isArray(colors)
+          ? withGradient(ctx, colors[ctx.dataIndex] || colors[0])
+          : withGradient(ctx, colors),
+        borderRadius: 8,
+        borderSkipped: false,
+        maxBarThickness: 56,
+        hoverBackgroundColor: Array.isArray(colors) ? colors : undefined,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipStyle, callbacks: { label: c => ` ${c.parsed.y}${unitLabel}` } },
+      },
+      scales: {
+        x: { grid: { display: false }, border: { display: false } },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#eef0f3' },
+          border: { display: false },
+          ticks: { precision: 0 },
+        }
+      },
+      animation: { duration: 900, easing: 'easeInOutQuart' }
+    }
+  });
+}
+
+/* ── Donut Helper (with centered total label) ──────────── */
+function makeDonut(id, labels, values, colors) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  const total = values.reduce((sum, v) => sum + v, 0);
+
+  const centerTextPlugin = {
+    id: `centerText-${id}`,
+    afterDraw(chart) {
+      const { ctx, chartArea: { left, right, top, bottom } } = chart;
+      const centerX = (left + right) / 2;
+      const centerY = (top + bottom) / 2;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#1C1F26';
+      ctx.font = "700 20px 'Inter', 'Segoe UI', sans-serif";
+      ctx.fillText(total, centerX, centerY - 8);
+      ctx.fillStyle = '#8B93A1';
+      ctx.font = "600 10px 'Inter', 'Segoe UI', sans-serif";
+      ctx.fillText('TOTAL', centerX, centerY + 12);
+      ctx.restore();
+    }
+  };
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: '#fff',
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipStyle, callbacks: { label: c => ` ${c.label}: ${c.parsed}` } },
+      },
+      animation: { duration: 900, easing: 'easeInOutQuart' }
+    },
+    plugins: [centerTextPlugin]
+  });
+}
+
+function hexToRgba(hex, alpha) {
+  if (!hex) return `rgba(30, 90, 168, ${alpha})`;
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return `rgba(30, 90, 168, ${alpha})`;
+  return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+}
+
+window.chartRegistry = window.chartRegistry || {};
+
+/* ── Senior SaaS Smooth Line Graph Engine ────────────────── */
+function makeAreaChart(id, labels, datasets) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+
+  if (window.chartRegistry[id]) {
+    window.chartRegistry[id].destroy();
+  }
+
+  const chartDatasets = datasets.map(ds => ({
+    label: ds.label,
+    data: ds.data,
+    borderColor: ds.color,
+    backgroundColor: function(context) {
+      const chart = context.chart;
+      const { ctx, chartArea } = chart;
+      if (!chartArea) return hexToRgba(ds.color, 0.18);
+      const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+      gradient.addColorStop(0, hexToRgba(ds.color, 0.38));
+      gradient.addColorStop(0.5, hexToRgba(ds.color, 0.12));
+      gradient.addColorStop(1, hexToRgba(ds.color, 0.005));
+      return gradient;
+    },
+    fill: true,
+    cubicInterpolationMode: 'monotone',
+    tension: 0.4,
+    borderWidth: 3,
+    pointRadius: 4,
+    pointHoverRadius: 8,
+    pointBackgroundColor: '#ffffff',
+    pointBorderColor: ds.color,
+    pointBorderWidth: 3,
+    pointHoverBackgroundColor: ds.color,
+    pointHoverBorderColor: '#ffffff',
+    pointHoverBorderWidth: 3,
+  }));
+
+  window.chartRegistry[id] = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: chartDatasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltipStyle,
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: c => ` ${c.dataset.label}: ${c.parsed.y}`
+          }
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { font: { size: 11, weight: '600' }, color: '#8B93A1' },
+        },
+        y: {
+          beginAtZero: true,
+          suggestedMax: 5,
+          grid: { color: 'rgba(226, 232, 240, 0.7)', tickBorderDash: [4, 4] },
+          border: { display: false, dash: [4, 4] },
+          ticks: { precision: 0, font: { size: 11, weight: '500' }, color: '#8B93A1', padding: 8 },
+        }
+      },
+      animation: { duration: 1100, easing: 'easeInOutQuart' }
+    }
+  });
+  return window.chartRegistry[id];
+}
+
+/* ── Multi-Line Performance Chart (dual Y axis) ────────── */
+function makeMultiLineChart(id, labels, ds1, ds2) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+
+  if (window.chartRegistry[id]) {
+    window.chartRegistry[id].destroy();
+  }
+
+  window.chartRegistry[id] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: ds1.label,
+          data: ds1.data,
+          borderColor: ds1.color,
+          backgroundColor: function(context) {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) return hexToRgba(ds1.color, 0.15);
+            const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            g.addColorStop(0, hexToRgba(ds1.color, 0.35));
+            g.addColorStop(0.6, hexToRgba(ds1.color, 0.08));
+            g.addColorStop(1, hexToRgba(ds1.color, 0.005));
+            return g;
+          },
+          fill: true,
+          cubicInterpolationMode: 'monotone',
+          tension: 0.4,
+          borderWidth: 3,
+          pointRadius: 4,
+          pointHoverRadius: 8,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: ds1.color,
+          pointBorderWidth: 3,
+          yAxisID: 'y',
+        },
+        {
+          label: ds2.label,
+          data: ds2.data,
+          borderColor: ds2.color,
+          backgroundColor: 'transparent',
+          fill: false,
+          cubicInterpolationMode: 'monotone',
+          tension: 0.4,
+          borderWidth: 2.5,
+          borderDash: [6, 4],
+          pointRadius: 4,
+          pointHoverRadius: 8,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: ds2.color,
+          pointBorderWidth: 3,
+          yAxisID: 'y1',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltipStyle,
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: c => c.dataset.yAxisID === 'y1' ? ` ${c.dataset.label}: ${c.parsed.y}%` : ` ${c.dataset.label}: ${c.parsed.y}`
+          }
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { font: { size: 11, weight: '600' }, color: '#8B93A1' },
+        },
+        y: {
+          type: 'linear',
+          position: 'left',
+          beginAtZero: true,
+          suggestedMax: 5,
+          grid: { color: 'rgba(226, 232, 240, 0.7)' },
+          border: { display: false, dash: [4, 4] },
+          ticks: { precision: 0, font: { size: 11, weight: '500' }, color: '#8B93A1', padding: 8 },
+          title: { display: true, text: ds1.label, font: { size: 10, weight: '700' }, color: ds1.color },
+        },
+        y1: {
+          type: 'linear',
+          position: 'right',
+          beginAtZero: true,
+          max: 100,
+          grid: { drawOnChartArea: false },
+          border: { display: false },
+          ticks: { precision: 0, font: { size: 11, weight: '500' }, color: '#8B93A1', padding: 8, callback: v => v + '%' },
+          title: { display: true, text: ds2.label, font: { size: 10, weight: '700' }, color: ds2.color },
+        }
+      },
+      animation: { duration: 1100, easing: 'easeInOutQuart' }
+    }
+  });
+  return window.chartRegistry[id];
+}
+
+/* ── AJAX Filter Update Listener ───────────────────────── */
+function fetchAndFilterAnalytics() {
+  const monthSelect = document.querySelector('#analyticsMonthSelect, .analyticsMonthSelect');
+  const yearSelect  = document.querySelector('#analyticsYearSelect, .analyticsYearSelect');
+  if (!monthSelect || !yearSelect) return;
+
+  const month = monthSelect.value;
+  const year  = yearSelect.value;
+
+  fetch(`/dashboard/analytics/api/?month=${month}&year=${year}`)
+    .then(res => res.json())
+    .then(data => {
+      const labels = data.labels || [];
+
+      // Update Area Trend charts
+      ['enrollmentTrendChart', 'instrEnrollTrend', 'stuActivityTrend'].forEach(id => {
+        if (window.chartRegistry[id]) {
+          const chart = window.chartRegistry[id];
+          chart.data.labels = labels;
+          if (id === 'stuActivityTrend') {
+            chart.data.datasets[0].data = data.submissions;
+            chart.data.datasets[1].data = data.testAttempts;
+          } else {
+            chart.data.datasets[0].data = data.enrollments;
+            chart.data.datasets[1].data = data.submissions;
+          }
+          chart.update();
+        }
+      });
+
+      // Update Dual-Axis Test Performance charts
+      ['testActivityChart', 'instrTestTrend', 'stuTestPerformance'].forEach(id => {
+        if (window.chartRegistry[id]) {
+          const chart = window.chartRegistry[id];
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = data.testAttempts;
+          chart.data.datasets[1].data = data.testScores;
+          chart.update();
+        }
+      });
+    })
+    .catch(err => console.error("Error fetching analytics data:", err));
+}
+</script>
+
+{% if request.user.is_superuser or request.user.role == 'EMPLOYEE' %}
+<script>
+(function() {
+  const h = document.getElementById('db-data-holder');
+  if (!h) return;
+
+  const totalUsers  = parseInt(h.dataset.totalUsers) || 0;
+  const students    = parseInt(h.dataset.totalStudents) || 0;
+  const instructors = parseInt(h.dataset.totalInstructors) || 0;
+  const employees   = parseInt(h.dataset.totalEmployees) || 0;
+  const totalEnr    = parseInt(h.dataset.totalEnrollments) || 0;
+  const paidEnr     = parseInt(h.dataset.totalPaidEnrollments) || 0;
+  const totalPub    = parseInt(h.dataset.totalPublished) || 0;
+  const totalCourses = parseInt(h.dataset.totalCourses) || 0;
+
+  /* User bar chart */
+  makeBarChart('userBarChart', ['Students', 'Instructors', 'Employees'], [students, instructors, employees],
+    [palette.blue, palette.green, palette.amber], { unit: ' users' });
+
+  /* Enrollment donut */
+  const unpaidEnr = Math.max(0, totalEnr - paidEnr);
+  makeDonut('enrollmentDonut', ['Paid', 'Unpaid'], [paidEnr, unpaidEnr], [palette.green, palette.amber]);
+
+  /* Daily Enrollment Trend Area Chart */
+  try {
+    const dailyLabels = JSON.parse(h.dataset.dailyLabels || '[]');
+    const dailyEnrollments = JSON.parse(h.dataset.dailyEnrollments || '[]');
+    const dailySubmissions = JSON.parse(h.dataset.dailySubmissions || '[]');
+    const dailyTestAttempts = JSON.parse(h.dataset.dailyTestAttempts || '[]');
+    const dailyTestScores = JSON.parse(h.dataset.dailyTestScores || '[]');
+
+    makeAreaChart('enrollmentTrendChart', dailyLabels, [
+      { label: 'Enrollments', data: dailyEnrollments, color: '#1e5aa8' },
+      { label: 'Submissions', data: dailySubmissions, color: '#2f855a' },
+    ]);
+
+    makeMultiLineChart('testActivityChart', dailyLabels,
+      { label: 'Attempts', data: dailyTestAttempts, color: '#7c3aed' },
+      { label: 'Avg Score', data: dailyTestScores, color: '#059669' }
+    );
+  } catch(e) { console.warn('Daily chart data parse error:', e); }
+
+  animateNamedBar('payRateBar', 'payRatePct', paidEnr, totalEnr || 1);
+  animateNamedBar('pubRateBar', 'pubRatePct', totalPub, totalCourses || 1);
+  animateNamedBar('stuRateBar', 'stuRatePct', students, totalUsers || 1);
+})();
+</script>
+{% endif %}
+
+{% if request.user.role == 'INSTRUCTOR' %}
+<script>
+(function() {
+  const h = document.getElementById('db-data-holder');
+  if (!h) return;
+
+  const myCourses   = parseInt(h.dataset.myCoursesCount) || 0;
+  const myPub       = parseInt(h.dataset.myPublishedCount) || 0;
+  const myStudents  = parseInt(h.dataset.myStudentsCount) || 0;
+  const myPaid      = parseInt(h.dataset.myPaidEnrollments) || 0;
+  const pendingSubs = parseInt(h.dataset.pendingSubmissionsCount) || 0;
+
+  makeDonut('instrCourseDonut', ['Published', 'Draft'], [myPub, Math.max(0, myCourses - myPub)], [palette.blue, palette.slate]);
+
+  makeBarChart('instrSubChart', ['Total Students', 'Paid', 'Pending Review'], [myStudents, myPaid, pendingSubs],
+    [palette.blue, palette.green, palette.rose]);
+
+  /* Daily Trend Charts for Instructor */
+  try {
+    const dailyLabels = JSON.parse(h.dataset.dailyLabels || '[]');
+    const dailyEnrollments = JSON.parse(h.dataset.dailyEnrollments || '[]');
+    const dailySubmissions = JSON.parse(h.dataset.dailySubmissions || '[]');
+    const dailyTestAttempts = JSON.parse(h.dataset.dailyTestAttempts || '[]');
+    const dailyTestScores = JSON.parse(h.dataset.dailyTestScores || '[]');
+
+    makeAreaChart('instrEnrollTrend', dailyLabels, [
+      { label: 'Enrollments', data: dailyEnrollments, color: '#1e5aa8' },
+      { label: 'Submissions', data: dailySubmissions, color: '#2f855a' },
+    ]);
+
+    makeMultiLineChart('instrTestTrend', dailyLabels,
+      { label: 'Attempts', data: dailyTestAttempts, color: '#7c3aed' },
+      { label: 'Avg Score', data: dailyTestScores, color: '#059669' }
+    );
+  } catch(e) {}
+
+  animateNamedBar('instrPayBar', 'instrPayPct', myPaid, myStudents || 1);
+  animateNamedBar('instrPubBar', 'instrPubPct', myPub, myCourses || 1);
+})();
+</script>
+{% endif %}
+
+{% if request.user.role == 'STUDENT' %}
+<script>
+(function() {
+  const h = document.getElementById('db-data-holder');
+  if (!h) return;
+
+  const enrolled   = parseInt(h.dataset.myEnrollmentsCount) || 0;
+  const paid       = parseInt(h.dataset.myPaidCount) || 0;
+  const subs       = parseInt(h.dataset.mySubmissionsCount) || 0;
+  const graded     = parseInt(h.dataset.myGradedCount) || 0;
+  const available  = parseInt(h.dataset.availableCoursesCount) || 0;
+  const pending    = Math.max(0, subs - graded);
+
+  makeDonut('stuProgressDonut', ['Graded', 'Pending', 'Paid Courses'], [graded, pending, paid], [palette.green, palette.amber, palette.blue]);
+
+  makeBarChart('stuCoursesChart', ['Enrolled', 'Paid', 'Free Courses'], [enrolled, paid, available],
+    [palette.blue, palette.green, palette.teal]);
+
+  /* Daily Trend Charts for Student */
+  try {
+    const dailyLabels = JSON.parse(h.dataset.dailyLabels || '[]');
+    const dailySubmissions = JSON.parse(h.dataset.dailySubmissions || '[]');
+    const dailyTestAttempts = JSON.parse(h.dataset.dailyTestAttempts || '[]');
+    const dailyTestScores = JSON.parse(h.dataset.dailyTestScores || '[]');
+
+    makeAreaChart('stuActivityTrend', dailyLabels, [
+      { label: 'Submissions', data: dailySubmissions, color: '#2f855a' },
+      { label: 'Test Attempts', data: dailyTestAttempts, color: '#7c3aed' },
+    ]);
+
+    makeMultiLineChart('stuTestPerformance', dailyLabels,
+      { label: 'Attempts', data: dailyTestAttempts, color: '#7c3aed' },
+      { label: 'Avg Score', data: dailyTestScores, color: '#059669' }
+    );
+  } catch(e) {}
+
+  animateNamedBar('stuGradeBar', 'stuGradePct', graded, subs || 1);
+  animateNamedBar('stuPaidBar',  'stuPaidPct',  paid, enrolled || 1);
+})();
+</script>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  animateBars();
+  
+  const hour = new Date().getHours();
+  let greet = "Welcome back";
+  if (hour >= 5 && hour < 12) {
+    greet = "Good morning";
+  } else if (hour >= 12 && hour < 17) {
+    greet = "Good afternoon";
+  } else if (hour >= 17 && hour < 22) {
+    greet = "Good evening";
+  } else {
+    greet = "Welcome back";
+  }
+  document.querySelectorAll('.live-greeting').forEach(el => {
+    el.textContent = greet;
+  });
+
+  // Set current month/year and attach AJAX filter listeners
+  const now = new Date();
+  document.querySelectorAll('#analyticsMonthSelect, .analyticsMonthSelect').forEach(el => {
+    el.value = now.getMonth() + 1;
+    el.addEventListener('change', fetchAndFilterAnalytics);
+  });
+  document.querySelectorAll('#analyticsYearSelect, .analyticsYearSelect').forEach(el => {
+    el.value = now.getFullYear();
+    el.addEventListener('change', fetchAndFilterAnalytics);
+  });
+});
+</script>
+{% endblock %}

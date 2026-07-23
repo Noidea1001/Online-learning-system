@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load static %}
+{# templates/homepage.html #}
+{% block title %}Online Learning System - Home{% endblock %}
+{% block content %}
+<!-- HERO SECTION: Premium Glow Design -->
+<div class="position-relative overflow-hidden mb-5 rounded-4 text-white shadow-lg bg-slate-900">
+<img src="{% static 'image/hello.png' %}" 
+     alt="Hero Background" 
+     class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover z-0 opacity-80"
+     style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
+  <div class="position-absolute rounded-circle bg-primary opacity-8" style="width: 200px; height: 400px; top: -200px; right: -100px; filter: blur(100px);"></div>
+  <div class="position-absolute rounded-circle bg-info opacity-8" style="width: 200px; height: 400px; bottom: -100px; left: -100px; filter: blur(100px);"></div>
+
+  <div class="container-fluid py-3 text-center text-lg-start position-relative z-1 p-4">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <h1 class="display-4 fw-black mb-3  text-white lh-base" style="letter-spacing: -0.02em; font-weight: 800;">
+          Advance Your Expert Skills With <span class="text-primary" style="background: linear-gradient(45deg, #1e5aa8, #8fa8c7); -webkit-background-clip: text;background-clip: text; -webkit-text-fill-color: transparent;">Top Professionals</span>
+        </h1>
+        <p class="col-lg-10 fs-5 text-white mb-4" style="color: #ffffff !important; line-height: 1.6;">
+          Access high-quality operational video lectures, documentation, and instant project-based evaluations designed to build your future today.
+        </p>
+
+      <div class="d-flex gap-3 justify-content-center justify-content-lg-start pt-2 p-4">
+       {% if user.is_authenticated %}
+       <a href="{% url 'course_list' %}" class="btn btn-primary btn-sm px-3 py-2 fw-semibold transition-smooth" style="border-radius: 10px; font-size: 1rem;">
+        Explore Courses
+       </a>
+       {% else %}
+       <a href="{% url 'register' %}?next={% url 'course_list' %}" class="btn btn-primary btn-sm px-3 py-2 fw-semibold transition-smooth" style="border-radius: 10px; font-size: 1rem;">
+         Explore Courses
+       </a>
+       <a href="{% url 'register' %}" class="btn btn-outline-light btn-sm px-3 py-2 fw-semibold transition-smooth" style="border-radius: 10px; font-size: 1rem; border-color: rgba(255,255,255,0.25);">
+          Get Started
+       </a>
+       {% endif %}
+       </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--  PLATFORM STATISTICS: Modern Minimalist Cards -->
+<div class="container mb-5">
+  <div class="row g-4 text-center">
+    <div class="col-6 col-md-3">
+      <div class="p-4 bg-white rounded-4 shadow-sm transition-hover border-0">
+        <div class="text-primary mb-2"><i class="bi bi-people-fill fs-3"></i></div>
+        <h3 class="fw-extrabold text-dark mb-1" style="font-weight: 800; letter-spacing: -0.02em;">{{ total_students_count|default:0 }}+</h3>
+        <small class="text-muted text-uppercase tracking-wider fw-bold" style="font-size: 0.7rem;">Active Students</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-4 bg-white rounded-4 shadow-sm transition-hover border-0">
+        <div class="text-success mb-2"><i class="bi bi-journal-code fs-3"></i></div>
+        <h3 class="fw-extrabold text-dark mb-1" style="font-weight: 800; letter-spacing: -0.02em;">{{ total_courses_count|default:0 }}+</h3>
+        <small class="text-muted text-uppercase tracking-wider fw-bold" style="font-size: 0.7rem;">Live Courses</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-4 bg-white rounded-4 shadow-sm transition-hover border-0">
+        <div class="text-info mb-2"><i class="bi bi-patch-check-fill fs-3"></i></div>
+        <h3 class="fw-extrabold text-dark mb-1" style="font-weight: 800; letter-spacing: -0.02em;">{{ total_instructors_count|default:0 }}+</h3>
+        <small class="text-muted text-uppercase tracking-wider fw-bold" style="font-size: 0.7rem;">Expert Mentors</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-4 bg-white rounded-4 shadow-sm transition-hover border-0">
+        <div class="text-warning mb-2"><i class="bi bi-globe2 fs-3"></i></div>
+        <h3 class="fw-extrabold text-dark mb-1" style="font-weight: 800; letter-spacing: -0.02em;">100%</h3>
+        <small class="text-muted text-uppercase tracking-wider fw-bold" style="font-size: 0.7rem;">Online Access</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container my-5">
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-end mb-4 gap-3">
+    <div>
+      <h3 class="fw-bold text-dark mb-1" style="font-weight: 700;"> Featured Learning Modules</h3>
+      <p class="text-muted small mb-0">Invest in your career path by enrolling in our highly-rated programs.</p>
+    </div>
+    {% if user.is_authenticated %}
+    <a href="{% url 'course_list' %}" class="btn btn-sm btn-outline-primary px-3 py-2 fw-semibold rounded-3 text-nowrap">View All Courses →</a>
+    {% else %}
+    <a href="{% url 'login' %}?next={% url 'course_list' %}" class="btn btn-sm btn-outline-primary px-3 py-2 fw-semibold rounded-3 text-nowrap">View All Courses →</a>
+    {% endif %}
+  </div>
+  <div class="row g-4">
+    {% for course in featured_courses %}
+      <div class="col-md-6 col-lg-4">
+        <div class="cl-card fade-in-up h-100">
+          <div class="form-header-accent-course"></div>
+          <div class="cl-card__thumb" style="height: 200px;">
+            {% if course.lessons.first and course.lessons.first.youtube_video_id %}
+              <img src="https://img.youtube.com/vi/{{ course.lessons.first.youtube_video_id }}/maxresdefault.jpg" 
+                   alt="{{ course.title }}" 
+                   class="cl-card__img"
+                   onerror="this.onerror=null; this.src=this.src.replace('maxresdefault', 'hqdefault');">
+            {% elif course.image %}
+              <img src="{{ course.image.url }}" alt="{{ course.title }}" class="cl-card__img">
+            {% else %}
+              <div class="cl-card__placeholder">
+                <i class="bi bi-camera-video"></i>
+                <span>No Preview</span>
+              </div>
+            {% endif %}
+
+            <span class="cl-card__category">
+              {{ course.category.name|default:"Uncategorized" }}
+            </span>
+
+            <!-- LOCK OVERLAY OR NORMAL PLAY OVERLAY -->
+          
+            {% if not user.is_authenticated %}
+              {% if course.is_free or course.price <= 0 %}
+
+                <a href="{% url 'login' %}?next={% url 'course_detail' course.id %}" 
+                   class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-white text-decoration-none"
+                   style="background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(2px); z-index: 10;">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center border border-2 border-white shadow-lg" 
+                       style="width: 70px; height: 70px; background: rgba(255,255,255,0.15);">
+                    <i class="bi bi-play-fill fs-3"></i>
+                  </div>
+                  <h5 class="mb-1 mt-2" style="font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em;">Free Course</h5>
+                  <span class="badge bg-success px-3 py-1.5 rounded-pill small" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Login to Access</span>
+                </a>
+              {% else %}
+                <a href="{% url 'login' %}?next={% url 'course_detail' course.id %}" 
+                   class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-white text-decoration-none"
+                   style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); z-index: 10;">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center border border-2 border-white shadow-lg" 
+                       style="width: 70px; height: 70px; background: rgba(255,255,255,0.1);">
+                    <i class="bi bi-lock-fill fs-3"></i>
+                  </div>
+                  <h5 class="mb-1 mt-2" style="font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em;">Course Locked</h5>
+                  <span class="badge bg-dark bg-opacity-75 px-3 py-1.5 rounded-pill small" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Register to Access</span>
+                </a>
+              {% endif %}
+            {% else %}
+              <div class="cl-card__overlay">
+                <a href="{% url 'course_detail' course.id %}" class="cl-card__play-btn" aria-label="View Course">
+                  <i class="bi bi-play-fill"></i>
+                </a>
+              </div>
+            {% endif %}
+          </div>
+          <div class="cl-card__body">
+            <h3 class="cl-card__title">{{ course.title }}</h3>
+            <p class="cl-card__desc">
+              {{ course.description|default:"No description available."|striptags|truncatewords:18 }}
+            </p>
+
+            <div class="cl-card__instructor">
+              <div class="cl-card__avatar">
+                <i class="bi bi-person-fill" style="font-size: 12px;"></i>
+              </div>
+              <div class="cl-card__instructor-info">
+                <span class="cl-card__instructor-name">{{ course.instructor.user.get_full_name|default:course.instructor.user.username }}</span>
+                <span class="cl-card__instructor-role">Instructor</span>
+              </div>
+            </div>
+          </div>
+          <div class="cl-card__footer">
+            <div class="cl-card__meta">
+              <span class="cl-card__lessons"><i class="bi bi-play-circle me-1"></i>{{ course.lessons.count }} Lessons</span>
+              <span class="cl-card__reviews"><i class="bi bi-star-fill me-1"></i>{{ course.reviews.count|default:"0" }}</span>
+            </div>
+            <div class="cl-card__price-row">
+              {% if course.is_free or course.price <= 0 %}
+                <span class="cl-card__price text-success" style="color: var(--success) !important;">Free</span>
+              {% else %}
+                <span class="cl-card__price">${{ course.price }}</span>
+              {% endif %}
+              {% if user.is_authenticated %}
+                <a href="{% url 'course_detail' course.id %}" class="cl-card__view-btn">
+                  View <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+              {% else %}
+                <a href="{% url 'login' %}?next={% url 'course_detail' course.id %}" class="cl-card__view-btn">
+                  Login <i class="bi bi-box-arrow-in-right ms-1"></i>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-center text-muted py-5 card border-0 bg-light rounded-4">
+        <p class="fs-5 mb-0 fw-medium text-secondary">No active learning courses deployed on the platform feed yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

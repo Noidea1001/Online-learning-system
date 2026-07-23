@@ -1,0 +1,78 @@
+{# adminpanel/templates/adminpanel/group_list.html #}
+{% extends "base.html" %}
+
+{% block title %}Manage Groups — Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container py-1">
+
+  <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <nav class="small text-muted mb-1">
+        <a href="{% url 'adminpanel_home' %}" class="text-decoration-none">Admin Panel</a>
+        <i class="bi bi-chevron-right small mx-1"></i> Groups
+      </nav>
+      <h1 class="fw-bold display-6 mb-1">Permission Groups</h1>
+      <p class="text-muted mb-0">Bundle permissions into reusable groups, then assign them to users.</p>
+    </div>
+    <a href="{% url 'adminpanel_group_create' %}" class="btn btn-primary shadow-sm rounded-pill px-4 py-2 btn-icon" title="New Group"><i class="bi bi-plus-lg"></i></a>
+  </div>
+
+  <div class="w-100 overflow-hidden">
+    <div class="table-responsive list-scroll">
+      <table class="table align-middle mb-0 custom-student-table">
+        <thead>
+          <tr>
+            <th class="ps-4">Group Name</th>
+            <th>Members</th>
+            <th>Permissions</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in groups %}
+            <tr>
+              <td class="ps-4" data-label="Group Name">
+                <span class="fw-bold d-block text-dark"><i class="bi bi-folder2-open me-2 text-muted"></i>{{ group.name }}</span>
+              </td>
+              <td data-label="Members">
+                <span class="badge bg-primary-subtle text-primary border px-3 py-2 fw-semibold">
+                  {{ group.member_count }} user{{ group.member_count|pluralize }}
+                </span>
+              </td>
+              <td data-label="Permissions">
+                <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fw-semibold">
+                  {{ group.perm_count }} permission{{ group.perm_count|pluralize }}
+                </span>
+              </td>
+              <td class="text-end pe-4" data-label="Actions">
+                <div class="d-flex justify-content-end gap-1">
+                  <a href="{% url 'adminpanel_group_detail' group.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+                  <form method="post" action="{% url 'adminpanel_group_delete' group.pk %}" onsubmit="return confirm('Delete the &quot;{{ group.name }}&quot; group? This cannot be undone.');" class="d-inline m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-5 text-muted">
+                <i class="bi bi-diagram-3 display-1 text-secondary mb-3 d-block opacity-50"></i>
+                <h5 class="fw-bold text-dark">No Groups Yet</h5>
+                <p class="mb-3 small">Create your first permission group to start organizing access levels.</p>
+                <a href="{% url 'adminpanel_group_create' %}" class="btn btn-primary rounded-pill px-4">
+                  <i class="bi bi-plus-lg me-2"></i>Create Group
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

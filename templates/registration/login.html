@@ -1,0 +1,86 @@
+{# templates/registration/login.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+
+<div class="container py-1 d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden w-100" style="max-width: 460px;">
+    <div class="card-body p-4 p-md-5 text-center">
+
+      <div class="bg-primary bg-opacity-10 text-primary rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 26px; height: 26px;">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+      </div>
+
+      <h2 class="fw-bold text-dark mb-1 h3">Welcome back</h2>
+      <p class="text-muted small mb-4">Sign in to your account to continue.</p>
+
+      <form method="post" novalidate class="text-start">
+        {% csrf_token %}
+
+        {% if next %}
+          <input type="hidden" name="next" value="{{ next }}" />
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger rounded-3 p-2.5 small mb-4 text-start border-0 shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Username or Email Field -->
+        <div class="mb-3">
+          <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 0.75rem;">Username or Email</label>
+          <input type="text"
+                 id="{{ form.username.id_for_label }}"
+                 name="{{ form.username.html_name }}"
+                 value="{{ form.username.value|default:'' }}"
+                 class="form-control rounded-3 {% if form.username.errors %}is-invalid{% endif %}"
+                 placeholder="Username or Email"
+                 autocomplete="username"
+                 autofocus />
+          {% if form.username.errors %}
+            <div class="invalid-feedback small">{% for e in form.username.errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <!-- Password Field -->
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold text-secondary small text-uppercase mb-0" style="font-size: 0.75rem;">Password</label>
+            <a href="{% url 'password_reset' %}" class="text-decoration-none small fw-medium" style="font-size: 0.8rem;">Forgot password?</a>
+          </div>
+          <input type="password"
+                 id="{{ form.password.id_for_label }}"
+                 name="{{ form.password.html_name }}"
+                 class="form-control rounded-3 {% if form.password.errors %}is-invalid{% endif %}"
+                 placeholder="Your password"
+                 autocomplete="current-password" />
+          {% if form.password.errors %}
+            <div class="invalid-feedback small">{% for e in form.password.errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold shadow-sm mb-2">Sign in</button>
+      </form>
+
+      <!-- Divider Section -->
+      <div class="d-flex align-items-center my-4">
+        <hr class="flex-grow-1 text-muted opacity-25">
+        <span class="mx-3 text-secondary small text-uppercase tracking-wider fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Don't have an account?</span>
+        <hr class="flex-grow-1 text-muted opacity-25">
+      </div>
+      
+      <p class="mb-0 small fw-semibold"><a href="{% url 'register' %}" class="text-decoration-none">Create an account →</a></p>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
