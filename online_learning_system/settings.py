@@ -198,14 +198,14 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
-
-    INSTALLED_APPS.insert(0, 'cloudinary_storage')
-    INSTALLED_APPS.insert(1, 'cloudinary')
     
+    # ❌ ត្រូវលុបបន្ទាត់ INSTALLED_APPS.insert(0, 'cloudinary_storage') ចេញ
+    # ❌ ត្រូវលុបបន្ទាត់ INSTALLED_APPS.insert(1, 'cloudinary') ចេញ
+
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     
     # ត្រូវដូរមកប្រើប្រាស់ Domain "res.cloudinary.com" និងមានសញ្ញា "/" ត្រឹមត្រូវបែបនេះ៖
-    MEDIA_URL = f'https://cloudinary.com{CLOUDINARY_CLOUD_NAME}/image/upload/'
+    MEDIA_URL = f'https://cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
