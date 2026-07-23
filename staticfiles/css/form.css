@@ -1,0 +1,61 @@
+
+      .container, .card, .btn, .badge, small, label, h1, h2, h3, h4, h5, h6, input, textarea, select {
+        font-family: 'Inter', 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      }
+      .premium-form-card {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04) !important;
+        border: 1px solid rgba(0, 0, 0, 0.03) !important;
+        border-radius: 16px !important;
+        background-color: #ffffff;
+      }
+      .form-control, .form-select {
+        border-color: #c7cdd8 !important;
+        border-radius: 12px !important;
+        padding: 0.65rem 1rem;
+        font-size: 0.925rem;
+        color: #3a4150;
+        transition: all 0.2s ease-in-out !important;
+      }
+      .form-control:focus, .form-select:focus {
+        border-color: #1e5aa8 !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+        background-color: #ffffff;
+      }
+      
+      .premium-input-group {
+        position: relative;
+        width: 100%;
+      }
+      .premium-input-group .form-control, 
+      .premium-input-group .form-select {
+        padding-left: 1rem !important; 
+      }
+      .premium-input-group::before {
+        display: none !important; 
+      }
+
+      .premium-dropzone-box {
+        background-color: #f8f9fb;
+        border: 2px dashed #c7cdd8 !important;
+        border-radius: 16px !important;
+        transition: all 0.25s ease-in-out;
+        cursor: pointer;
+        position: relative;
+        padding: 2.5rem 1.5rem;
+      }
+      .premium-dropzone-box:hover {
+        border-color: #1e5aa8 !important;
+        background-color: #f0fff4; 
+      }
+      .transition-smooth { transition: all 0.2s ease-in-out !important; }
+      .btn-premium-action:hover { transform: translateY(-1px); }
+      .shadow-primary-matrix {
+        box-shadow: 0 4px 14px rgba(13, 110, 253, 0.2) !important;
+      }
+      .shadow-primary-matrix:hover {
+        box-shadow: 0 6px 20px rgba(13, 110, 253, 0.35) !important;
+      }
+      @media (max-width: 576px) {
+        .mobile-buttons-flex, .mobile-w-100 { width: 100% !important; }
+      }
+
