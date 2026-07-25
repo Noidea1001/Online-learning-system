@@ -4,7 +4,7 @@
 // within their own scope, and a worker registered from /static/pwa/sw.js
 // would default to only covering /static/pwa/*.
 
-const CACHE_VERSION = 'ols-cache-v1';
+const CACHE_VERSION = 'ols-cache-v2';
 const OFFLINE_URL = '/offline/';
 
 const PRECACHE_URLS = [
@@ -47,15 +47,34 @@ self.addEventListener('fetch', (event) => {
   // fall back to a cached copy, and finally to the offline page.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
+      (async () => {
+        try {
+          const response = await fetch(request);
           const clone = response.clone();
           caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
+
+          // A service worker isn't allowed to hand back a *redirected*
+          // response for a navigation request (redirect mode "manual").
+          // When that happens in the installed app, Chrome/Edge silently
+          // abandon the in-app navigation and open the URL in a brand new
+          // window instead — this is what caused pages that redirect
+          // (login-required, post-action redirects, etc.) to "pop a new
+          // tab" instead of navigating in place. Re-wrapping the body in
+          // a fresh Response strips that redirected flag.
+          if (response.redirected) {
+            const body = await response.clone().arrayBuffer();
+            return new Response(body, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers,
+            });
+          }
           return response;
-        })
-        .catch(() =>
-          caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL))
-        )
+        } catch (err) {
+          const cached = await caches.match(request);
+          return cached || caches.match(OFFLINE_URL);
+        }
+      })()
     );
     return;
   }
